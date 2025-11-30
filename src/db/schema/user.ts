@@ -15,8 +15,11 @@ export const users = pgTable("user", {
   course: courseEnum("course"),
   gender: genderEnum("gender"),
   isLeader: boolean("isLeader").notNull().default(false),
-  role: roleEnum("role").default("User"),
+  role: roleEnum("role").default("User").notNull(),
   attended: boolean("attended").notNull().default(false),
+  isRegistrationComplete: boolean("is_registration_complete")
+    .notNull()
+    .default(false),
   idProof: text("idProof"),
   resume: text("resume"),
   github: text("github"),

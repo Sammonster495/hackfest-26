@@ -13,9 +13,10 @@ export const teams = pgTable("team", {
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull().unique(),
   teamNumber: integer("team_number").unique(),
-  teamStatus: teamStatusEnum("team_status"),
-  paymentStatus: paymentStatusEnum("payment_status"),
+  teamStatus: teamStatusEnum("team_status").default("Not Selected"),
+  paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
   attended: boolean("attended").notNull().default(false),
+  isCompleted: boolean("is_completed").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
