@@ -1,4 +1,4 @@
-import db from "~/db";
+import type db from "~/db";
 
 type QueryKeys = keyof (typeof db)["query"];
 

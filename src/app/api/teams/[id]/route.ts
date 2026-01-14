@@ -1,16 +1,17 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import { registrationRequiredRoute } from "~/auth/route-handlers";
 import * as teamData from "~/db/data/teams";
 import * as userData from "~/db/data/users";
 import { AppError } from "~/lib/errors/app-error";
 import { successResponse } from "~/lib/response/success";
-import { registrationRequiredRoute } from "~/auth/route-handlers";
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   return registrationRequiredRoute(async (_req, ctx, user) => {
-    const { id } = await ctx.params!;
+    const params = await ctx.params;
+    const { id } = params;
     const team = await teamData.findById(id);
 
     if (!team) {
@@ -20,7 +21,7 @@ export async function GET(
       });
     }
 
-    const dbUser = await userData.findById(user.id!);
+    const dbUser = await userData.findById(user.id);
     if (!dbUser || dbUser.teamId !== team.id) {
       throw new AppError("FORBIDDEN", 403, {
         title: "Access denied",

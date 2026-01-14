@@ -1,11 +1,10 @@
-import { query } from "./index";
+import { parseBody } from "~/lib/validation/parse";
 import {
   createTeamSchema,
-  updateTeamSchema,
-  type CreateTeamInput,
   type UpdateTeamInput,
+  updateTeamSchema,
 } from "~/lib/validation/team";
-import { parseBody } from "~/lib/validation/parse";
+import { query } from "./index";
 
 export async function findById(id: string) {
   return query.teams.findOne({

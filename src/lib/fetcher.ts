@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -10,7 +10,7 @@ interface ApiResponse<T = any> {
   description?: string;
 }
 
-export async function apiFetch<T = any>(
+export async function apiFetch<T = unknown>(
   url: string,
   options: RequestInit = {},
 ): Promise<T> {
@@ -46,7 +46,7 @@ export async function apiFetch<T = any>(
 
     if (!json.success) {
       const error = new Error(json.error || "REQUEST_FAILED");
-      (error as any).isHandledError = true;
+      (error as Error & { isHandledError?: boolean }).isHandledError = true;
       throw error;
     }
 
@@ -55,7 +55,7 @@ export async function apiFetch<T = any>(
     if (
       error instanceof Error &&
       error.message !== "REQUEST_FAILED" &&
-      !(error as any).isHandledError
+      !(error as Error & { isHandledError?: boolean }).isHandledError
     ) {
       toast.error("Network Error", {
         description: "Something went wrong. Please try again.",

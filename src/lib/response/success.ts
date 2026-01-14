@@ -6,7 +6,7 @@ interface SuccessOpts {
   description?: string;
 }
 
-export function successResponse(data: any, opts: SuccessOpts = {}) {
+export function successResponse(data: unknown, opts: SuccessOpts = {}) {
   return NextResponse.json({
     success: true,
     data,

@@ -1,7 +1,8 @@
 "use client";
 
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,8 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { Button } from "~/components/ui/button";
 import { apiFetch } from "~/lib/fetcher";
 
 export function LeaveTeamButton() {

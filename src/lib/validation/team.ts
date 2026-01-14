@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { teamStatusEnum, paymentStatusEnum } from "~/db/enum";
+import { paymentStatusEnum, teamStatusEnum } from "~/db/enum";
 
 export const teamSchema = z.object({
   id: z.string(),

@@ -1,11 +1,13 @@
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  registerUserSchema,
-  type RegisterUserInput,
-} from "~/lib/validation/user";
+import { X } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { CloudinaryUpload } from "~/components/cloudinary-upload";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -23,11 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { stateEnum, courseEnum, genderEnum } from "~/db/enum";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { courseEnum, genderEnum, stateEnum } from "~/db/enum";
 import { apiFetch } from "~/lib/fetcher";
+import {
+  type RegisterUserInput,
+  registerUserSchema,
+} from "~/lib/validation/user";
 
 interface College {
   id: string;
@@ -35,7 +38,11 @@ interface College {
   state: string | null;
 }
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  initialGithubUsername?: string;
+}
+
+export function RegisterForm({ initialGithubUsername }: RegisterFormProps) {
   const router = useRouter();
   const [colleges, setColleges] = useState<College[]>([]);
   const [loadingColleges, setLoadingColleges] = useState(true);
@@ -50,9 +57,17 @@ export function RegisterForm() {
       course: undefined,
       gender: undefined,
       collegeId: undefined,
-      github: undefined,
+      github: initialGithubUsername,
+      idProof: undefined,
     },
   });
+
+  // Update form when initialGithubUsername is available
+  useEffect(() => {
+    if (initialGithubUsername && !form.getValues("github")) {
+      form.setValue("github", initialGithubUsername);
+    }
+  }, [initialGithubUsername, form]);
 
   useEffect(() => {
     async function loadColleges() {
@@ -77,6 +92,7 @@ export function RegisterForm() {
       gender: data.gender,
       collegeId: data.collegeId,
       github: data.github?.trim() || undefined,
+      idProof: data.idProof,
     };
 
     await apiFetch("/api/users/register", {
@@ -261,13 +277,62 @@ export function RegisterForm() {
           name="github"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>GitHub URL (Optional)</FormLabel>
+              <FormLabel>GitHub Username</FormLabel>
               <FormControl>
                 <Input
-                  type="url"
-                  placeholder="https://github.com/username"
+                  type="text"
+                  placeholder="username"
                   {...field}
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
+                  value={field.value || initialGithubUsername || ""}
                 />
+              </FormControl>
+              <FormMessage />
+              {initialGithubUsername && (
+                <p className="text-xs text-muted-foreground">
+                  Automatically fetched from your GitHub account
+                </p>
+              )}
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          // @ts-expect-error - Type conflict between react-hook-form type definitions
+          control={form.control}
+          name="idProof"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>ID Proof *</FormLabel>
+              <FormControl>
+                {field.value ? (
+                  <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-lg border">
+                    <Image
+                      src={field.value}
+                      alt="ID Proof"
+                      fill
+                      className="object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onClick={() => field.onChange(undefined)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <CloudinaryUpload
+                    onUpload={field.onChange}
+                    allowedFormats={["png", "jpg", "jpeg"]}
+                    maxFileSize={1024 * 1024}
+                    label="Upload ID Proof (Max 1MB)"
+                    folder="idProof"
+                  />
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>

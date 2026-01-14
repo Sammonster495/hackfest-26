@@ -1,7 +1,12 @@
-import { auth } from "~/auth/config";
+import { Home } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import * as userData from "~/db/data/users";
-import * as teamData from "~/db/data/teams";
+import { auth } from "~/auth/config";
+import { ConfirmTeamButton } from "~/components/teams/confirm-team-button";
+import { DeleteTeamButton } from "~/components/teams/delete-team-button";
+import { LeaveTeamButton } from "~/components/teams/leave-team-button";
+import { TeamIdDisplay } from "~/components/teams/team-id-display";
+import { Button } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,13 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import Link from "next/link";
-import { Home } from "lucide-react";
-import { TeamIdDisplay } from "~/components/teams/team-id-display";
-import { ConfirmTeamButton } from "~/components/teams/confirm-team-button";
-import { LeaveTeamButton } from "~/components/teams/leave-team-button";
-import { DeleteTeamButton } from "~/components/teams/delete-team-button";
+import * as teamData from "~/db/data/teams";
+import * as userData from "~/db/data/users";
 
 export default async function TeamDetailsPage({
   params,

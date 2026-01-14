@@ -1,11 +1,11 @@
 import { query } from "~/db/data";
+import { parseBody } from "~/lib/validation/parse";
 import {
-  updateUserSchema,
+  type RegisterUserInput,
   registerUserSchema,
   type UpdateUserInput,
-  type RegisterUserInput,
+  updateUserSchema,
 } from "~/lib/validation/user";
-import { parseBody } from "~/lib/validation/parse";
 
 export async function findById(id: string) {
   return query.users.findOne({

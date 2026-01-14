@@ -59,7 +59,7 @@ export default async function Home() {
                     <Link href="/teams">Create or Join Team</Link>
                   </Button>
                 )}
-                {user && user.teamId && (
+                {user?.teamId && (
                   <Button asChild>
                     <Link href={`/teams/${user.teamId}`}>Team</Link>
                   </Button>

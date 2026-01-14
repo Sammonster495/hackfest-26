@@ -1,20 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "./get-current-user";
+import type { NextRequest, NextResponse } from "next/server";
+import type { Session } from "next-auth";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
-import { Session } from "next-auth";
+import { getCurrentUser } from "./get-current-user";
 
 type RouteHandler = (
   request: NextRequest,
   context: { params: Promise<Record<string, string>> },
-  user: Session["user"],
-) => Promise<NextResponse>;
-
-type RouteHandlerWithParams<
-  T extends Record<string, string> = Record<string, string>,
-> = (
-  request: NextRequest,
-  context: { params: Promise<T> },
   user: Session["user"],
 ) => Promise<NextResponse>;
 

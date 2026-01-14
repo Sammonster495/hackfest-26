@@ -1,7 +1,8 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,10 +14,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
+import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
 import { apiFetch } from "~/lib/fetcher";
 
 interface DeleteTeamButtonProps {

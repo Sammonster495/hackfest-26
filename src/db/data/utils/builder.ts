@@ -1,11 +1,13 @@
-import db from "~/db";
 import { eq } from "drizzle-orm";
-import type { PgTable } from "drizzle-orm/pg-core";
+import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
+import db from "~/db";
 import { safeDB } from "./wrappers";
 
 export function queryBuilder<
+  // biome-ignore lint/suspicious/noExplicitAny: Drizzle PgTable requires complex TableConfig type
   Table extends PgTable<any> & {
-    id: any;
+    // biome-ignore lint/suspicious/noExplicitAny: Column type requires complex config
+    id: PgColumn<any, any, any>;
   },
   TableName extends keyof typeof db.query,
 >(table: Table, tableName: TableName) {
@@ -45,7 +47,7 @@ export function queryBuilder<
 
     txUpdate: (
       tx: typeof db,
-      id: Table["id"],
+      id: Table["$inferSelect"]["id"],
       data: Partial<Table["$inferInsert"]>,
     ) => tx.update(table).set(data).where(eq(table.id, id)).returning(),
   };

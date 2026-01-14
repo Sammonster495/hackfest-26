@@ -1,0 +1,45 @@
+name: Deploy - Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run database migrations
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          GITHUB_CLIENT_ID: ${{ secrets.STAGING_GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.STAGING_GITHUB_CLIENT_SECRET }}
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET }}
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+        continue-on-error: false
+
+      - name: Trigger Dokploy deployment
+        run: |
+          curl -X POST https://vps.finiteloop.club/api/deploy/C7zWuCDZTZIP929sIovUa \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+        continue-on-error: false

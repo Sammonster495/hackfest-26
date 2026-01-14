@@ -1,17 +1,23 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import { protectedRoute } from "~/auth/route-handlers";
 import * as userData from "~/db/data/users";
-import { parseBody } from "~/lib/validation/parse";
-import { registerUserSchema } from "~/lib/validation/user";
 import { AppError } from "~/lib/errors/app-error";
 import { successResponse } from "~/lib/response/success";
-import { protectedRoute } from "~/auth/route-handlers";
+import { parseBody } from "~/lib/validation/parse";
+import { registerUserSchema } from "~/lib/validation/user";
 
 export const POST = protectedRoute(
   async (request: NextRequest, _context, user) => {
     const body = await request.json();
     const data = parseBody(registerUserSchema, body);
 
-    const existing = await userData.findByEmail(user.email!);
+    if (!user.email) {
+      throw new AppError("EMAIL_REQUIRED", 400, {
+        title: "Email required",
+        description: "Email is required for registration.",
+      });
+    }
+    const existing = await userData.findByEmail(user.email);
     if (!existing) {
       throw new AppError("USER_NOT_FOUND", 404, {
         title: "User not found",
@@ -26,10 +32,14 @@ export const POST = protectedRoute(
       });
     }
 
-    const updatedUser = await userData.updateUser(existing.id, {
+    // Use existing GitHub username if not provided in form data (auto-fetched from GitHub)
+    const updateData = {
       ...data,
+      github: data.github || existing.github || undefined,
       isRegistrationComplete: true,
-    });
+    };
+
+    const updatedUser = await userData.updateUser(existing.id, updateData);
 
     return successResponse(
       { user: updatedUser },

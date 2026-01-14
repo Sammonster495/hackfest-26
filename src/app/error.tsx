@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-export default function Error({
+export default function ErrorPage({
   error,
   reset,
 }: {
@@ -14,6 +14,7 @@ export default function Error({
       <h1>Something went wrong!</h1>
       <p>{error?.message || "An unexpected error occurred"}</p>
       <button
+        type="button"
         onClick={() => reset()}
         style={{
           padding: "0.5rem 1rem",

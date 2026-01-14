@@ -1,5 +1,5 @@
-import { auth } from "~/auth/config";
 import { redirect } from "next/navigation";
+import { auth } from "~/auth/config";
 import { RegisterForm } from "~/components/forms/register-form";
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import * as userData from "~/db/data/users";
 
 export default async function RegisterPage() {
   const session = await auth();
@@ -18,6 +19,8 @@ export default async function RegisterPage() {
   if (session.user.isRegistrationComplete) {
     redirect("/");
   }
+
+  const user = await userData.findByEmail(session.user.email);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black p-4">
@@ -31,7 +34,7 @@ export default async function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RegisterForm />
+          <RegisterForm initialGithubUsername={user?.github || undefined} />
         </CardContent>
       </Card>
     </div>

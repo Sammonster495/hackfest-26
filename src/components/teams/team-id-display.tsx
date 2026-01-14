@@ -1,9 +1,9 @@
 "use client";
 
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "~/components/ui/button";
 
 export function TeamIdDisplay({ teamId }: { teamId: string }) {
   const [copied, setCopied] = useState(false);

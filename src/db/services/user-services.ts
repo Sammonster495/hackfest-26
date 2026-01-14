@@ -1,6 +1,6 @@
 import * as userData from "~/db/data/users";
 import { AppError } from "~/lib/errors/app-error";
-import { UpdateUserInput } from "~/lib/validation/user";
+import type { UpdateUserInput } from "~/lib/validation/user";
 
 export async function getUserProfile(userId: string) {
   const user = await userData.findById(userId);

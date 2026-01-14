@@ -1,9 +1,9 @@
-import { auth } from "~/auth/config";
-import { redirect } from "next/navigation";
-import { Button } from "~/components/ui/button";
-import Link from "next/link";
 import { Home } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "~/auth/config";
 import { TeamForm } from "~/components/teams/team-form";
+import { Button } from "~/components/ui/button";
 import * as userData from "~/db/data/users";
 
 export default async function TeamsPage() {

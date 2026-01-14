@@ -1,4 +1,4 @@
-import { boolean, timestamp, pgTable, text, pgEnum } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { courseEnum, genderEnum, roleEnum, stateEnum } from "../enum";
 import { teams } from "./team";
 
