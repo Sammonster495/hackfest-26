@@ -26,10 +26,14 @@ export const POST = protectedRoute(
       });
     }
 
-    const updatedUser = await userData.updateUser(existing.id, {
+    // Use existing GitHub username if not provided in form data (auto-fetched from GitHub)
+    const updateData = {
       ...data,
+      github: data.github || existing.github || undefined,
       isRegistrationComplete: true,
-    });
+    };
+
+    const updatedUser = await userData.updateUser(existing.id, updateData);
 
     return successResponse(
       { user: updatedUser },

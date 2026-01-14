@@ -11,14 +11,5 @@ const ToasterProvider = dynamic(
 );
 
 export function ToasterWrapper() {
-  try {
-    // Only render on client side
-    if (typeof window === "undefined") {
-      return null;
-    }
-    return <ToasterProvider />;
-  } catch {
-    // Silently fail during build/SSR
-    return null;
-  }
+  return <ToasterProvider />;
 }

@@ -40,8 +40,9 @@ export const registerUserSchema = z.object({
   github: z.preprocess(
     (val) =>
       val === "" || val === null || val === undefined ? undefined : val,
-    z.string().url("Invalid GitHub URL").optional(),
+    z.string().min(1, "GitHub username is required").optional(),
   ),
+  idProof: z.string().url("ID Proof is required").min(1, "ID Proof is required"),
 });
 
 export const updateUserSchema = userSchema
