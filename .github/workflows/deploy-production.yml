@@ -39,7 +39,11 @@ jobs:
 
       - name: Trigger Dokploy deployment
         run: |
-          curl -X POST https://vps.finiteloop.club/api/deploy/D91DzKjj_hGkVkHAymcOZ \
-            -H "Content-Type: application/json" \
-            -w "\nHTTP Status: %{http_code}\n"
+          curl -X POST https://vps.finiteloop.club/api/application.deploy \
+          -H 'accept: application/json' \
+          -H 'Content-Type: application/json' \
+          -H 'x-api-key: ${{ secrets.DOKPLOY_API_KEY }}' \
+          -d '{
+          "applicationId": "in8UxOnCmW2eU6HKY5Zz2"
+          }'
         continue-on-error: false
