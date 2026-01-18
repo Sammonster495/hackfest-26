@@ -146,18 +146,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }>;
         };
         session.dashboardUser = dashboardUser;
-        mixpanel.people.set(dashboardUser.id, {
-          $name: dashboardUser.name,
-          username: dashboardUser.username,
-          roles: dashboardUser.roles.map((role) => role.name),
-          permissions: dashboardUser.roles
-            .flatMap((role) => role.permissions)
-            .map((perm) => perm.key),
-        });
-        mixpanel.track("Dashboard User Login", {
-          distinct_id: dashboardUser.id,
-          time: new Date(),
-        });
+        if (process.env.NODE_ENV === "production") {
+          mixpanel.people.set(dashboardUser.id, {
+            $name: dashboardUser.name,
+            username: dashboardUser.username,
+            roles: dashboardUser.roles.map((role) => role.name),
+            permissions: dashboardUser.roles
+              .flatMap((role) => role.permissions)
+              .map((perm) => perm.key),
+          });
+          mixpanel.track("Dashboard User Login", {
+            distinct_id: dashboardUser.id,
+            time: new Date(),
+          });
+        }
       }
       if (token.id) {
         session.user.id = token.id as string;

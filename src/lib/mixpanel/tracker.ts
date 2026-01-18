@@ -28,6 +28,12 @@ export async function trackAudit({
   previousValue = {},
   newValue = {},
 }: trackingParams) {
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      "[MIXPANEL] Skipped tracking audit event in non-production environment",
+    );
+    return;
+  }
   mixpanel.track(`${entity.type} ${action}`, {
     actor_id: actor.id,
     actor_name: actor.name,
