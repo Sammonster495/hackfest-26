@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "~/auth/dashboard-config";
 import { Button } from "~/components/ui/button";
@@ -9,6 +10,8 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { LiveClock } from "~/components/dashboard/live-clock";
+import { hasPermission } from "~/lib/auth/check-access";
+import { ArrowRightIcon } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -113,6 +116,27 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {await hasPermission(/^team/i) && (
+        <Link href="/dashboard/teams" className="block">
+          <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group">
+            <div className="flex items-center justify-between p-6">
+              <div className="flex-1">
+                <CardTitle className="text-lg group-hover:text-primary transition-colors mb-1">
+                  Manage Teams
+                </CardTitle>
+                <CardDescription>
+                  View and manage all hackathon teams, payments, and attendance
+                </CardDescription>
+              </div>
+              <div className="text-muted-foreground group-hover:text-primary transition-colors">
+                <ArrowRightIcon className="h-4 w-4" />
+              </div>
+            </div>
+          </Card>
+        </Link>
+      )}
     </div>
   );
 }
+

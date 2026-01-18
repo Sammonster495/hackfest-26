@@ -112,6 +112,7 @@ async function seed() {
       key: "participant:view_profile",
       description: "View participant profiles",
     },
+    {key: "team:view_team_details", description: "View team details"},
     // Submissions
     { key: "submission:view", description: "View submissions" },
     { key: "submission:score", description: "Score submissions" },
@@ -173,6 +174,7 @@ async function seed() {
     EVALUATOR: [
       "dashboard:access",
       "team:view_all",
+      "team:view_team_details",
       "submission:view",
       "submission:score",
       "submission:remark",
@@ -181,6 +183,7 @@ async function seed() {
     SELECTOR: [
       "dashboard:access",
       "team:view_all",
+      "team:view_team_details",
       "submission:view",
       "submission:download_ppt",
       "selection:view",
@@ -190,6 +193,7 @@ async function seed() {
     JUDGE: [
       "dashboard:access",
       "team:view_top60",
+      "team:view_team_details",
       "submission:view",
       "submission:score",
       "submission:remark",
@@ -197,6 +201,7 @@ async function seed() {
     FINAL_JUDGE: [
       "dashboard:access",
       "team:view_top60",
+      "team:view_team_details",
       "submission:view",
       "submission:score",
       "submission:remark",
@@ -205,6 +210,7 @@ async function seed() {
     MENTOR: [
       "dashboard:access",
       "team:view_top60",
+      "team:view_team_details",
       "submission:view",
       "submission:remark",
     ],
