@@ -78,6 +78,7 @@ function validateEnv() {
       DATABASE_URL: "",
       GITHUB_CLIENT_ID: "",
       GITHUB_CLIENT_SECRET: "",
+      MIXPANEL_TOKEN: "",
       ...clientParsed.data,
     };
   }
