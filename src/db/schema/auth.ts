@@ -1,20 +1,21 @@
 import type { AdapterAccountType } from "@auth/core/adapters";
 import {
   boolean,
+  index,
   integer,
   pgTable,
   primaryKey,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { users } from "./user";
+import { participants } from "./participant";
 
 export const accounts = pgTable(
   "account",
   {
     userId: text("userId")
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => participants.id, { onDelete: "cascade" }),
     type: text("type").$type<AdapterAccountType>().notNull(),
     provider: text("provider").notNull(),
     providerAccountId: text("providerAccountId").notNull(),
@@ -27,21 +28,28 @@ export const accounts = pgTable(
     session_state: text("session_state"),
   },
   (account) => [
-    {
-      compoundKey: primaryKey({
-        columns: [account.provider, account.providerAccountId],
-      }),
-    },
+    primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+    index("account_user_id_idx").on(account.userId),
+    index("account_provider_idx").on(account.provider),
   ],
 );
 
-export const sessions = pgTable("session", {
-  sessionToken: text("sessionToken").primaryKey(),
-  userId: text("userId")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
-});
+export const sessions = pgTable(
+  "session",
+  {
+    sessionToken: text("sessionToken").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => participants.id, { onDelete: "cascade" }),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (table) => [
+    index("session_user_id_idx").on(table.userId),
+    index("session_expires_idx").on(table.expires),
+  ],
+);
 
 export const verificationTokens = pgTable(
   "verificationToken",
@@ -65,7 +73,7 @@ export const authenticators = pgTable(
     credentialID: text("credentialID").notNull().unique(),
     userId: text("userId")
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => participants.id, { onDelete: "cascade" }),
     providerAccountId: text("providerAccountId").notNull(),
     credentialPublicKey: text("credentialPublicKey").notNull(),
     counter: integer("counter").notNull(),
@@ -74,10 +82,9 @@ export const authenticators = pgTable(
     transports: text("transports"),
   },
   (authenticator) => [
-    {
-      compositePK: primaryKey({
-        columns: [authenticator.userId, authenticator.credentialID],
-      }),
-    },
+    primaryKey({
+      columns: [authenticator.userId, authenticator.credentialID],
+    }),
+    index("authenticator_user_id_idx").on(authenticator.userId),
   ],
 );

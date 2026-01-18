@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "~/auth/config";
 import { TeamForm } from "~/components/teams/team-form";
 import { Button } from "~/components/ui/button";
-import * as userData from "~/db/data/users";
+import * as userData from "~/db/data/participant";
 
 export default async function TeamsPage() {
   const session = await auth();

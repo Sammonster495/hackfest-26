@@ -48,13 +48,6 @@ export const genderEnum = pgEnum("gender", [
   "Prefer Not To Say",
 ]);
 
-export const roleEnum = pgEnum("role", [
-  "Admin",
-  "User",
-  "Participant",
-  "Judge",
-]);
-
 export const teamStatusEnum = pgEnum("team_status", [
   "Not Selected",
   "Under Review",

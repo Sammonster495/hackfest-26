@@ -14,8 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
-import * as userData from "~/db/data/users";
 
 export default async function TeamDetailsPage({
   params,
@@ -76,14 +76,6 @@ export default async function TeamDetailsPage({
                 </span>{" "}
                 <span>{team.isCompleted ? "Completed" : "Active"}</span>
               </div>
-              {team.teamStatus && (
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Team Status:
-                  </span>{" "}
-                  <span>{team.teamStatus}</span>
-                </div>
-              )}
               {team.paymentStatus && (
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">

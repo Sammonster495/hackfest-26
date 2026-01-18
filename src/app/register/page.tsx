@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import * as userData from "~/db/data/users";
+import * as userData from "~/db/data/participant";
 
 export default async function RegisterPage() {
   const session = await auth();

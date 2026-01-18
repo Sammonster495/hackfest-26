@@ -34,30 +34,6 @@ export function protectedRoute(handler: RouteHandler) {
   };
 }
 
-export function roleRoute(
-  requiredRoles: string | string[],
-  handler: RouteHandler,
-) {
-  const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-
-  return protectedRoute(async (request, context, user) => {
-    if (!roles.includes(user.role)) {
-      return errorResponse(
-        new AppError("FORBIDDEN", 403, {
-          title: "Access denied",
-          description: "You don't have permission to access this resource.",
-        }),
-      );
-    }
-
-    try {
-      return await handler(request, context, user);
-    } catch (err) {
-      return errorResponse(err);
-    }
-  });
-}
-
 export function registrationRequiredRoute(handler: RouteHandler) {
   return protectedRoute(async (request, context, user) => {
     if (!user.isRegistrationComplete) {

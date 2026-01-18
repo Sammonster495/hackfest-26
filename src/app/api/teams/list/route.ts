@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { protectedRoute } from "~/auth/route-handlers";
+import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
-import * as userData from "~/db/data/users";
 import { successResponse } from "~/lib/response/success";
 
 export const GET = protectedRoute(

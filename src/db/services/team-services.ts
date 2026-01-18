@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import db from "~/db";
+import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
-import * as userData from "~/db/data/users";
-import { teams, users } from "~/db/schema";
+import { participants, teams } from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
 
 export async function createTeam(userId: string, name: string) {
@@ -25,12 +25,12 @@ export async function createTeam(userId: string, name: string) {
     const [team] = await tx.insert(teams).values({ name }).returning();
 
     await tx
-      .update(users)
+      .update(participants)
       .set({
         teamId: team.id,
         isLeader: true,
       })
-      .where(eq(users.id, userId));
+      .where(eq(participants.id, userId));
 
     return team;
   });
@@ -79,11 +79,11 @@ export async function joinTeam(userId: string, teamId: string) {
 
   return db.transaction(async (tx) => {
     await tx
-      .update(users)
+      .update(participants)
       .set({
         teamId: teamId,
       })
-      .where(eq(users.id, userId));
+      .where(eq(participants.id, userId));
 
     return team;
   });
@@ -118,12 +118,12 @@ export async function leaveTeam(userId: string) {
 
   return db.transaction(async (tx) => {
     await tx
-      .update(users)
+      .update(participants)
       .set({
         teamId: null,
         isLeader: false,
       })
-      .where(eq(users.id, userId));
+      .where(eq(participants.id, userId));
 
     return team;
   });
@@ -212,12 +212,12 @@ export async function deleteTeam(userId: string, teamId: string) {
 
   return db.transaction(async (tx) => {
     await tx
-      .update(users)
+      .update(participants)
       .set({
         teamId: null,
         isLeader: false,
       })
-      .where(eq(users.teamId, teamId));
+      .where(eq(participants.teamId, teamId));
 
     await tx.delete(teams).where(eq(teams.id, teamId));
 

@@ -1,15 +1,15 @@
 import type { NextRequest } from "next/server";
 import { protectedRoute } from "~/auth/route-handlers";
-import * as userData from "~/db/data/users";
+import * as userData from "~/db/data/participant";
 import { AppError } from "~/lib/errors/app-error";
 import { successResponse } from "~/lib/response/success";
 import { parseBody } from "~/lib/validation/parse";
-import { registerUserSchema } from "~/lib/validation/user";
+import { registerParticipantSchema } from "~/lib/validation/participant";
 
 export const POST = protectedRoute(
   async (request: NextRequest, _context, user) => {
     const body = await request.json();
-    const data = parseBody(registerUserSchema, body);
+    const data = parseBody(registerParticipantSchema, body);
 
     if (!user.email) {
       throw new AppError("EMAIL_REQUIRED", 400, {

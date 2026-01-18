@@ -1,6 +1,6 @@
-import * as userData from "~/db/data/users";
+import * as userData from "~/db/data/participant";
 import { AppError } from "~/lib/errors/app-error";
-import type { UpdateUserInput } from "~/lib/validation/user";
+import type { UpdateParticipantInput } from "~/lib/validation/participant";
 
 export async function getUserProfile(userId: string) {
   const user = await userData.findById(userId);
@@ -18,7 +18,10 @@ export async function listUsers() {
   return userData.listUsers();
 }
 
-export async function updateUserProfile(userId: string, data: UpdateUserInput) {
+export async function updateUserProfile(
+  userId: string,
+  data: UpdateParticipantInput,
+) {
   const user = await userData.findById(userId);
   if (!user) throw new AppError("USER_NOT_FOUND", 404);
 

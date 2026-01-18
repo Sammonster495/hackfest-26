@@ -4,7 +4,7 @@ import { auth } from "~/auth/config";
 import SignIn from "~/components/auth/authButtons/signIn";
 import SignOut from "~/components/auth/authButtons/signOut";
 import { Button } from "~/components/ui/button";
-import * as userData from "~/db/data/users";
+import * as userData from "~/db/data/participant";
 
 export default async function Home() {
   const session = await auth();

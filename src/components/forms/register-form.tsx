@@ -28,9 +28,9 @@ import {
 import { courseEnum, genderEnum, stateEnum } from "~/db/enum";
 import { apiFetch } from "~/lib/fetcher";
 import {
-  type RegisterUserInput,
-  registerUserSchema,
-} from "~/lib/validation/user";
+  type RegisterParticipantInput,
+  registerParticipantSchema,
+} from "~/lib/validation/participant";
 
 interface College {
   id: string;
@@ -47,9 +47,9 @@ export function RegisterForm({ initialGithubUsername }: RegisterFormProps) {
   const [colleges, setColleges] = useState<College[]>([]);
   const [loadingColleges, setLoadingColleges] = useState(true);
 
-  const form = useForm<RegisterUserInput>({
+  const form = useForm<RegisterParticipantInput>({
     // @ts-expect-error - Type conflict between react-hook-form type definitions
-    resolver: zodResolver(registerUserSchema),
+    resolver: zodResolver(registerParticipantSchema),
     defaultValues: {
       name: "",
       phone: "",
@@ -83,7 +83,7 @@ export function RegisterForm({ initialGithubUsername }: RegisterFormProps) {
     loadColleges();
   }, []);
 
-  async function onSubmit(data: RegisterUserInput) {
+  async function onSubmit(data: RegisterParticipantInput) {
     const submitData = {
       name: data.name.trim(),
       phone: data.phone.trim(),

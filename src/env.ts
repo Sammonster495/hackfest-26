@@ -42,7 +42,9 @@ function validateEnv() {
     console.error(errorMessage);
 
     if (typeof process !== "undefined" && process.exit) {
-      process.exit(1);
+      try {
+        process.exit(1);
+      } catch {}
     }
 
     throw new Error(errorMessage);
@@ -60,7 +62,9 @@ function validateEnv() {
     console.error(errorMessage);
 
     if (typeof process !== "undefined" && process.exit) {
-      process.exit(1);
+      try {
+        process.exit(1);
+      } catch {}
     }
 
     throw new Error(errorMessage);

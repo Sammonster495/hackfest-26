@@ -38,7 +38,7 @@ export async function createTeam(data: unknown) {
 }
 
 export async function listMembers(teamId: string) {
-  return query.users.findMany({
+  return query.participants.findMany({
     where: (u, { eq }) => eq(u.teamId, teamId),
   });
 }

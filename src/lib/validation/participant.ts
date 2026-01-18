@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { courseEnum, genderEnum, roleEnum, stateEnum } from "~/db/enum";
+import { courseEnum, genderEnum, stateEnum } from "~/db/enum";
 
-export const userSchema = z.object({
+export const participantSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
@@ -12,7 +12,6 @@ export const userSchema = z.object({
   course: z.enum(courseEnum.enumValues).nullable(),
   gender: z.enum(genderEnum.enumValues).nullable(),
   isLeader: z.boolean().default(false),
-  role: z.enum(roleEnum.enumValues).default("User"),
   attended: z.boolean().default(false),
   isRegistrationComplete: z.boolean().default(false),
   idProof: z.string().nullable(),
@@ -24,7 +23,7 @@ export const userSchema = z.object({
   updatedAt: z.date().default(() => new Date()),
 });
 
-export const registerUserSchema = z.object({
+export const registerParticipantSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phone: z.string().min(1, "Phone number is required"),
   state: z.enum(stateEnum.enumValues, {
@@ -42,13 +41,10 @@ export const registerUserSchema = z.object({
       val === "" || val === null || val === undefined ? undefined : val,
     z.string().min(1, "GitHub username is required").optional(),
   ),
-  idProof: z
-    .string()
-    .url("ID Proof is required")
-    .min(1, "ID Proof is required"),
+  idProof: z.url({ message: "ID Proof must be a valid URL" }),
 });
 
-export const updateUserSchema = userSchema
+export const updateParticipantSchema = participantSchema
   .omit({
     id: true,
     createdAt: true,
@@ -57,5 +53,7 @@ export const updateUserSchema = userSchema
   })
   .partial();
 
-export type RegisterUserInput = z.infer<typeof registerUserSchema>;
-export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type RegisterParticipantInput = z.infer<
+  typeof registerParticipantSchema
+>;
+export type UpdateParticipantInput = z.infer<typeof updateParticipantSchema>;

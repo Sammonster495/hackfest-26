@@ -29,30 +29,3 @@ export function protectedRoute(
     }
   };
 }
-
-export function roleRoute(
-  requiredRoles: string | string[],
-  handler: (
-    req: NextApiRequest,
-    user: Session["user"],
-  ) => Promise<NextApiResponse>,
-) {
-  const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-
-  return protectedRoute(async (req, user) => {
-    if (!roles.includes(user.role)) {
-      return errorResponse(
-        new AppError("FORBIDDEN", 403, {
-          title: "Access denied",
-          description: "You don't have permission to access this.",
-        }),
-      ) as unknown as NextApiResponse;
-    }
-
-    try {
-      return await handler(req, user);
-    } catch (err) {
-      return errorResponse(err) as unknown as NextApiResponse;
-    }
-  });
-}

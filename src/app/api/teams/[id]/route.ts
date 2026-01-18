@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { registrationRequiredRoute } from "~/auth/route-handlers";
+import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
-import * as userData from "~/db/data/users";
 import { AppError } from "~/lib/errors/app-error";
 import { successResponse } from "~/lib/response/success";
 
