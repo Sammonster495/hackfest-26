@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
-  adminProtected,
   permissionProtected,
   type RouteContext,
 } from "~/auth/routes-wrapper";
@@ -31,7 +30,8 @@ export const GET = permissionProtected<TeamIdParams>(
   },
 );
 
-export const PATCH = adminProtected<TeamIdParams>(
+export const PATCH = permissionProtected<TeamIdParams>(
+  ["team:mark_attendance"],
   async (request: Request, { params }: RouteContext<TeamIdParams>) => {
     const { teamId } = await params;
     const body = await request.json();
@@ -57,3 +57,4 @@ export const PATCH = adminProtected<TeamIdParams>(
     return NextResponse.json(updated);
   },
 );
+

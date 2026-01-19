@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { UserPermissions } from "~/app/dashboard/teams/page";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,22 +43,35 @@ type TeamWithMembers = {
 
 type TeamDetailDialogProps = {
   teamId: string | null;
+  teamName: string | null;
+  teamAttended: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
+  permissions: UserPermissions;
 };
 
 export function TeamDetailDialog({
   teamId,
+  teamName,
+  teamAttended,
   open,
   onOpenChange,
   onUpdate,
+  permissions,
 }: TeamDetailDialogProps) {
   const [team, setTeam] = useState<TeamWithMembers | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [localAttended, setLocalAttended] = useState(teamAttended);
+
+  useEffect(() => {
+    setLocalAttended(teamAttended);
+  }, [teamAttended]);
 
   const fetchTeam = useCallback(async () => {
     if (!teamId) return;
+
+    if (!permissions.canViewTeamDetails && !permissions.isAdmin) return;
 
     setIsLoading(true);
     try {
@@ -65,11 +79,12 @@ export function TeamDetailDialog({
       if (res.ok) {
         const data = await res.json();
         setTeam(data);
+        setLocalAttended(data.attended);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [teamId]);
+  }, [teamId, permissions.canViewTeamDetails, permissions.isAdmin]);
 
   useEffect(() => {
     if (open && teamId) {
@@ -78,21 +93,25 @@ export function TeamDetailDialog({
   }, [open, teamId, fetchTeam]);
 
   const handleToggleAttended = useCallback(async () => {
-    if (!team) return;
+    if (!teamId) return;
 
     setIsLoading(true);
     try {
-      await fetch(`/api/dashboard/teams/${team.id}`, {
+      const newAttended = team ? !team.attended : !localAttended;
+      await fetch(`/api/dashboard/teams/${teamId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ attended: !team.attended }),
+        body: JSON.stringify({ attended: newAttended }),
       });
-      await fetchTeam();
+      setLocalAttended(newAttended);
+      if (team) {
+        setTeam({ ...team, attended: newAttended });
+      }
       onUpdate();
     } finally {
       setIsLoading(false);
     }
-  }, [team, fetchTeam, onUpdate]);
+  }, [teamId, team, localAttended, onUpdate]);
 
   const handleToggleCompleted = useCallback(async () => {
     if (!team) return;
@@ -148,6 +167,56 @@ export function TeamDetailDialog({
     },
     [team, fetchTeam, onUpdate],
   );
+
+  if (!permissions.canViewTeamDetails && !permissions.isAdmin) {
+    if (permissions.canMarkAttendance) {
+      return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">{teamName}</DialogTitle>
+              <DialogDescription>Mark team attendance</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Attendance Status
+                </span>
+                <Badge variant={localAttended ? "success" : "outline"}>
+                  {localAttended ? "Attended" : "Not Attended"}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleToggleAttended}
+                disabled={isLoading}
+              >
+                {localAttended ? "Mark Not Attended" : "Mark Attended"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Team Details</DialogTitle>
+            <DialogDescription>
+              You don&apos;t have permission to view team details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center h-32">
+            <span className="text-destructive font-medium">
+              Insufficient permissions
+            </span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (!team) {
     return (
@@ -214,24 +283,30 @@ export function TeamDetailDialog({
         </div>
 
         {/* Team Actions */}
-        <div className="flex gap-2 py-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleAttended}
-            disabled={isLoading}
-          >
-            {team.attended ? "Mark Not Attended" : "Mark Attended"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleCompleted}
-            disabled={isLoading}
-          >
-            {team.isCompleted ? "Mark Incomplete" : "Mark Complete"}
-          </Button>
-        </div>
+        {(permissions.canMarkAttendance || permissions.isAdmin) && (
+          <div className="flex gap-2 py-2">
+            {(permissions.canMarkAttendance || permissions.isAdmin) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToggleAttended}
+                disabled={isLoading}
+              >
+                {team.attended ? "Mark Not Attended" : "Mark Attended"}
+              </Button>
+            )}
+            {permissions.isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToggleCompleted}
+                disabled={isLoading}
+              >
+                {team.isCompleted ? "Mark Incomplete" : "Mark Complete"}
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Members List */}
         <div className="space-y-3 pt-4 border-t">
@@ -265,47 +340,49 @@ export function TeamDetailDialog({
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {!member.isLeader && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleMakeLeader(member)}
-                        disabled={isLoading}
-                      >
-                        Make Leader
-                      </Button>
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
+                  {permissions.isAdmin && (
+                    <div className="flex gap-2">
+                      {!member.isLeader && (
                         <Button
-                          variant="destructive"
+                          variant="outline"
                           size="sm"
+                          onClick={() => handleMakeLeader(member)}
                           disabled={isLoading}
                         >
-                          Remove
+                          Make Leader
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove Member?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will remove {member.name || "this member"} from
-                            the team. They can rejoin if the team is not
-                            completed.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleRemoveMember(member)}
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={isLoading}
                           >
                             Remove
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Member?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will remove {member.name || "this member"} from
+                              the team. They can rejoin if the team is not
+                              completed.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleRemoveMember(member)}
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

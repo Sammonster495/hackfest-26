@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { UserPermissions } from "~/app/dashboard/teams/page";
 import { Badge } from "~/components/ui/badge";
 import {
   Table,
@@ -36,6 +37,7 @@ type TeamsData = {
 
 type TeamsTableProps = {
   initialData: TeamsData;
+  permissions: UserPermissions;
 };
 
 const columnHelper = createColumnHelper<Team>();
@@ -49,11 +51,13 @@ async function fetchTeams(cursor?: string): Promise<TeamsData> {
   return res.json();
 }
 
-export function TeamsTable({ initialData }: TeamsTableProps) {
+export function TeamsTable({ initialData, permissions }: TeamsTableProps) {
   const [data, setData] = useState<Team[]>(initialData.teams);
   const [cursor, setCursor] = useState<string | null>(initialData.nextCursor);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [selectedTeamName, setSelectedTeamName] = useState<string | null>(null);
+  const [selectedTeamAttended, setSelectedTeamAttended] = useState<boolean>(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -158,14 +162,18 @@ export function TeamsTable({ initialData }: TeamsTableProps) {
     return () => observer.disconnect();
   }, [cursor, isLoading, loadMore]);
 
-  const handleRowClick = useCallback((teamId: string) => {
-    setSelectedTeamId(teamId);
+  const handleRowClick = useCallback((team: Team) => {
+    setSelectedTeamId(team.id);
+    setSelectedTeamName(team.name);
+    setSelectedTeamAttended(team.attended);
     setDialogOpen(true);
   }, []);
 
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
     setSelectedTeamId(null);
+    setSelectedTeamName(null);
+    setSelectedTeamAttended(false);
   }, []);
 
   const refreshData = useCallback(async () => {
@@ -174,10 +182,17 @@ export function TeamsTable({ initialData }: TeamsTableProps) {
       const result = await fetchTeams();
       setData(result.teams);
       setCursor(result.nextCursor);
+
+      if (selectedTeamId) {
+        const updatedTeam = result.teams.find((t) => t.id === selectedTeamId);
+        if (updatedTeam) {
+          setSelectedTeamAttended(updatedTeam.attended);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedTeamId]);
 
   return (
     <>
@@ -195,9 +210,9 @@ export function TeamsTable({ initialData }: TeamsTableProps) {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -214,7 +229,7 @@ export function TeamsTable({ initialData }: TeamsTableProps) {
                       key={row.id}
                       data-index={virtualRow.index}
                       className="cursor-pointer"
-                      onClick={() => handleRowClick(row.original.id)}
+                      onClick={() => handleRowClick(row.original)}
                       style={{
                         height: `${virtualRow.size}px`,
                       }}
@@ -257,11 +272,14 @@ export function TeamsTable({ initialData }: TeamsTableProps) {
 
       <TeamDetailDialog
         teamId={selectedTeamId}
+        teamName={selectedTeamName}
+        teamAttended={selectedTeamAttended}
         open={dialogOpen}
         onOpenChange={(open) => {
           if (!open) handleDialogClose();
         }}
         onUpdate={refreshData}
+        permissions={permissions}
       />
     </>
   );

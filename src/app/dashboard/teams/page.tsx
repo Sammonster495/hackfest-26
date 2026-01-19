@@ -4,7 +4,7 @@ import { TeamsTable } from "~/components/dashboard/teams-table";
 import db from "~/db";
 import * as teamData from "~/db/data/teams";
 import { teams } from "~/db/schema";
-import { isAdmin } from "~/lib/auth/check-access";
+import { hasPermission, isAdmin } from "~/lib/auth/check-access";
 
 async function getInitialTeams() {
   const allTeams = await db
@@ -37,6 +37,39 @@ async function getInitialTeams() {
   };
 }
 
+export type UserPermissions = {
+  isAdmin: boolean;
+  canMarkAttendance: boolean;
+  canViewTeams: boolean;
+  canViewTeamDetails: boolean;
+};
+
+async function getUserPermissions(): Promise<UserPermissions> {
+  const session = await auth();
+  if (!session?.dashboardUser) {
+    return {
+      isAdmin: false,
+      canMarkAttendance: false,
+      canViewTeams: false,
+      canViewTeamDetails: false,
+    };
+  }
+
+  const userIsAdmin = isAdmin(session.dashboardUser);
+  const [canMarkAttendance, canViewTeams, canViewTeamDetails] = await Promise.all([
+    hasPermission("team:mark_attendance"),
+    hasPermission(/^team:/),
+    hasPermission("team:view_team_details"),
+  ]);
+
+  return {
+    isAdmin: userIsAdmin,
+    canMarkAttendance,
+    canViewTeams,
+    canViewTeamDetails,
+  };
+}
+
 export default async function TeamsPage() {
   const session = await auth();
 
@@ -44,7 +77,9 @@ export default async function TeamsPage() {
     redirect("/dashboard/login");
   }
 
-  if (!isAdmin(session.dashboardUser)) {
+  const permissions = await getUserPermissions();
+
+  if (!permissions.canViewTeams && !permissions.isAdmin) {
     redirect("/dashboard");
   }
 
@@ -61,7 +96,8 @@ export default async function TeamsPage() {
         </div>
       </div>
 
-      <TeamsTable initialData={initialData} />
+      <TeamsTable initialData={initialData} permissions={permissions} />
     </div>
   );
 }
+

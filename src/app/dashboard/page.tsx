@@ -103,7 +103,7 @@ export default async function DashboardPage() {
                       key={permission.id}
                       className="rounded-md bg-muted px-3 py-2 text-sm"
                     >
-                      <span className="font-medium">{permission.key}</span>
+                      <span className="font-medium">{permission.key.replaceAll("_", " ")}</span>
                     </div>
                   )),
                 )}
