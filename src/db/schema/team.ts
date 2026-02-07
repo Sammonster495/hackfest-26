@@ -1,5 +1,5 @@
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import { paymentStatusEnum } from "../enum";
+import { paymentStatusEnum, teamProgressEnum } from "../enum";
 
 export const teams = pgTable(
   "team",
@@ -9,6 +9,7 @@ export const teams = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull().unique(),
     paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
+    teamProgress: teamProgressEnum("team_progress").default("NOT_SELECTED"),
     attended: boolean("attended").notNull().default(false),
     isCompleted: boolean("is_completed").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),

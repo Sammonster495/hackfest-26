@@ -57,6 +57,13 @@
       "when": 1770458889712,
       "tag": "0007_added ideaSubmission and tracks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1770459243923,
+      "tag": "0008_added teamProgress enum",
+      "breakpoints": true
     }
   ]
 }

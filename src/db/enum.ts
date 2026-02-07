@@ -63,3 +63,14 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "Paid",
   "Refunded",
 ]);
+
+export const teamProgressEnum = pgEnum("team_progress", [
+  "NOT_SELECTED",
+  "SEMI_SELECTED",
+  "SELECTED",
+  "TOP15",
+  "WINNER",
+  "RUNNER",
+  "SECOND_RUNNER",
+  "TRACK"
+]);

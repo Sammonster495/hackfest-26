@@ -33,7 +33,7 @@ export async function getDashboardStats() {
         const confirmedTeams = confirmedTeamsResult?.count ?? 0;
 
         const [ideaSubmissionsResult] = await db.select({ count: count() }).from(ideaSubmission);
-        const ideaSubmissions = ideaSubmissionsResult.count ?? 0;
+        const ideaSubmissions = ideaSubmissionsResult?.count ?? 0;
 
         return {
             totalTeams,
@@ -66,5 +66,25 @@ export async function getStatesStats() {
     } catch (error) {
         console.log(error);
         throw new AppError("STATES_STATS_FETCH_FAILED", 500);
+    }
+}
+
+export async function getCollegeRankingsBySelections() {
+    try {
+        const collegeRankingsResult = await db.select({
+            college: colleges.name,
+            totalTeams: count(teams.id),
+            totalParticipants: count(participants.id),
+        }).from(colleges)
+            .innerJoin(participants, eq(colleges.id, participants.collegeId))
+            .innerJoin(teams, eq(participants.teamId, teams.id))
+            .where(eq(teams.teamProgress, "SELECTED"))
+            .groupBy(colleges.name)
+            .orderBy(desc(count(teams.id)));
+
+        return collegeRankingsResult;
+    } catch (error) {
+        console.log(error);
+        throw new AppError("COLLEGE_RANKINGS_FETCH_FAILED", 500);
     }
 }

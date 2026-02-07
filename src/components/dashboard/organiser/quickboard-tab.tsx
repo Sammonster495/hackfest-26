@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Users, Building2, MapPin, CheckCircle2 } from "lucide-react";
-import { getDashboardStats, getStatesStats } from "~/db/services/dashboard-stats";
+import { getCollegeRankingsBySelections, getDashboardStats, getStatesStats } from "~/db/services/dashboard-stats";
 
 type StatCardProps = {
     title: string;
@@ -29,6 +29,7 @@ function StatCard({ title, value, description, icon }: StatCardProps) {
 export async function QuickboardTab() {
     const quickStats = await getDashboardStats();
     const statesStats = await getStatesStats();
+    const collegeRankings = await getCollegeRankingsBySelections();
 
     return (
         <div className="space-y-6">
@@ -124,7 +125,34 @@ export async function QuickboardTab() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    Coming Soon sir
+                    {collegeRankings.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b">
+                                        <th className="text-left py-2 px-3 font-medium">College</th>
+                                        <th className="text-right py-2 px-3 font-medium">Teams</th>
+                                        <th className="text-right py-2 px-3 font-medium">Participants</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {collegeRankings.map((college, index) => (
+                                        <tr key={index} className="border-b last:border-0">
+                                            <td className="py-2 px-3">{college.college}</td>
+                                            <td className="py-2 px-3 text-right">{college.totalTeams}</td>
+                                            <td className="py-2 px-3 text-right">{college.totalParticipants}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center p-8 border border-dashed rounded-lg">
+                            <p className="text-sm text-muted-foreground">
+                                No college ranking data available yet
+                            </p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
