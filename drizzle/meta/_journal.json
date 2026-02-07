@@ -64,6 +64,13 @@
       "when": 1770459243923,
       "tag": "0008_added teamProgress enum",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1770473486378,
+      "tag": "0009_added payment and modified team",
+      "breakpoints": true
     }
   ]
 }

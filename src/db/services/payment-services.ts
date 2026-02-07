@@ -59,7 +59,7 @@ export async function createOrder(data: CreateOrderInput) {
         throw new AppError("PAYMENT_ALREADY_COMPLETED", 400);
     }
 
-    const amount: number = envAmount ?? 350;
+    const amount: number = Number(envAmount ?? 350);
 
     const TO_BE_PAID = team.users.length * amount;
     const CURRENCY = "INR";
