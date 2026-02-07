@@ -6,11 +6,16 @@ const server = z.object({
   GITHUB_CLIENT_ID: z.string().min(1),
   GITHUB_CLIENT_SECRET: z.string().min(1),
   MIXPANEL_TOKEN: z.string().min(1),
+  HACKFEST_AMOUNT: z.string().min(1),
+  RAZORPAY_SECRET: z.string().min(1),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1),
+  RAZORPAY_API_KEY_ID: z.string().min(1),
 });
 
 const client = z.object({
   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: z.string().min(1),
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  NEXT_PUBLIC_RAZORPAY_API_KEY_ID: z.string().min(1),
 });
 
 const processEnv = {
@@ -22,6 +27,11 @@ const processEnv = {
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
     process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   MIXPANEL_TOKEN: process.env.MIXPANEL_TOKEN,
+  HACKFEST_AMOUNT: process.env.HACKFEST_AMOUNT,
+  RAZORPAY_SECRET: process.env.RAZORPAY_SECRET,
+  RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
+  RAZORPAY_API_KEY_ID: process.env.RAZORPAY_API_KEY_ID,
+  NEXT_PUBLIC_RAZORPAY_API_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_API_KEY_ID,
 };
 
 function validateEnv() {
@@ -79,6 +89,10 @@ function validateEnv() {
       GITHUB_CLIENT_ID: "",
       GITHUB_CLIENT_SECRET: "",
       MIXPANEL_TOKEN: "",
+      HACKFEST_AMOUNT: 350,
+      RAZORPAY_SECRET: "",
+      RAZORPAY_WEBHOOK_SECRET: "",
+      RAZORPAY_API_KEY_ID: "",
       ...clientParsed.data,
     };
   }

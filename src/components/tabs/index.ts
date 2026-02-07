@@ -1,0 +1,9 @@
+export { AllocationsTab } from "./Allocations";
+export { AttendanceTab } from "./Attendance";
+export { MealsTab } from "./Meals";
+export { ResultsTab } from "./Results";
+export { RolesTab } from "./Roles";
+export { SelectionsTab } from "./SelectionsTab";
+export { SettingsTab } from "./Settings";
+export { SubmissionsTab } from "./SubmissionsTab";
+export { TeamsTab } from "./TeamsTab";

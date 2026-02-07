@@ -42,16 +42,15 @@ export async function requireRole(roleName: string) {
   return session.dashboardUser;
 }
 
-export async function hasPermission(
+export function hasPermission(
+  dashboardUser: {
+    roles: Array<{
+      name: string;
+      permissions: Array<{ key: string }>;
+    }>;
+  },
   permissionKey: string | RegExp,
-): Promise<boolean> {
-  const session = await auth();
-
-  if (!session?.dashboardUser) {
-    return false;
-  }
-
-  const { dashboardUser } = session;
+): boolean {
   if (isAdmin(dashboardUser)) {
     return true;
   }

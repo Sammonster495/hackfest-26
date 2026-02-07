@@ -31,10 +31,10 @@ export async function deleteTeam(id: string) {
   return query.teams.delete(id);
 }
 
-export async function createTeam(data: unknown) {
+export async function createTeam(data: unknown, leaderId: string) {
   const payload = parseBody(createTeamSchema, data);
 
-  return query.teams.insert(payload);
+  return query.teams.insert({ ...payload, leaderId });
 }
 
 export async function listMembers(teamId: string) {

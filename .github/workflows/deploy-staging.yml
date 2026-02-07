@@ -107,6 +107,11 @@ jobs:
           GITHUB_CLIENT_SECRET: ${{ secrets.STAGING_GITHUB_CLIENT_SECRET }}
           NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET }}
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+          HACKFEST_AMOUNT: ${{ secrets.HACKFEST_AMOUNT }}
+          RAZORPAY_SECRET: ${{ secrets.RAZORPAY_SECRET }}
+          RAZORPAY_API_KEY_ID: ${{ secrets.RAZORPAY_API_KEY_ID }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          NEXT_PUBLIC_RAZORPAY_API_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_API_KEY_ID }}
         continue-on-error: false
 
       - name: Run database seed
@@ -119,6 +124,11 @@ jobs:
           GITHUB_CLIENT_SECRET: ${{ secrets.STAGING_GITHUB_CLIENT_SECRET }}
           NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET }}
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+          HACKFEST_AMOUNT: ${{ secrets.HACKFEST_AMOUNT }}
+          RAZORPAY_SECRET: ${{ secrets.RAZORPAY_SECRET }}
+          RAZORPAY_API_KEY_ID: ${{ secrets.RAZORPAY_API_KEY_ID }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          NEXT_PUBLIC_RAZORPAY_API_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_API_KEY_ID }}
         continue-on-error: false
 
       - name: Trigger Dokploy deployment
@@ -126,8 +136,8 @@ jobs:
           curl -X POST https://vps.finiteloop.club/api/application.deploy \
           -H 'accept: application/json' \
           -H 'Content-Type: application/json' \
-          -H 'x-api-key: ${{ secrets.DOKPLOY_API_KEY }}' \
+          -H 'x-api-key: ${{ secrets.COOLIFY_API_KEY }}' \
           -d '{
-          "applicationId": "Pu0vwJMljZBTFep5PM1Nr"
+          "applicationId": "Pu0vwJMljZBTFep5PM1Nr" 
           }'
         continue-on-error: false

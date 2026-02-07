@@ -4,6 +4,8 @@ import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
 import { successResponse } from "~/lib/response/success";
 
+// Guess that this route is not needed
+
 export const GET = protectedRoute(
   async (_request: NextRequest, _context, user) => {
     const dbUser = await userData.findById(user.id);

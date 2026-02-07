@@ -34,4 +34,8 @@ jobs:
           # Client env vars are needed at build time for Next.js
           NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'placeholder' }}
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'placeholder' }}
-
+          HACKFEST_AMOUNT: ${{ secrets.HACKFEST_AMOUNT }}
+          RAZORPAY_SECRET: ${{ secrets.RAZORPAY_SECRET }}
+          RAZORPAY_API_KEY_ID: ${{ secrets.RAZORPAY_API_KEY_ID }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          NEXT_PUBLIC_RAZORPAY_API_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_API_KEY_ID }}

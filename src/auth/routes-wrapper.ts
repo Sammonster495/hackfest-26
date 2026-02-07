@@ -97,9 +97,9 @@ export function permissionProtected<T = Record<string, string>>(
     }
 
     // Check if user has at least one of the required permissions
-    const hasAnyPermission = await Promise.all(
-      permissions.map((perm) => hasPermission(perm)),
-    ).then((results) => results.some((result) => result));
+    const hasAnyPermission = permissions.some((perm) =>
+      hasPermission(session.dashboardUser, perm),
+    );
 
     if (!hasAnyPermission) {
       return NextResponse.json(

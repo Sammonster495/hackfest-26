@@ -1,7 +1,6 @@
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "~/auth/dashboard-config";
+import { DashboardContent } from "~/components/dashboard/dashboard-content";
 import { LiveClock } from "~/components/dashboard/live-clock";
 import { Button } from "~/components/ui/button";
 import {
@@ -11,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { hasPermission } from "~/lib/auth/check-access";
+import { hasPermission, isAdmin } from "~/lib/auth/check-access";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -21,6 +20,52 @@ export default async function DashboardPage() {
   }
 
   const { dashboardUser } = session;
+  const userIsAdmin = isAdmin(dashboardUser);
+
+  const permissions = {
+    isAdmin: userIsAdmin,
+    // Settings & Management
+    canManageSettings:
+      userIsAdmin || hasPermission(dashboardUser, "settings:manage"),
+    canManageRoles: userIsAdmin || hasPermission(dashboardUser, "roles:manage"),
+    // Team visibility
+    canViewAllTeams:
+      userIsAdmin || hasPermission(dashboardUser, "team:view_all"),
+    canViewTop60:
+      userIsAdmin || hasPermission(dashboardUser, "team:view_top60"),
+    // Submissions
+    canScoreSubmissions:
+      userIsAdmin || hasPermission(dashboardUser, "submission:score"),
+    canRemarkSubmissions:
+      userIsAdmin || hasPermission(dashboardUser, "submission:remark"),
+    // Selection
+    canPromoteSelection:
+      userIsAdmin || hasPermission(dashboardUser, "selection:promote"),
+    canViewSelection:
+      userIsAdmin || hasPermission(dashboardUser, "selection:view"),
+    // Attendance
+    canMarkAttendance:
+      userIsAdmin || hasPermission(dashboardUser, "attendance:mark"),
+    // Results
+    canViewResults: userIsAdmin || hasPermission(dashboardUser, "results:view"),
+  };
+
+  const hasDashboardAccess =
+    userIsAdmin || hasPermission(dashboardUser, "dashboard:access");
+
+  if (!hasDashboardAccess) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="flex items-center justify-center p-12">
+            <p className="text-muted-foreground">
+              You do not have access to the dashboard. Contact an administrator.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -34,7 +79,7 @@ export default async function DashboardPage() {
         <div className="flex-1 flex justify-center">
           <LiveClock />
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end gap-2">
           <form
             action={async () => {
               "use server";
@@ -48,7 +93,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>User Information</CardTitle>
@@ -73,11 +118,11 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {dashboardUser.roles.length > 0 ? (
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
                 {dashboardUser.roles.map((role) => (
                   <div
                     key={role.id}
-                    className="rounded-md bg-muted px-3 py-2 text-sm font-medium"
+                    className="rounded-md bg-primary/10 text-primary px-3 py-1.5 text-sm font-medium"
                   >
                     {role.name}
                   </div>
@@ -96,19 +141,21 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {dashboardUser.roles.some((r) => r.permissions.length > 0) ? (
-              <div className="space-y-2">
-                {dashboardUser.roles.flatMap((role) =>
-                  role.permissions.map((permission) => (
-                    <div
-                      key={permission.id}
-                      className="rounded-md bg-muted px-3 py-2 text-sm"
-                    >
-                      <span className="font-medium">
-                        {permission.key.replaceAll("_", " ")}
-                      </span>
-                    </div>
-                  )),
-                )}
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                {Array.from(
+                  new Set(
+                    dashboardUser.roles.flatMap((role) =>
+                      role.permissions.map((p) => p.key),
+                    ),
+                  ),
+                ).map((key) => (
+                  <div
+                    key={key}
+                    className="rounded bg-muted px-2 py-1 text-xs font-mono"
+                  >
+                    {key}
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -119,25 +166,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {(await hasPermission(/^team/i)) && (
-        <Link href="/dashboard/teams" className="block">
-          <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group">
-            <div className="flex items-center justify-between p-6">
-              <div className="flex-1">
-                <CardTitle className="text-lg group-hover:text-primary transition-colors mb-1">
-                  Manage Teams
-                </CardTitle>
-                <CardDescription>
-                  View and manage all hackathon teams, payments, and attendance
-                </CardDescription>
-              </div>
-              <div className="text-muted-foreground group-hover:text-primary transition-colors">
-                <ArrowRightIcon className="h-4 w-4" />
-              </div>
-            </div>
-          </Card>
-        </Link>
-      )}
+      <DashboardContent permissions={permissions} />
     </div>
   );
 }

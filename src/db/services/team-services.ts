@@ -1,9 +1,12 @@
-import { eq } from "drizzle-orm";
+import { eq, type InferSelectModel } from "drizzle-orm";
 import db from "~/db";
 import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
 import { participants, teams } from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
+
+type Team = InferSelectModel<typeof teams>;
+type TeamWithMemberCount = Team & { memberCount: number };
 
 export async function createTeam(userId: string, name: string) {
   const user = await userData.findById(userId);
@@ -22,7 +25,10 @@ export async function createTeam(userId: string, name: string) {
     });
 
   return db.transaction(async (tx) => {
-    const [team] = await tx.insert(teams).values({ name }).returning();
+    const [team] = await tx
+      .insert(teams)
+      .values({ name, leaderId: user.id })
+      .returning();
 
     await tx
       .update(participants)
@@ -223,4 +229,44 @@ export async function deleteTeam(userId: string, teamId: string) {
 
     return team;
   });
+}
+
+export async function fetchTeams({
+  cursor,
+  limit = 50,
+}: {
+  cursor?: string;
+  limit?: number;
+}): Promise<{ teams: TeamWithMemberCount[]; nextCursor: string | null }> {
+  const allTeams = await db
+    .select()
+    .from(teams)
+    .orderBy(teams.createdAt)
+    .limit(limit + 1);
+
+  let startIndex = 0;
+  if (cursor) {
+    startIndex = allTeams.findIndex((t) => t.id === cursor) + 1;
+  }
+
+  const paginatedTeams = allTeams.slice(startIndex, startIndex + limit);
+  const hasMore = allTeams.length > startIndex + limit;
+  const nextCursor = hasMore
+    ? paginatedTeams[paginatedTeams.length - 1]?.id
+    : null;
+
+  const teamsWithCounts = await Promise.all(
+    paginatedTeams.map(async (team) => {
+      const members = await teamData.listMembers(team.id);
+      return {
+        ...team,
+        memberCount: members.length,
+      };
+    }),
+  );
+
+  return {
+    teams: teamsWithCounts,
+    nextCursor,
+  };
 }

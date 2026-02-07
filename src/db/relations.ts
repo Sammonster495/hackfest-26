@@ -6,14 +6,17 @@ import {
   colleges,
   dashboardUserRoles,
   dashboardUsers,
+  ideaSubmission,
   participants,
+  payment,
   permissions,
   rolePermissions,
   roles,
   teams,
+  tracks,
 } from "./schema";
 
-export const userRelations = relations(participants, ({ one }) => ({
+export const userRelations = relations(participants, ({ one, many }) => ({
   college: one(colleges, {
     fields: [participants.collegeId],
     references: [colleges.id],
@@ -22,14 +25,47 @@ export const userRelations = relations(participants, ({ one }) => ({
     fields: [participants.teamId],
     references: [teams.id],
   }),
+  payments: many(payment),
 }));
 
 export const collegeRelations = relations(colleges, ({ many }) => ({
   users: many(participants),
 }));
 
-export const teamRelations = relations(teams, ({ many }) => ({
+export const teamRelations = relations(teams, ({ many, one }) => ({
   users: many(participants),
+  submission: one(ideaSubmission),
+  payments: many(payment),
+  leader: one(participants, {
+    fields: [teams.leaderId],
+    references: [participants.id],
+  }),
+}));
+
+export const trackRelations = relations(tracks, ({ many }) => ({
+  submissions: many(ideaSubmission),
+}));
+
+export const ideaSubmissionRelations = relations(ideaSubmission, ({ one }) => ({
+  track: one(tracks, {
+    fields: [ideaSubmission.trackId],
+    references: [tracks.id],
+  }),
+  team: one(teams, {
+    fields: [ideaSubmission.teamId],
+    references: [teams.id],
+  }),
+}));
+
+export const paymentRelations = relations(payment, ({ one }) => ({
+  user: one(participants, {
+    fields: [payment.userId],
+    references: [participants.id],
+  }),
+  team: one(teams, {
+    fields: [payment.teamId],
+    references: [teams.id],
+  }),
 }));
 
 export const dashboardUserRelations = relations(dashboardUsers, ({ many }) => ({

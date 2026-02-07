@@ -1,38 +1,18 @@
 import { redirect } from "next/navigation";
 import { auth } from "~/auth/dashboard-config";
 import { TeamsTable } from "~/components/dashboard/teams-table";
-import db from "~/db";
-import * as teamData from "~/db/data/teams";
-import { teams } from "~/db/schema";
+import { fetchTeams } from "~/db/services/team-services";
 import { hasPermission, isAdmin } from "~/lib/auth/check-access";
 
 async function getInitialTeams() {
-  const allTeams = await db
-    .select()
-    .from(teams)
-    .orderBy(teams.createdAt)
-    .limit(51);
-
-  const paginatedTeams = allTeams.slice(0, 50);
-  const hasMore = allTeams.length > 50;
-  const nextCursor = hasMore
-    ? paginatedTeams[paginatedTeams.length - 1]?.id
-    : null;
-
-  const teamsWithCounts = await Promise.all(
-    paginatedTeams.map(async (team) => {
-      const members = await teamData.listMembers(team.id);
-      return {
-        ...team,
-        createdAt: team.createdAt.toISOString(),
-        updatedAt: team.updatedAt.toISOString(),
-        memberCount: members.length,
-      };
-    }),
-  );
+  const { teams, nextCursor } = await fetchTeams({ limit: 50 });
 
   return {
-    teams: teamsWithCounts,
+    teams: teams.map((team) => ({
+      ...team,
+      createdAt: team.createdAt.toISOString(),
+      updatedAt: team.updatedAt.toISOString(),
+    })),
     nextCursor,
   };
 }
@@ -56,12 +36,15 @@ async function getUserPermissions(): Promise<UserPermissions> {
   }
 
   const userIsAdmin = isAdmin(session.dashboardUser);
-  const [canMarkAttendance, canViewTeams, canViewTeamDetails] =
-    await Promise.all([
-      hasPermission("team:mark_attendance"),
-      hasPermission(/^team:/),
-      hasPermission("team:view_team_details"),
-    ]);
+  const canMarkAttendance = hasPermission(
+    session.dashboardUser,
+    "team:mark_attendance",
+  );
+  const canViewTeams = hasPermission(session.dashboardUser, /^team:/);
+  const canViewTeamDetails = hasPermission(
+    session.dashboardUser,
+    "team:view_team_details",
+  );
 
   return {
     isAdmin: userIsAdmin,
