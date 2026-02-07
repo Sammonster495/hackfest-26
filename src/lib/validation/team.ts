@@ -6,6 +6,7 @@ export const teamSchema = z.object({
   name: z.string().min(1),
   teamNumber: z.number().int().positive().nullable(),
   teamStatus: z.enum(teamStatusEnum.enumValues).nullable(),
+  leaderId: z.string(),
   paymentStatus: z.enum(paymentStatusEnum.enumValues).nullable(),
   attended: z.boolean().default(false),
   isCompleted: z.boolean().default(false),
@@ -20,6 +21,7 @@ export const createTeamSchema = teamSchema
     updatedAt: true,
   })
   .partial({
+    leaderId: true,
     attended: true,
     isCompleted: true,
     teamNumber: true,

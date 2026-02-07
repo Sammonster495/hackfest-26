@@ -1,5 +1,6 @@
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, PgColumn, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { paymentStatusEnum, teamProgressEnum } from "../enum";
+import { participants } from "./participant";
 
 export const teams = pgTable(
   "team",
@@ -10,6 +11,7 @@ export const teams = pgTable(
     name: text("name").notNull().unique(),
     paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
     teamProgress: teamProgressEnum("team_progress").default("NOT_SELECTED"),
+    leaderId: text("leader_id").notNull().references((): PgColumn => participants.id),
     attended: boolean("attended").notNull().default(false),
     isCompleted: boolean("is_completed").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),

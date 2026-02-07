@@ -26,7 +26,7 @@ export async function createTeam(userId: string, name: string) {
     });
 
   return db.transaction(async (tx) => {
-    const [team] = await tx.insert(teams).values({ name }).returning();
+    const [team] = await tx.insert(teams).values({ name, leaderId: user.id }).returning();
 
     await tx
       .update(participants)

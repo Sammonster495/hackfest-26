@@ -4,4 +4,5 @@ export * from "./schema/participant";
 export * from "./schema/rbac";
 export * from "./schema/team";
 export * from "./schema/ideaSubmission";
+export * from "./schema/payment";
 export * from "./schema/tracks";
