@@ -15,7 +15,7 @@ extend({ TransitionMaterial });
 
 // Preload textures to avoid pop-in
 useTexture.preload([
-    "/images/sunny-day.png",
+    "/sunny.jpeg",
     "/images/underwater.png"
 ]);
 
@@ -24,7 +24,7 @@ function Background({ loaded, loadingProgress }: { loaded: boolean, loadingProgr
     const materialRef = useRef<any>(null);
     const scroll = useScroll();
     const [sunny, underwater] = useTexture([
-        "/images/sunny-day.png",
+        "/sunny.jpeg",
         "/images/underwater.png"
     ]) as [THREE.Texture, THREE.Texture];
 
