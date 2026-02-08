@@ -183,7 +183,7 @@ function TrackCard3D({ activeIndex }: { activeIndex: number }) {
                     <div className="absolute inset-0 bg-linear-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
                 </div>
 
-        
+
                 {/* Border Glow */}
                 <div className="absolute inset-0 border-2 border-cyan-500/20 rounded-2xl pointer-events-none" style={{ transform: "translateZ(20px)" }} />
             </motion.div>
@@ -293,33 +293,77 @@ export default function TracksSection() {
                     <MobileTrackStack />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center h-[600px]">
-                        {/* Left Side: Spectrum Tabs */}
-                        <div className="md:col-span-5 flex flex-col gap-4 relative">
-                            {tracks.map((track, index) => {
-                                const isActive = activeTab === index;
-                                return (
-                                    <motion.button
-                                        key={track.id}
-                                        onClick={() => setActiveTab(index)}
-                                        className={`relative group text-left px-8 py-4 rounded-r-xl transition-all duration-300 border-l-4 overflow-hidden ${isActive
-                                            ? "border-cyan-400 bg-cyan-900/20"
-                                            : "border-transparent hover:border-cyan-800 hover:bg-white/5"
-                                            }`}
-                                        whileHover={{ x: 10 }}
-                                        animate={{
-                                            scale: isActive ? 1.05 : 1,
-                                            opacity: isActive ? 1 : 0.6
-                                        }}
-                                    >
-                                        <div className={`absolute inset-0 bg-linear-to-r from-cyan-500/10 to-transparent transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                        {/* Left Side: Fixed List with Animated Selection */}
+                        <div className="md:col-span-5 flex flex-col items-start justify-center relative h-full" style={{ perspective: "1000px" }}>
+                            <div className="relative flex flex-col items-start gap-2 w-full" style={{ transformStyle: "preserve-3d" }}>
+                                {tracks.map((track, index) => {
+                                    const isActive = activeTab === index;
 
-                                        <span className={`relative z-10 text-xl md:text-2xl font-bold tracking-wide ${isActive ? "text-cyan-300" : "text-gray-400 group-hover:text-cyan-100"
-                                            }`}>
-                                            {track.title}
-                                        </span>
-                                    </motion.button>
-                                );
-                            })}
+                                    return (
+                                        <motion.button
+                                            key={track.id}
+                                            onClick={() => setActiveTab(index)}
+                                            className="relative group text-left px-6 py-3 rounded-xl w-full"
+                                            style={{
+                                                transformStyle: "preserve-3d",
+                                            }}
+                                            animate={{
+                                                scale: isActive ? 1.08 : 1,
+                                                x: isActive ? 15 : 0,
+                                                z: isActive ? 30 : 0,
+                                            }}
+                                            transition={{
+                                                type: "spring",
+                                                stiffness: 300,
+                                                damping: 30
+                                            }}
+                                            whileHover={{
+                                                scale: isActive ? 1.08 : 1.03,
+                                                x: isActive ? 15 : 5,
+                                            }}
+                                        >
+                                            {/* Glow background for active item */}
+                                            <motion.div
+                                                className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/30 via-cyan-400/20 to-transparent"
+                                                animate={{
+                                                    opacity: isActive ? 1 : 0,
+                                                    boxShadow: isActive
+                                                        ? "inset 0 0 20px rgba(34, 211, 238, 0.1)"
+                                                        : "none"
+                                                }}
+                                                transition={{ duration: 0.3 }}
+                                            />
+
+                                            {/* Active indicator bar */}
+                                            <motion.div
+                                                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-400 rounded-full"
+                                                animate={{
+                                                    opacity: isActive ? 1 : 0,
+                                                    scaleY: isActive ? 1 : 0,
+                                                    boxShadow: isActive ? "0 0 10px rgba(34, 211, 238, 0.8)" : "none"
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                            />
+
+                                            {/* Track title */}
+                                            <motion.span
+                                                className="relative z-10 text-xl md:text-4xl font-bold tracking-wide whitespace-nowrap pl-4"
+                                                animate={{
+                                                    color: isActive ? "#67e8f9" : "#9ca3af",
+                                                    textShadow: isActive
+                                                        ? "0 0 20px rgba(103, 232, 249, 0.6), 0 0 40px rgba(103, 232, 249, 0.3)"
+                                                        : "none"
+                                                }}
+                                                transition={{ duration: 0.3 }}
+                                            >
+                                                {track.title}
+                                            </motion.span>
+
+
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         {/* Right Side: 3D Display used to have AnimatePresence, now manages state internally */}

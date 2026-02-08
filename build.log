@@ -1,0 +1,30 @@
+
+> hackfest@0.1.0 build D:\Code\Web\Finite-Loop-Club-NMAMIT\hackfest-26
+> next build
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   Ôû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ Ô£ô Compiled successfully in 7.1s
+   Running TypeScript ...
+Failed to compile.
+
+.next/dev/types/validator.ts:225:31
+Type error: Type 'typeof import("D:/Code/Web/Finite-Loop-Club-NMAMIT/hackfest-26/src/app/api/teams/[id]/details/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/teams/[id]/details">'.
+  The types returned by 'GET(...)' are incompatible between these types.
+    Type 'Promise<(request: NextRequest, context: { params: Promise<Record<string, string>>; }) => Promise<NextResponse<unknown>>>' is not assignable to type 'void | Response | Promise<void | Response>'.
+      Type 'Promise<(request: NextRequest, context: { params: Promise<Record<string, string>>; }) => Promise<NextResponse<unknown>>>' is not assignable to type 'Promise<void | Response>'.
+        Type '(request: NextRequest, context: { params: Promise<Record<string, string>>; }) => Promise<NextResponse<unknown>>' is not assignable to type 'void | Response'.
+
+  223 |   type __IsExpected<Specific extends RouteHandlerConfig<"/api/teams/[id]/details">> = Specific
+  224 |   const handler = {} as typeof import("../../../src/app/api/teams/[id]/details/route.js")
+> 225 |   type __Check = __IsExpected<typeof handler>
+      |                               ^
+  226 |   // @ts-ignore
+  227 |   type __Unused = __Check
+  228 | }
+Next.js build worker exited with code: 1 and signal: null
+ÔÇëELIFECYCLEÔÇë Command failed with exit code 1.

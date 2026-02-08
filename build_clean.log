@@ -1,0 +1,26 @@
+
+> hackfest@0.1.0 build D:\Code\Web\Finite-Loop-Club-NMAMIT\hackfest-26
+> next build
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   Ôû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ Ô£ô Compiled successfully in 4.4s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/landing/Tracks.tsx:91:67
+Type error: Property 'width' does not exist on type '{}'.
+
+  89 |                 // Resolution uniforms need to be set from the texture images
+  90 |                 if (tex1.image && tex2.image) {
+> 91 |                     materialRef.current.uMediaRes1.set(tex1.image.width, tex1.image.height);
+     |                                                                   ^
+  92 |                     materialRef.current.uMediaRes2.set(tex2.image.width, tex2.image.height);
+  93 |                 }
+  94 |             }
+Next.js build worker exited with code: 1 and signal: null
+ÔÇëELIFECYCLEÔÇë Command failed with exit code 1.
