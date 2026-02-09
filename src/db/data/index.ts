@@ -4,6 +4,7 @@ import {
   participants,
   permissions,
   roles,
+  siteSettings,
   teams,
 } from "~/db/schema";
 import { queryBuilder } from "./utils/builder";
@@ -15,4 +16,5 @@ export const query = {
   roles: queryBuilder(roles, "roles"),
   permissions: queryBuilder(permissions, "permissions"),
   dashboardUserRoles: queryBuilder(dashboardUserRoles, "dashboardUserRoles"),
+  siteSettings: queryBuilder(siteSettings, "siteSettings"),
 };

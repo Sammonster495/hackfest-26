@@ -15,6 +15,7 @@ import {
   teams,
   tracks,
 } from "./schema";
+import { notSelected, selected, semiSelected } from "./schema/team-progress";
 
 export const userRelations = relations(participants, ({ one, many }) => ({
   college: one(colleges, {
@@ -39,6 +40,43 @@ export const teamRelations = relations(teams, ({ many, one }) => ({
   leader: one(participants, {
     fields: [teams.leaderId],
     references: [participants.id],
+  }),
+  notSelected: one(notSelected, {
+    fields: [teams.id],
+    references: [notSelected.teamId],
+  }),
+  semiSelected: one(semiSelected, {
+    fields: [teams.id],
+    references: [semiSelected.teamId],
+  }),
+  selected: one(selected, {
+    fields: [teams.id],
+    references: [selected.teamId],
+  }),
+  ideaSubmission: one(ideaSubmission, {
+    fields: [teams.id],
+    references: [ideaSubmission.teamId],
+  }),
+}));
+
+export const notSelectedRelations = relations(notSelected, ({ one }) => ({
+  team: one(teams, {
+    fields: [notSelected.teamId],
+    references: [teams.id],
+  }),
+}));
+
+export const semiSelectedRelations = relations(semiSelected, ({ one }) => ({
+  team: one(teams, {
+    fields: [semiSelected.teamId],
+    references: [teams.id],
+  }),
+}));
+
+export const selectedRelations = relations(selected, ({ one }) => ({
+  team: one(teams, {
+    fields: [selected.teamId],
+    references: [teams.id],
   }),
 }));
 

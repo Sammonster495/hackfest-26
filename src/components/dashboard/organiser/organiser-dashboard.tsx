@@ -113,7 +113,7 @@ export function OrganiserDashboard() {
         onValueChange={handleTabChange}
         className="w-full"
       >
-        <TabsList className="w-full justify-start h-auto flex-wrap gap-1 bg-muted/50 p-1">
+        <TabsList className="w-full justify-between h-auto flex-wrap gap-1 bg-muted/50 p-1">
           {SUB_TABS.map((tab) => (
             <TabsTrigger
               key={tab.id}

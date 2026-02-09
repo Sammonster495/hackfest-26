@@ -18,6 +18,13 @@ export function queryBuilder<
       `${String(tableName).toUpperCase()}_QUERY_FAILED`,
     ),
 
+    findFirst: safeDB(
+      () =>
+        // TODO: CHECK WORKING
+        db.query[tableName].findFirst(),
+      `${String(tableName).toUpperCase()}_QUERY_FAILED`,
+    ),
+
     findMany: safeDB(
       (filters: Parameters<(typeof db)["query"][TableName]["findMany"]>[0]) =>
         db.query[tableName].findMany(filters),

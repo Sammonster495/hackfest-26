@@ -10,11 +10,6 @@ import { AppError } from "~/lib/errors/app-error";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.dashboardUser) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const tracks = await getTracks();
     return NextResponse.json(tracks);
   } catch (error) {

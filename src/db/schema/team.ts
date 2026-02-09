@@ -6,7 +6,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { paymentStatusEnum, teamProgressEnum } from "../enum";
+import { paymentStatusEnum } from "../enum";
 import { participants } from "./participant";
 
 export const teams = pgTable(
@@ -17,7 +17,6 @@ export const teams = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull().unique(),
     paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
-    teamProgress: teamProgressEnum("team_progress").default("NOT_SELECTED"),
     leaderId: text("leader_id")
       .notNull()
       .references((): PgColumn => participants.id),

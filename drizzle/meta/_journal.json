@@ -71,6 +71,27 @@
       "when": 1770473486378,
       "tag": "0009_added payment and modified team",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1770483125260,
+      "tag": "0010_wakeful_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1770483185370,
+      "tag": "0011_added team status tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1770542995491,
+      "tag": "0012_nice_mantis",
+      "breakpoints": true
     }
   ]
 }

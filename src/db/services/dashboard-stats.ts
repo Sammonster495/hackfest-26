@@ -3,6 +3,7 @@ import { AppError } from "~/lib/errors/app-error";
 import db from "..";
 import { colleges, participants, teams } from "../schema";
 import { ideaSubmission } from "../schema/ideaSubmission";
+import { selected } from "../schema/team-progress";
 
 export async function getDashboardStats() {
   try {
@@ -87,9 +88,9 @@ export async function getCollegeRankingsBySelections() {
       .from(colleges)
       .innerJoin(participants, eq(colleges.id, participants.collegeId))
       .innerJoin(teams, eq(participants.teamId, teams.id))
-      .where(eq(teams.teamProgress, "SELECTED"))
+      .innerJoin(selected, eq(teams.id, selected.teamId))
       .groupBy(colleges.name)
-      .orderBy(desc(count(teams.id)));
+      .orderBy(desc(count(selected.id)));
 
     return collegeRankingsResult;
   } catch (error) {

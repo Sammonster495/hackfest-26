@@ -73,7 +73,7 @@ export function DashboardTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="w-full justify-start mb-6 h-auto flex-wrap gap-1 bg-muted/50 p-1">
+      <TabsList className="w-full justify-center mb-6 h-auto flex-wrap gap-1 bg-muted/50 p-1">
         {accessibleTabs.map((tab) => (
           <TabsTrigger
             key={tab.id}

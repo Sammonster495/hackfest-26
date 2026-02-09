@@ -15,6 +15,7 @@ interface CloudinaryUploadProps {
   allowedFormats?: string[];
   label?: string;
   folder?: string;
+  resourceType?: "image" | "raw" | "auto";
 }
 
 export function CloudinaryUpload({
@@ -24,6 +25,7 @@ export function CloudinaryUpload({
   allowedFormats = ["jpg", "png", "jpeg", "webp"],
   label = "Upload Image",
   folder,
+  resourceType = "image",
 }: CloudinaryUploadProps) {
   const [error, setError] = React.useState<string | null>(null);
 
@@ -64,6 +66,7 @@ export function CloudinaryUpload({
           clientAllowedFormats: allowedFormats,
           sources: ["local"],
           multiple: false,
+          resourceType: resourceType,
         }}
         onSuccess={handleSuccess}
         onError={handleError}
@@ -83,4 +86,62 @@ export function CloudinaryUpload({
       {error && <p className="text-sm text-destructive mt-2">{error}</p>}
     </div>
   );
+}
+
+interface UploadOptions {
+  folder?: string;
+  onProgress?: (progress: number) => void;
+}
+
+export async function uploadFileToCloudinary(
+  file: File,
+  options: UploadOptions = {},
+): Promise<string> {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+  if (!cloudName || !uploadPreset) {
+    throw new Error("Cloudinary configuration is missing");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
+  if (options.folder) {
+    formData.append("folder", `hackfest26/${options.folder}`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && options.onProgress) {
+        const progress = Math.round((event.loaded / event.total) * 100);
+        options.onProgress(progress);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const response = JSON.parse(xhr.responseText) as { secure_url: string };
+        resolve(response.secure_url);
+      } else {
+        reject(new Error("Upload failed"));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Upload failed"));
+    xhr.send(formData);
+  });
+}
+
+export function validatePdfFile(file: File, maxSizeMB = 10): string | null {
+  if (file.type !== "application/pdf") {
+    return "Please select a PDF file.";
+  }
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    return `File size must be less than ${maxSizeMB}MB.`;
+  }
+  return null;
 }
