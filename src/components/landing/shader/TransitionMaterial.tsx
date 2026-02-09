@@ -255,33 +255,33 @@ void main()
 `;
 
 export const TransitionMaterial = shaderMaterial(
-    {
-        uTime: 0,
-        uTransitionProgress: 0,
-        uHoverProgress: 0,
-        uVar1: 0,
-        uVar2: 0,
-        uVar3: 0,
-        uPlaneRes: new THREE.Vector2(1, 1),
-        uMediaRes1: new THREE.Vector2(1, 1),
-        uMediaRes2: new THREE.Vector2(1, 1),
-        uCanvasRes: new THREE.Vector2(1, 1),
-        uMouse2D: new THREE.Vector2(0, 0),
-        tMap1: null,
-        tMap2: null,
-        tMap3: null, // Unused but in uniforms
-        uNausea: 0,
-    },
-    vertexShader,
-    fragmentShader
+  {
+    uTime: 0,
+    uTransitionProgress: 0,
+    uHoverProgress: 0,
+    uVar1: 0,
+    uVar2: 0,
+    uVar3: 0,
+    uPlaneRes: new THREE.Vector2(1, 1),
+    uMediaRes1: new THREE.Vector2(1, 1),
+    uMediaRes2: new THREE.Vector2(1, 1),
+    uCanvasRes: new THREE.Vector2(1, 1),
+    uMouse2D: new THREE.Vector2(0, 0),
+    tMap1: null,
+    tMap2: null,
+    tMap3: null, // Unused but in uniforms
+    uNausea: 0,
+  },
+  vertexShader,
+  fragmentShader,
 );
 
 extend({ TransitionMaterial });
 
 declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            transitionMaterial: any;
-        }
+  namespace JSX {
+    interface IntrinsicElements {
+      transitionMaterial: any;
     }
+  }
 }

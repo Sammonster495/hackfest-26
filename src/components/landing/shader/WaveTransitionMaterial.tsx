@@ -2,25 +2,25 @@ import { shaderMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
 export const WaveTransitionMaterial = shaderMaterial(
-    {
-        uTime: 0,
-        uTransitionProgress: 0,
-        uPlaneRes: new THREE.Vector2(1, 1),
-        uMediaRes1: new THREE.Vector2(1, 1),
-        uMediaRes2: new THREE.Vector2(1, 1),
-        tMap1: null,
-        tMap2: null,
-    },
-    // Vertex Shader
-    `
+  {
+    uTime: 0,
+    uTransitionProgress: 0,
+    uPlaneRes: new THREE.Vector2(1, 1),
+    uMediaRes1: new THREE.Vector2(1, 1),
+    uMediaRes2: new THREE.Vector2(1, 1),
+    tMap1: null,
+    tMap2: null,
+  },
+  // Vertex Shader
+  `
     varying vec2 vUv;
     void main() {
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       vUv = uv;
     }
   `,
-    // Fragment Shader
-    `
+  // Fragment Shader
+  `
     uniform vec2 uPlaneRes;
     uniform vec2 uMediaRes1;
     uniform vec2 uMediaRes2;
@@ -98,5 +98,5 @@ export const WaveTransitionMaterial = shaderMaterial(
         float roundC = roundCorners(uPlaneRes, vUv, 0.024);
         gl_FragColor.a *= roundC;
     }
-  `
+  `,
 );
