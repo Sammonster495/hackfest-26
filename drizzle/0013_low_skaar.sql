@@ -1,0 +1,1 @@
+ALTER TABLE "site-settings" ADD COLUMN "registrations_open" boolean DEFAULT false;
