@@ -8,6 +8,8 @@ import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
+import { signOut } from "next-auth/react";
+import { LogOut } from "lucide-react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -60,7 +62,7 @@ export function Navbar({
       ref={navRef}
       layout // This enables the smooth height expansion
       className={cn(
-        "fixed left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-5xl pointer-events-auto",
+        "fixed left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-4xl pointer-events-auto",
         "transition-all duration-500 ease-out",
         // Disable shrinking if menu is open so it doesn't look cramped
         scrolled && !isMobileMenuOpen ? "top-2 scale-[0.98]" : "top-6",
@@ -261,13 +263,13 @@ export function Navbar({
                 );
               })}
 
-              <button
-                type="button"
-                className="mt-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <AuthButton session={session} isUnderwater={isUnderwater} />
-              </button>
+              <div className="mt-2 flex flex-col items-center gap-4">
+                <AuthButton
+                  session={session}
+                  isUnderwater={isUnderwater}
+                  onNavigate={() => setIsMobileMenuOpen(false)}
+                />
+              </div>
             </div>
           </motion.div>
         )}
@@ -280,41 +282,77 @@ export function Navbar({
 function AuthButton({
   session,
   isUnderwater,
+  onNavigate,
 }: {
   session: Session | null;
   isUnderwater: boolean;
+  onNavigate?: () => void;
 }) {
-  return (
-    <Link href={session?.user ? "/dashboard" : "/dashboard/login"}>
-      <button
-        type="button"
+  const isLoggedIn = !!session?.user;
+  const href = isLoggedIn
+    ? session.user.isRegistrationComplete
+      ? "/teams"
+      : "/register"
+    : "/register";
+  const label = isLoggedIn
+    ? session.user.isRegistrationComplete
+      ? "Your Team"
+      : "Register Now"
+    : "Register Now";
+
+  // Base button styles
+  const buttonClass = cn(
+    "group relative px-6 py-2 font-serif font-bold transition-all duration-500",
+    isUnderwater
+      ? "text-cyan-100 hover:text-white"
+      : "text-amber-100 hover:text-white",
+  );
+
+  const borderContent = (
+    <>
+      {/* Button Border / Inset Look */}
+      <div
         className={cn(
-          "group relative px-6 py-2 font-serif font-bold transition-all duration-500",
+          "absolute inset-0 border rounded-md transition-all duration-500",
           isUnderwater
-            ? "text-cyan-100 hover:text-white"
-            : "text-amber-100 hover:text-white",
+            ? "border-cyan-400/40 bg-cyan-900/20 group-hover:bg-cyan-900/40"
+            : "border-amber-200/40 bg-white/5 group-hover:bg-white/10",
         )}
-      >
-        {/* Button Border / Inset Look */}
-        <div
+      />
+      {/* Inner faint border for depth */}
+      <div
+        className={cn(
+          "absolute inset-[3px] border rounded-sm opacity-50 transition-colors duration-500",
+          isUnderwater ? "border-cyan-200/20" : "border-amber-200/20",
+        )}
+      />
+    </>
+  );
+
+  return (
+    <>
+      <Link href={href} onClick={onNavigate}>
+        <button type="button" className={buttonClass}>
+          {borderContent}
+          <span className="relative z-10 drop-shadow-sm">{label}</span>
+        </button>
+      </Link>
+
+      {isLoggedIn && (
+        <button
+          type="button"
+          onClick={() => signOut()}
           className={cn(
-            "absolute inset-0 border rounded-md transition-all duration-500",
+            "p-2 rounded-md transition-colors duration-300",
             isUnderwater
-              ? "border-cyan-400/40 bg-cyan-900/20 group-hover:bg-cyan-900/40"
-              : "border-amber-200/40 bg-white/5 group-hover:bg-white/10",
+              ? "text-cyan-400 hover:text-cyan-100 hover:bg-cyan-900/20"
+              : "text-amber-400 hover:text-amber-100 hover:bg-amber-900/20",
           )}
-        />
-        {/* Inner faint border for depth */}
-        <div
-          className={cn(
-            "absolute inset-[3px] border rounded-sm opacity-50 transition-colors duration-500",
-            isUnderwater ? "border-cyan-200/20" : "border-amber-200/20",
-          )}
-        />
-        <span className="relative z-10 drop-shadow-sm">
-          {session?.user ? "Dashboard" : "Sign In"}
-        </span>
-      </button>
-    </Link>
+          title="Logout"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
+      )}
+    </>
   );
 }
