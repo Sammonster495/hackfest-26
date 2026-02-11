@@ -3,15 +3,23 @@
 
 import { relations } from "drizzle-orm";
 import {
+  accounts,
   colleges,
   dashboardUserRoles,
   dashboardUsers,
+  eventAccounts,
+  eventParticipants,
+  eventSessions,
+  events,
+  eventTeams,
+  eventUsers,
   ideaSubmission,
   participants,
   payment,
   permissions,
   rolePermissions,
   roles,
+  sessions,
   teams,
   tracks,
 } from "./schema";
@@ -143,6 +151,42 @@ export const dashboardUserRoleRelations = relations(
     role: one(roles, {
       fields: [dashboardUserRoles.roleId],
       references: [roles.id],
+    }),
+  }),
+);
+
+export const eventTeamRelations = relations(eventTeams, ({ many, one }) => ({
+  event: one(events, {
+    fields: [eventTeams.eventId],
+    references: [events.id],
+  }),
+  leader: one(participants, {
+    fields: [eventTeams.leaderId],
+    references: [participants.id],
+  }),
+  members: many(eventParticipants),
+}));
+
+export const eventUserRelations = relations(eventUsers, ({ many }) => ({
+  participants: many(eventParticipants),
+  accounts: many(eventAccounts),
+  sessions: many(eventSessions),
+}));
+
+export const eventRelations = relations(events, ({ many }) => ({
+  teams: many(eventTeams),
+}));
+
+export const eventParticipantRelations = relations(
+  eventParticipants,
+  ({ one }) => ({
+    user: one(eventUsers, {
+      fields: [eventParticipants.participantId],
+      references: [eventUsers.id],
+    }),
+    team: one(eventTeams, {
+      fields: [eventParticipants.teamId],
+      references: [eventTeams.id],
     }),
   }),
 );

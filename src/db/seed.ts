@@ -1,11 +1,12 @@
 import "dotenv/config";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { hashPassword } from "~/lib/auth/password";
 import db from "./index";
 import {
   colleges,
   dashboardUserRoles,
   dashboardUsers,
+  events,
   permissions,
   rolePermissions,
   roles,
@@ -301,6 +302,27 @@ async function seed() {
       console.error("Error seeding admin user:", error);
       throw error;
     }
+  }
+
+  // Seed Events
+  console.log("Seeding events...");
+  const existingEventsCount = await db.select({ count: count() }).from(events);
+  if (existingEventsCount.length > 0 && existingEventsCount[0].count === 0) {
+    await db.insert(events).values(
+      Array.from({ length: 5 }, (_, i) => ({
+        title: `Event ${i + 1}`,
+        description: `Description for Event ${i + 1}. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Laudantium reiciendis provident quidem eligendi animi praesentium natus dolores accusantium quibusdam nulla vitae deserunt quam iusto, voluptatibus mollitia autem. Laudantium, fuga tempora?`,
+        date: new Date(
+          Date.now() + (i + 1) * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        image: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQl_LkmRRISlkI9wz7dZCmGDHJ68mMWaW4zZg&s`,
+        teamSize: i % 3 === 0 ? 1 : 4,
+      })),
+    );
+
+    console.log("✅ Seeded events");
+  } else {
+    console.log("⚠️  Events already exist. Skipping.");
   }
 }
 

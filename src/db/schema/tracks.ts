@@ -6,5 +6,8 @@ export const tracks = pgTable("tracks", {
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull().unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdateFn(() => new Date()),
 });

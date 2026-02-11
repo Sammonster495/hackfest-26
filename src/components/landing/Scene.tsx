@@ -10,7 +10,7 @@ import {
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import Footer from "./Footer";
 import { TransitionMaterial } from "./shader/TransitionMaterial";

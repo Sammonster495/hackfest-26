@@ -19,7 +19,10 @@ export const dashboardUsers = pgTable(
     isActive: boolean("is_active").notNull().default(true),
     lastLoginAt: timestamp("last_login_at", { mode: "date" }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => new Date()),
   },
   (table) => [index("dashboard_user_is_active_idx").on(table.isActive)],
 );
