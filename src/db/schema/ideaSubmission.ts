@@ -17,7 +17,10 @@ export const ideaSubmission = pgTable(
       .notNull()
       .references(() => tracks.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => new Date()),
   },
   (table) => [
     index("idea_submission_team_id_idx").on(table.teamId),

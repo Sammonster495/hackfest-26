@@ -10,6 +10,8 @@ const server = z.object({
   RAZORPAY_SECRET: z.string().min(1),
   RAZORPAY_WEBHOOK_SECRET: z.string().min(1),
   RAZORPAY_API_KEY_ID: z.string().min(1),
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
 });
 
 const client = z.object({
@@ -32,6 +34,8 @@ const processEnv = {
   RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
   RAZORPAY_API_KEY_ID: process.env.RAZORPAY_API_KEY_ID,
   NEXT_PUBLIC_RAZORPAY_API_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_API_KEY_ID,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 };
 
 function validateEnv() {
@@ -93,6 +97,8 @@ function validateEnv() {
       RAZORPAY_SECRET: "",
       RAZORPAY_WEBHOOK_SECRET: "",
       RAZORPAY_API_KEY_ID: "",
+      GOOGLE_CLIENT_ID: "",
+      GOOGLE_CLIENT_SECRET: "",
       ...clientParsed.data,
     };
   }

@@ -23,7 +23,10 @@ export const teams = pgTable(
     attended: boolean("attended").notNull().default(false),
     isCompleted: boolean("is_completed").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => new Date()),
   },
   (table) => [
     index("team_payment_status_idx").on(table.paymentStatus),

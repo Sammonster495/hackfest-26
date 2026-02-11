@@ -32,7 +32,10 @@ export const participants = pgTable(
     }),
 
     createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => new Date()),
   },
   (table) => [
     index("participant_college_id_idx").on(table.collegeId),
