@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Button } from "~/components/ui/button";
-import { Form } from "~/components/ui/form";
 import { CollegeStep } from "~/components/forms/register-steps/CollegeStep";
 import { CourseStep } from "~/components/forms/register-steps/CourseStep";
 import { GenderStep } from "~/components/forms/register-steps/GenderStep";
@@ -15,10 +13,12 @@ import { IdProofStep } from "~/components/forms/register-steps/IdProofStep";
 import { NameStep } from "~/components/forms/register-steps/NameStep";
 import { PhoneStep } from "~/components/forms/register-steps/PhoneStep";
 import { StateStep } from "~/components/forms/register-steps/StateStep";
+import { Button } from "~/components/ui/button";
+import { Form } from "~/components/ui/form";
 import { apiFetch } from "~/lib/fetcher";
 import {
-  registerParticipantSchema,
   type RegisterParticipantInput,
+  registerParticipantSchema,
 } from "~/lib/validation/participant";
 
 interface College {
@@ -33,9 +33,7 @@ interface RegisterFormProps {
 
 type FormValues = RegisterParticipantInput;
 
-export function RegisterForm({
-  initialGithubUsername,
-}: RegisterFormProps) {
+export function RegisterForm({ initialGithubUsername }: RegisterFormProps) {
   const router = useRouter();
 
   const [colleges, setColleges] = useState<College[]>([]);
@@ -84,7 +82,7 @@ export function RegisterForm({
     async function loadColleges(): Promise<void> {
       try {
         const result = await apiFetch<{ colleges: College[] }>(
-          "/api/colleges/list"
+          "/api/colleges/list",
         );
         setColleges(result?.colleges ?? []);
       } finally {
@@ -201,8 +199,8 @@ export function RegisterForm({
             )}
 
             {!isLastStep ? (
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={handleNext}
                 className="bg-white text-black hover:bg-white/90 transition-all"
               >
@@ -214,9 +212,7 @@ export function RegisterForm({
                 disabled={form.formState.isSubmitting}
                 className="bg-white text-black hover:bg-white/90 transition-all"
               >
-                {form.formState.isSubmitting
-                  ? "Submitting..."
-                  : "Submit"}
+                {form.formState.isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             )}
           </div>

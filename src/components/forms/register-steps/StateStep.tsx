@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { UseFormReturn } from "react-hook-form";
 import { Check, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { UseFormReturn } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -12,8 +12,8 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { stateEnum } from "~/db/enum";
-import { type RegisterParticipantInput } from "~/lib/validation/participant";
-import { cn } from "~/lib/utils"; 
+import { cn } from "~/lib/utils";
+import type { RegisterParticipantInput } from "~/lib/validation/participant";
 
 interface StateStepProps {
   form: UseFormReturn<RegisterParticipantInput>;
@@ -23,7 +23,7 @@ interface StateStepProps {
 
 export function StateStep({ form, onNext }: StateStepProps) {
   const [search, setSearch] = useState("");
-  
+
   // 1. Get the current selected value
   const selectedState = form.watch("state");
 
@@ -32,14 +32,14 @@ export function StateStep({ form, onNext }: StateStepProps) {
     // A. Filter by search term first
     const options = search
       ? stateEnum.enumValues.filter((state) =>
-          state.toLowerCase().includes(search.toLowerCase())
+          state.toLowerCase().includes(search.toLowerCase()),
         )
       : stateEnum.enumValues;
 
     // B. Sort: Move selected item to the top
     return [...options].sort((a, b) => {
       if (a === selectedState) return -1; // 'a' moves to top
-      if (b === selectedState) return 1;  // 'b' moves to top
+      if (b === selectedState) return 1; // 'b' moves to top
       return 0; // Keep original order for others
     });
   }, [search, selectedState]);
@@ -51,7 +51,6 @@ export function StateStep({ form, onNext }: StateStepProps) {
         name="state"
         render={({ field }) => (
           <FormItem className="w-full max-w-lg space-y-8">
-
             {/* Header Section */}
             <div className="text-center space-y-2">
               <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight">
@@ -103,7 +102,8 @@ export function StateStep({ form, onNext }: StateStepProps) {
                     className={cn(
                       "group flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:bg-white/20 hover:border-white/30 active:scale-[0.98]",
                       // Highlight style if selected
-                      field.value === state && "bg-white/20 border-white/50 ring-1 ring-white/50 sticky top-0 z-10 backdrop-blur-md shadow-lg"
+                      field.value === state &&
+                        "bg-white/20 border-white/50 ring-1 ring-white/50 sticky top-0 z-10 backdrop-blur-md shadow-lg",
                     )}
                   >
                     {/* State Name */}

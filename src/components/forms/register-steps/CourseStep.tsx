@@ -1,7 +1,7 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
 import { Check } from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -10,8 +10,8 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { courseEnum } from "~/db/enum";
-import { type RegisterParticipantInput } from "~/lib/validation/participant";
 import { cn } from "~/lib/utils";
+import type { RegisterParticipantInput } from "~/lib/validation/participant";
 
 interface CourseStepProps {
   form: UseFormReturn<RegisterParticipantInput>;
@@ -27,7 +27,6 @@ export function CourseStep({ form, onNext }: CourseStepProps) {
         name="course"
         render={({ field }) => (
           <FormItem className="w-full max-w-lg space-y-8">
-            
             {/* Header Section */}
             <div className="text-center">
               <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight">
@@ -50,7 +49,8 @@ export function CourseStep({ form, onNext }: CourseStepProps) {
                     style={{ animationDelay: `${index * 50}ms` }}
                     className={cn(
                       "group flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-5 text-left transition-all duration-300 hover:bg-white/20 hover:border-white/30 hover:scale-[1.02] active:scale-[0.98] animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards",
-                      field.value === course && "bg-white/20 border-white/50 ring-1 ring-white/50"
+                      field.value === course &&
+                        "bg-white/20 border-white/50 ring-1 ring-white/50",
                     )}
                   >
                     {/* Course Name */}
@@ -63,7 +63,7 @@ export function CourseStep({ form, onNext }: CourseStepProps) {
                       {field.value === course && (
                         <Check className="h-5 w-5 text-white animate-in zoom-in" />
                       )}
-                      
+
                       {/* Keyboard shortcut hint (Optional visual flair) */}
                       <span className="hidden group-hover:block text-xs font-bold uppercase tracking-widest text-white/50 bg-white/10 px-2 py-1 rounded">
                         Select

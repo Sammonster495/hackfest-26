@@ -1,7 +1,7 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
-import { Github, Lock, CheckCircle2 } from "lucide-react"; 
+import { CheckCircle2, Github, Lock } from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -9,7 +9,7 @@ import {
   FormLabel,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { type RegisterParticipantInput } from "~/lib/validation/participant";
+import type { RegisterParticipantInput } from "~/lib/validation/participant";
 
 interface GithubStepProps {
   form: UseFormReturn<RegisterParticipantInput>;
@@ -18,10 +18,7 @@ interface GithubStepProps {
   initialGithubUsername?: string;
 }
 
-export function GithubStep({
-  form,
-  initialGithubUsername,
-}: GithubStepProps) {
+export function GithubStep({ form, initialGithubUsername }: GithubStepProps) {
   return (
     <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-700">
       <FormField
@@ -29,7 +26,6 @@ export function GithubStep({
         name="github"
         render={({ field }) => (
           <FormItem className="w-full space-y-8 text-center px-4">
-            
             {/* Icon Decoration */}
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-md shadow-lg">
@@ -53,13 +49,14 @@ export function GithubStep({
                   Desktop (md): Block/Relative (Horizontal Overlay)
               */}
               <div className="relative w-full max-w-xl mx-auto group flex flex-col items-center md:block">
-                
                 {/* 1. LOCK ICON */}
-                <div className="
+                <div
+                  className="
                   text-white/40 group-hover:text-white/60 transition-colors z-10
                   mb-2 md:mb-0
                   md:absolute md:left-2 md:top-1/2 md:-translate-y-1/2
-                ">
+                "
+                >
                   <Lock className="w-5 h-5 md:w-6 md:h-6" />
                 </div>
 
@@ -92,16 +89,17 @@ export function GithubStep({
                 />
 
                 {/* 3. VERIFIED BADGE */}
-                <div className="
+                <div
+                  className="
                   z-10
                   mt-4 md:mt-0
                   md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2
-                ">
+                "
+                >
                   <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-green-400 bg-green-950/30 border border-green-500/30 px-3 py-1.5 rounded-full backdrop-blur-sm">
                     <CheckCircle2 className="w-3 h-3" /> Verified
                   </span>
                 </div>
-
               </div>
             </FormControl>
           </FormItem>

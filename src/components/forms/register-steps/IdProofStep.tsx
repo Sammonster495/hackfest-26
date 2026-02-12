@@ -1,8 +1,8 @@
 "use client";
 
-import { X, UploadCloud, FileImage } from "lucide-react";
+import { FileImage, UploadCloud, X } from "lucide-react";
 import Image from "next/image";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { CloudinaryUpload } from "~/components/cloudinary-upload"; // Assuming this accepts className, if not, the wrapper handles positioning
 import { Button } from "~/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { type RegisterParticipantInput } from "~/lib/validation/participant";
+import type { RegisterParticipantInput } from "~/lib/validation/participant";
 
 interface IdProofStepProps {
   form: UseFormReturn<RegisterParticipantInput>;
@@ -28,7 +28,6 @@ export function IdProofStep({ form, onNext }: IdProofStepProps) {
         name="idProof"
         render={({ field }) => (
           <FormItem className="w-full max-w-2xl space-y-8 text-center">
-            
             {/* Header Section */}
             <div className="space-y-2">
               <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight">
@@ -50,7 +49,7 @@ export function IdProofStep({ form, onNext }: IdProofStepProps) {
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    
+
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
                       <Button
@@ -73,7 +72,8 @@ export function IdProofStep({ form, onNext }: IdProofStepProps) {
                 ) : (
                   /* UPLOAD STATE WRAPPER */
                   <div className="w-full max-w-lg">
-                    <div className="
+                    <div
+                      className="
                       relative 
                       group
                       flex flex-col items-center justify-center 
@@ -83,7 +83,8 @@ export function IdProofStep({ form, onNext }: IdProofStepProps) {
                       bg-white/5 
                       hover:bg-white/10 hover:border-white/40 
                       transition-all duration-300
-                    ">
+                    "
+                    >
                       {/* NOTE: Assuming CloudinaryUpload renders a button. 
                          We position it centrally. 
                          If CloudinaryUpload has its own styling, this wrapper provides the 'glass' container context.
@@ -92,13 +93,15 @@ export function IdProofStep({ form, onNext }: IdProofStepProps) {
                         <div className="p-4 rounded-full bg-white/10 mb-4">
                           <UploadCloud className="w-10 h-10 text-white" />
                         </div>
-                        <p className="text-white/80 font-medium">Click to upload</p>
+                        <p className="text-white/80 font-medium">
+                          Click to upload
+                        </p>
                         <p className="text-white/40 text-sm mt-1">JPG, PNG</p>
                       </div>
 
                       {/* The actual functional component - Positioned relative to accept clicks */}
                       <div className="z-10 w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity p-8">
-                         <CloudinaryUpload
+                        <CloudinaryUpload
                           onUpload={(url) => {
                             field.onChange(url);
                             onNext();
@@ -114,7 +117,7 @@ export function IdProofStep({ form, onNext }: IdProofStepProps) {
                 )}
               </div>
             </FormControl>
-            
+
             <FormMessage className="text-red-300 text-lg" />
           </FormItem>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { type RegisterParticipantInput } from "~/lib/validation/participant";
+import type { RegisterParticipantInput } from "~/lib/validation/participant";
 
 interface PhoneStepProps {
   form: UseFormReturn<RegisterParticipantInput>;
@@ -58,7 +58,9 @@ export function PhoneStep({ form, onNext }: PhoneStepProps) {
 
             {/* "Press Enter" Hint */}
             <div className="flex items-center justify-center gap-2 text-white/50 text-sm mt-4 animate-pulse">
-              <span>Press <span className="font-bold text-white">Enter ↵</span></span>
+              <span>
+                Press <span className="font-bold text-white">Enter ↵</span>
+              </span>
             </div>
           </FormItem>
         )}
