@@ -86,7 +86,6 @@ function Background({
         tMap1={sunny}
         tMap2={underwater}
         transparent={true}
-        // Opacity is 1 so we can see the nausea effect behind the loading screen as it fades
         opacity={1}
       />
     </mesh>
@@ -109,7 +108,6 @@ function LoadingScreen({ progress }: { progress: number }) {
           repeat: Infinity,
           duration: 3,
           ease: "linear",
-          // Stop rotating smoothly when nearing complete can be complex, just keep spinning or fade
         }}
       />
       <motion.div className="mt-8 h-1 w-64 bg-white/20 rounded-full overflow-hidden">
@@ -127,19 +125,29 @@ function LoadingScreen({ progress }: { progress: number }) {
 
 function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const calculatePages = () => {
       if (ref.current) {
         const { height } = ref.current.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
+        // Use visualViewport or window.innerHeight for accurate mobile height
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
         const newPages = Math.max(3, height / viewportHeight);
         setPages(newPages);
       }
     };
 
+    // Debounced resize handler to avoid excessive recalculations
+    const debouncedCalculate = () => {
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+      resizeTimeoutRef.current = setTimeout(calculatePages, 150);
+    };
+
     const observer = new ResizeObserver(() => {
-      calculatePages();
+      debouncedCalculate();
     });
 
     if (ref.current) {
@@ -147,13 +155,41 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
       calculatePages();
     }
 
-    window.addEventListener("resize", calculatePages);
+    // Handle both resize and visualViewport resize for mobile browser chrome changes
+    window.addEventListener("resize", debouncedCalculate);
+    window.visualViewport?.addEventListener("resize", debouncedCalculate);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", calculatePages);
+      window.removeEventListener("resize", debouncedCalculate);
+      window.visualViewport?.removeEventListener("resize", debouncedCalculate);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
     };
   }, [setPages]);
+
+  // Prevent default scroll behavior when focusing on elements
+  useEffect(() => {
+    const preventFocusScroll = (e: FocusEvent) => {
+      e.preventDefault();
+      const target = e.target as HTMLElement;
+      if (target) {
+        // Scroll into view without affecting the 3D scroll system
+        target.scrollIntoView({
+          behavior: 'instant',
+          block: 'nearest',
+          inline: 'nearest'
+        });
+      }
+    };
+
+    document.addEventListener('focus', preventFocusScroll, true);
+
+    return () => {
+      document.removeEventListener('focus', preventFocusScroll, true);
+    };
+  }, []);
 
   return (
     <div
@@ -266,7 +302,11 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
           <Link href="/timeline" passHref>
             <button
               type="button"
-              className="group relative px-10 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-bold text-xl transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] overflow-hidden"
+              className="group relative px-10 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-bold text-xl transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black"
+              // Prevent scroll on focus
+              onFocus={(e) => {
+                e.preventDefault();
+              }}
             >
               <span className="relative z-10">Explore Timeline</span>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
@@ -285,6 +325,7 @@ export default function Scene({ session }: { session: Session | null }) {
   const [pages, setPages] = useState(3);
   const [progress, setProgress] = useState(0);
   const [isUnderwater, setIsUnderwater] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   function ScrollSync({
     setUnderwater,
@@ -310,16 +351,84 @@ export default function Scene({ session }: { session: Session | null }) {
           setLoaded(true);
           return 100;
         }
-        return prev + 2; // Restore speed
+        return prev + 2;
       });
     }, 30);
     return () => clearInterval(interval);
   }, []);
 
+  // Handle mobile viewport changes without triggering scroll recalculation
+  useEffect(() => {
+    let lastHeight = window.visualViewport?.height || window.innerHeight;
+    let stabilizationTimeout: NodeJS.Timeout;
+
+    const handleViewportChange = () => {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+
+      // Only recalculate if height change is significant (more than 100px)
+      // This prevents minor browser chrome changes from triggering recalc
+      if (Math.abs(currentHeight - lastHeight) > 500) {
+        // Debounce the recalculation
+        clearTimeout(stabilizationTimeout);
+        stabilizationTimeout = setTimeout(() => {
+          lastHeight = currentHeight;
+        }, 300);
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', handleViewportChange);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportChange);
+      clearTimeout(stabilizationTimeout);
+    };
+  }, []);
+
+  // Prevent keyboard navigation from breaking scroll sync
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent tab key from causing scroll jumps
+      if (e.key === 'Tab') {
+        e.preventDefault();
+
+        // Manually handle tab navigation
+        const focusableElements = Array.from(
+          document.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+
+        const currentIndex = focusableElements.findIndex(
+          el => el === document.activeElement
+        );
+
+        let nextIndex: number;
+        if (e.shiftKey) {
+          nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
+        } else {
+          nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1;
+        }
+
+        focusableElements[nextIndex]?.focus({ preventScroll: true });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <div
+      ref={scrollContainerRef}
       className="fixed top-0 left-0 w-full h-screen bg-black"
-      style={{ zIndex: 0 }}
+      style={{
+        zIndex: 0,
+        // Use dvh (dynamic viewport height) for better mobile support
+        height: '100dvh'
+      }}
     >
       {/* Loading Screen Overlay */}
       <AnimatePresence>
@@ -328,7 +437,6 @@ export default function Scene({ session }: { session: Session | null }) {
 
       {loaded && (
         <div className="absolute inset-0 pointer-events-none z-40">
-          {/* The Navbar component itself handles pointer-events-auto for buttons */}
           <Navbar isUnderwater={isUnderwater} session={session} />
         </div>
       )}
@@ -338,7 +446,6 @@ export default function Scene({ session }: { session: Session | null }) {
           <ScrollControls pages={pages} damping={0.3}>
             <ScrollSync setUnderwater={setIsUnderwater} />
             <Background loaded={loaded} loadingProgress={progress} />
-            {/* Scroll content: Only visible when loaded, but mounted so scroll works */}
             <Scroll
               html
               style={{
@@ -354,42 +461,24 @@ export default function Scene({ session }: { session: Session | null }) {
         </Suspense>
       </Canvas>
 
-      {/* Fixed UI Overlay (Navbar/Auth) - Only visible when loaded */}
-      {/* <motion.div
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-end p-6 bg-linear-to-b from-black/50 to-transparent pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: loaded ? 1 : 0 }}
-        transition={{ duration: 1, delay: 0.5 }}
-      >
-        <div className="pointer-events-auto">
-          {session?.user ? (
-            <Button
-              asChild
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md transition-all"
-            >
-              {session.user.isRegistrationComplete ? (
-                <Link href="/teams">Your Team</Link>
-              ) : (
-                <Link href="/register">Register Now</Link>
-              )}
-            </Button>
-          ) : (
-            <Button
-              asChild
-              className="bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_20px_rgba(8,145,178,0.5)] border-none transition-all hover:scale-105"
-            >
-              <Link href="/register">Register Now</Link>
-            </Button>
-          )}
-        </div>
-      </motion.div> */}
-
-      {/* CSS for custom keyframe animations if not in tailwind config */}
+      {/* CSS for custom keyframe animations */}
       <style jsx global>{`
         @keyframes float {
             0%, 100% { transform: translateY(0px) rotate(0deg); }
             50% { transform: translateY(-20px) rotate(2deg); }
+        }
+        
+        /* Improve mobile scrolling */
+        html {
+          overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Prevent iOS Safari bottom bar from causing layout shifts */
+        @supports (-webkit-touch-callout: none) {
+          body {
+            min-height: -webkit-fill-available;
+          }
         }
       `}</style>
     </div>
