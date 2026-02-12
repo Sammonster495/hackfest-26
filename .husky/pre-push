@@ -2,3 +2,4 @@ rm -rf .next
 
 pnpm lint
 pnpm format
+pnpm build
