@@ -12,7 +12,6 @@ import Link from "next/link";
 import type { Session } from "next-auth";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Button } from "~/components/ui/button";
 import Footer from "./Footer";
 import { Navbar } from "./Navbar";
 import { TransitionMaterial } from "./shader/TransitionMaterial";
