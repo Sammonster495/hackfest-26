@@ -133,7 +133,7 @@ export function RegisterForm({ initialGithubUsername }: RegisterFormProps) {
         </div>
 
         {/* --- DECORATIVE ELEMENTS (The Beach) --- */}
-        <div className="absolute -bottom-[5%] left-[-20%] w-[140%] h-[35vh] bg-[#fffac2]/40 rounded-[100%] blur-3xl z-0 pointer-events-none" />        
+        <div className="absolute -bottom-[5%] left-[-20%] w-[140%] h-[35vh] bg-[#fffac2]/40 rounded-[100%] blur-3xl z-0 pointer-events-none" />
         <div className="absolute -bottom-[12%] left-[-10%] w-[120%] h-[30vh] bg-[#fbf6db] rounded-[50%] shadow-[0_-10px_50px_rgba(240,230,180,0.8)] z-0 pointer-events-none" />
         {/* Step Counter Text */}
         <div className="absolute top-8 left-6 text-sm text-white/80 z-20 font-medium tracking-wide">
