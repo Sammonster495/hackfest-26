@@ -204,18 +204,18 @@ void main() {
     vec4 tex2 = texture2D(tMap2, distortedUv2);
 
     // Underwater color correction (blulish tint and darkness)
-    tex2.rgb *= vec3(0.8, 0.9, 1.0) * 0.6; // Keep the darkening from previous step
+    tex2.rgb *= vec3(0.8, 0.9, 1.0) * 0.9; // Keep the darkening from previous step
 
     // Chromatic aberration at the surface line
-    float aberr = smoothstep(0.02, 0.0, abs(uv.y - surfaceY));
-    if(aberr > 0.0) {
-        float r = texture2D(tMap2, distortedUv2 + vec2(0.005 * aberr, 0.0)).r;
-        float b = texture2D(tMap2, distortedUv2 - vec2(0.005 * aberr, 0.0)).b;
-        tex2.r = mix(tex2.r, r, aberr);
-        tex2.b = mix(tex2.b, b, aberr);
-        // Add a bright "foam" line
-        mixVal += aberr * 0.5 * (1.0 - progress); // Flash only during transition
-    }
+    // float aberr = smoothstep(0.02, 0.0, abs(uv.y - surfaceY));
+    // if(aberr > 0.0) {
+    //     float r = texture2D(tMap2, distortedUv2 + vec2(0.005 * aberr, 0.0)).r;
+    //     float b = texture2D(tMap2, distortedUv2 - vec2(0.005 * aberr, 0.0)).b;
+    //     tex2.r = mix(tex2.r, r, aberr);
+    //     tex2.b = mix(tex2.b, b, aberr);
+    //     // Add a bright "foam" line
+    //     mixVal += aberr * 0.5 * (1.0 - progress); // Flash only during transition
+    // }
 
     // Final mix
     vec4 finalColor = mix(tex1, tex2, clamp(mixVal, 0.0, 1.0));
