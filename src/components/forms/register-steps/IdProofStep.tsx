@@ -30,7 +30,7 @@ export function IdProofStep({ form, onNext }: IdProofStepProps) {
           <FormItem className="w-full max-w-2xl space-y-8 text-center">
             {/* Header Section */}
             <div className="space-y-2">
-              <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight">
+              <FormLabel className="text-3xl md:text-5xl font-pirate font-bold text-white drop-shadow-sm leading-tight tracking-wide">
                 Upload your ID Proof
               </FormLabel>
               <p className="text-white/60 text-lg">

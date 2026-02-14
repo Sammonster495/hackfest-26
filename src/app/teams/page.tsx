@@ -54,7 +54,7 @@ export default async function TeamsPage() {
 
           {/* Text Content */}
           <div className="space-y-2 text-center md:flex-1 md:text-left md:pt-1">
-            <h1 className="text-3xl font-bold drop-shadow-sm md:text-4xl tracking-tight">
+            <h1 className="text-3xl font-pirate font-bold drop-shadow-sm md:text-4xl tracking-wide">
               Team Management
             </h1>
             <p className="text-white/80 text-base md:text-lg leading-relaxed font-medium">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Pirata_One, Crimson_Text } from "next/font/google";
 import Script from "next/script";
 import { ToasterWrapper } from "~/components/providers/toaster-wrapper";
 import { GlobalLoader } from "~/components/ui/global-loader";
@@ -10,6 +10,18 @@ import { DayNightProvider } from "~/components/providers/useDayNight";
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
+});
+
+const pirata = Pirata_One({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-pirata",
+});
+
+const crimson = Crimson_Text({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-crimson",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${jakarta.variable} antialiased dark`}>
+      <body className={`${jakarta.variable} ${pirata.variable} ${crimson.variable} antialiased dark`}>
         <DayNightProvider>
           <GlobalLoader />
           {children}

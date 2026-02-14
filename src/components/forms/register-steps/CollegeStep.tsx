@@ -69,7 +69,7 @@ export function CollegeStep({
           <FormItem className="w-full max-w-2xl space-y-8">
             {/* Header Section */}
             <div className="flex flex-col items-center justify-center text-center space-y-2">
-              <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight text-center">
+              <FormLabel className="text-3xl md:text-5xl font-pirate font-bold text-white drop-shadow-sm leading-tight text-center tracking-wide">
                 Select your College
               </FormLabel>
               <p className="text-white/60 text-lg">
@@ -124,7 +124,7 @@ export function CollegeStep({
                       "group flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:bg-white/20 hover:border-white/30 active:scale-[0.98]",
                       // Highlight & Sticky logic for selected item
                       field.value === college.id &&
-                        "bg-white/20 border-white/50 ring-1 ring-white/50 sticky top-0 z-10 backdrop-blur-md shadow-lg",
+                      "bg-white/20 border-white/50 ring-1 ring-white/50 sticky top-0 z-10 backdrop-blur-md shadow-lg",
                     )}
                   >
                     <div className="flex flex-col gap-1">

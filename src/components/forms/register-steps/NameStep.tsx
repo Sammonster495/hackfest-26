@@ -26,7 +26,7 @@ export function NameStep({ form, onNext }: NameStepProps) {
         render={({ field }) => (
           <FormItem className="w-full space-y-8">
             {/* Large, Bold Question */}
-            <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight">
+            <FormLabel className="text-3xl md:text-5xl font-pirate font-bold text-white drop-shadow-sm leading-tight tracking-wide">
               What's your name?
             </FormLabel>
 

@@ -231,7 +231,7 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
             alt="HF Logo"
             className="w-48 md:w-64 h-auto drop-shadow-2xl z-10 mb-8 translate-x-8"
           />
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] text-white">
+          <h1 className="text-5xl md:text-8xl font-pirate font-black tracking-wider drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] text-white">
             HACKFEST '26
           </h1>
           <p className="mt-6 text-xl md:text-2xl font-medium drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] text-white/90 max-w-2xl bg-black/20 backdrop-blur-sm p-4 rounded-xl border border-white/10">
@@ -257,7 +257,7 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
         >
           <div className="w-full max-w-6xl">
             <motion.h2
-              className="text-4xl md:text-6xl font-bold text-center mb-16 drop-shadow-[0_0_15px_rgba(0,200,255,0.8)] text-cyan-200"
+              className="text-5xl md:text-7xl font-pirate font-bold text-center mb-16 drop-shadow-[0_0_15px_rgba(0,200,255,0.8)] text-cyan-200 tracking-wide"
               initial={{ scale: 0.9, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.8 }}
@@ -290,17 +290,17 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
 
         {/* DEEP SEA (PRIZE POOL) */}
         <motion.section
-          className="min-h-[80vh] flex flex-col items-center justify-center relative px-4 py-10"
+          className="min-h-[80vh] flex flex-col items-center justify-center relative px-4 py-20 pt-8"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 1.5 }}
         >
           {/* Darkening overlay */}
-          <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/20 to-black/60 pointer-events-none -z-10" />
+          <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/30 to-black/70 pointer-events-none -z-10" />
 
           <div className="relative z-10 flex flex-col items-center text-center w-full pb-16">
             <motion.h2
-              className="text-4xl md:text-6xl font-black text-center mb-30 text-transparent bg-clip-text bg-linear-to-b from-yellow-200 to-yellow-600 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]"
+              className="text-5xl md:text-7xl font-pirate font-black text-center mb-30 text-transparent bg-clip-text bg-linear-to-b from-yellow-200 to-yellow-600 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] tracking-wide"
               initial={{ opacity: 0, y: -20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -324,7 +324,7 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
             <Link href="/timeline" passHref>
               <button
                 type="button"
-                className="group relative px-10 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-bold text-xl transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black"
+                className="group relative px-10 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-pirate font-bold text-2xl transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black tracking-wide"
                 // Prevent scroll on focus
                 onFocus={(e) => {
                   e.preventDefault();

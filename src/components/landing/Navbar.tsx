@@ -166,7 +166,7 @@ export function Navbar({
                 key={link.name}
                 href={link.href}
                 className={cn(
-                  "relative font-serif text-lg font-bold tracking-wide transition-colors duration-500",
+                  "relative font-pirate text-xl font-bold tracking-wide transition-colors duration-500",
                   isActive
                     ? isUnderwater
                       ? "text-cyan-400 shadow-cyan-500/50 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"
@@ -248,7 +248,7 @@ export function Navbar({
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
-                      "text-xl font-serif font-bold tracking-widest uppercase transition-colors",
+                      "text-2xl font-pirate font-bold tracking-widest uppercase transition-colors",
                       isActive
                         ? isUnderwater
                           ? "text-cyan-400"
@@ -302,7 +302,7 @@ function AuthButton({
 
   // Base button styles
   const buttonClass = cn(
-    "group relative px-6 py-2 font-serif font-bold transition-all duration-500",
+    "group relative px-6 py-2 font-pirate text-lg font-bold transition-all duration-500",
     isUnderwater
       ? "text-cyan-100 hover:text-white"
       : "text-amber-100 hover:text-white",

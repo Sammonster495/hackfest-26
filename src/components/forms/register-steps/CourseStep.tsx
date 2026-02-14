@@ -29,7 +29,7 @@ export function CourseStep({ form, onNext }: CourseStepProps) {
           <FormItem className="w-full max-w-lg space-y-8">
             {/* Header Section */}
             <div className="text-center">
-              <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight">
+              <FormLabel className="text-3xl md:text-5xl font-pirate font-bold text-white drop-shadow-sm leading-tight tracking-wide">
                 What course are you in?
               </FormLabel>
             </div>
@@ -51,7 +51,7 @@ export function CourseStep({ form, onNext }: CourseStepProps) {
                       // FIXED: Removed 'hover:scale-[1.02]' to prevent overflow
                       "group flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-5 text-left transition-all duration-300 hover:bg-white/20 hover:border-white/30 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards",
                       field.value === course &&
-                        "bg-white/20 border-white/50 ring-1 ring-white/50 shadow-lg sticky top-0 z-10 backdrop-blur-md",
+                      "bg-white/20 border-white/50 ring-1 ring-white/50 shadow-lg sticky top-0 z-10 backdrop-blur-md",
                     )}
                   >
                     {/* Course Name - Added group-hover:pl-2 for the internal movement effect */}

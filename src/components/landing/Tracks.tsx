@@ -264,7 +264,7 @@ function MobileTrackStack() {
             <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
 
             <div className="absolute bottom-0 left-0 w-full p-6">
-              <h3 className="text-2xl font-bold text-cyan-400 mb-2">
+              <h3 className="text-2xl font-bold font-crimson text-cyan-400 mb-2 tracking-wide">
                 {activeTrack.title}
               </h3>
               <div className="mt-4 flex gap-1 justify-center">
@@ -306,14 +306,14 @@ export default function TracksSection() {
   }, []);
 
   return (
-    <section className="relative min-h-screen w-full py-20 px-4 flex flex-col items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen w-full pt-32 py-10 px-4 flex flex-col items-center justify-center overflow-hidden">
       {/* Background Elements */}
       <div className="absolute top-1/4 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="container mx-auto max-w-6xl z-10">
         <motion.h2
-          className="text-4xl md:text-6xl font-black text-center mb-16 text-transparent bg-clip-text bg-linear-to-b from-cyan-200 to-cyan-600 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+          className="text-5xl md:text-7xl font-pirate font-black text-center mb-8 text-transparent bg-clip-text bg-linear-to-b from-yellow-300 to-yellow-600 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-wider"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -387,7 +387,7 @@ export default function TracksSection() {
 
                       {/* Track title */}
                       <motion.span
-                        className="relative z-10 text-xl md:text-4xl font-bold tracking-wide whitespace-nowrap pl-4"
+                        className="relative z-10 text-xl md:text-4xl font-crimson font-bold tracking-wide whitespace-nowrap pl-4"
                         animate={{
                           color: isActive ? "#67e8f9" : "#9ca3af",
                           textShadow: isActive

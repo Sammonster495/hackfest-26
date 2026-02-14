@@ -13,12 +13,12 @@ export default async function DashboardLayout({
     : false;
 
   return (
-    <>
+    <div className="dashboard-theme font-sans">
       <CommandMenu
         isAdmin={userIsAdmin}
         dashboardUser={session?.dashboardUser}
       />
       {children}
-    </>
+    </div>
   );
 }

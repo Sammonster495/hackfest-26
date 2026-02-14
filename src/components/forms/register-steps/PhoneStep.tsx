@@ -26,7 +26,7 @@ export function PhoneStep({ form, onNext }: PhoneStepProps) {
         render={({ field }) => (
           <FormItem className="w-full space-y-8 text-center">
             {/* Large, Bold Question */}
-            <FormLabel className="text-3xl md:text-5xl font-bold text-white drop-shadow-sm leading-tight">
+            <FormLabel className="text-3xl md:text-5xl font-pirate font-bold text-white drop-shadow-sm leading-tight tracking-wide">
               Your phone number?
             </FormLabel>
 

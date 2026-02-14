@@ -66,6 +66,16 @@
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+  --font-pirata: var(--font-pirata);
+  --font-crimson: var(--font-crimson);
+}
+
+.font-pirate {
+  font-family: var(--font-pirata), serif;
+}
+
+.font-crimson {
+  font-family: var(--font-crimson), serif;
 }
 
 .dark {
@@ -184,6 +194,25 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
+.dashboard-theme,
+.dashboard-theme h1,
+.dashboard-theme h2,
+.dashboard-theme h3,
+.dashboard-theme h4,
+.dashboard-theme h5,
+.dashboard-theme h6,
+.dashboard-theme p,
+.dashboard-theme span,
+.dashboard-theme div,
+.dashboard-theme button,
+.dashboard-theme input,
+.dashboard-theme textarea,
+.dashboard-theme select {
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif !important;
+}
+
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -191,6 +220,19 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-crimson), serif;
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-pirata), serif;
+  }
+
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-crimson), serif;
   }
 }
 
