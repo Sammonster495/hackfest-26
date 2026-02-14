@@ -8,16 +8,15 @@ import {
 } from "@react-three/drei";
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber";
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import type { Session } from "next-auth";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Button } from "~/components/ui/button";
 import Footer from "./Footer";
 import { Navbar } from "./Navbar";
 import { TransitionMaterial } from "./shader/TransitionMaterial";
 import TracksSection from "./Tracks";
-import Image from "next/image";
 
 // Register the custom shader material
 extend({ TransitionMaterial });
@@ -103,8 +102,8 @@ function LoadingScreen({ progress }: { progress: number }) {
         opacity: 0,
         transition: {
           backgroundColor: { duration: 0.5, ease: "easeInOut" },
-          opacity: { duration: 0.8, delay: 0.5, ease: "easeInOut" }
-        }
+          opacity: { duration: 0.8, delay: 0.5, ease: "easeInOut" },
+        },
       }}
     >
       {/* 1. BACKGROUND: Subtle Radial Gradient for depth (Deep Sea Vibe) */}
@@ -229,7 +228,12 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
     const handleResize = () => {
       // Only recalculate on significant width changes (orientation/desktop resize)
       // This ignores mobile browser chrome height changes
-      const widthChanged = Math.abs(window.innerWidth - (initialViewportHeight.current * (window.innerWidth / window.innerHeight))) > 100;
+      const widthChanged =
+        Math.abs(
+          window.innerWidth -
+            initialViewportHeight.current *
+              (window.innerWidth / window.innerHeight),
+        ) > 100;
 
       if (widthChanged && ref.current) {
         hasCalculated.current = false;
@@ -254,17 +258,17 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
       if (target) {
         // Scroll into view without affecting the 3D scroll system
         target.scrollIntoView({
-          behavior: 'instant',
-          block: 'nearest',
-          inline: 'nearest'
+          behavior: "instant",
+          block: "nearest",
+          inline: "nearest",
         });
       }
     };
 
-    document.addEventListener('focus', preventFocusScroll, true);
+    document.addEventListener("focus", preventFocusScroll, true);
 
     return () => {
-      document.removeEventListener('focus', preventFocusScroll, true);
+      document.removeEventListener("focus", preventFocusScroll, true);
     };
   }, []);
 
@@ -272,7 +276,7 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
     <div
       ref={ref}
       className="w-full text-white no-scrollbar pointer-events-auto flex flex-col"
-      style={{ minHeight: contentHeight > 0 ? `${contentHeight}px` : '100vh' }}
+      style={{ minHeight: contentHeight > 0 ? `${contentHeight}px` : "100vh" }}
     >
       {/* Main content wrapper */}
       <div className="flex-1">
@@ -443,35 +447,37 @@ export default function Scene({ session }: { session: Session | null }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent tab key from causing scroll jumps
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         e.preventDefault();
 
         // Manually handle tab navigation
         const focusableElements = Array.from(
           document.querySelectorAll<HTMLElement>(
-            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-          )
+            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
         );
 
-        const currentIndex = focusableElements.findIndex(
-          el => el === document.activeElement
+        const currentIndex = focusableElements.indexOf(
+          document.activeElement as HTMLElement,
         );
 
         let nextIndex: number;
         if (e.shiftKey) {
-          nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
+          nextIndex =
+            currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
         } else {
-          nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1;
+          nextIndex =
+            currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1;
         }
 
         focusableElements[nextIndex]?.focus({ preventScroll: true });
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -482,7 +488,7 @@ export default function Scene({ session }: { session: Session | null }) {
       style={{
         zIndex: 0,
         // Use dvh (dynamic viewport height) for better mobile support
-        height: '100dvh'
+        height: "100dvh",
       }}
     >
       {/* Loading Screen Overlay */}
@@ -496,7 +502,11 @@ export default function Scene({ session }: { session: Session | null }) {
         </div>
       )}
 
-      <Canvas gl={{ antialias: true, alpha: false }} dpr={[1, 1.5]} color="black">
+      <Canvas
+        gl={{ antialias: true, alpha: false }}
+        dpr={[1, 1.5]}
+        color="black"
+      >
         <Suspense fallback={null}>
           <ScrollControls pages={pages} damping={0.2}>
             <ScrollSync setUnderwater={setIsUnderwater} />
