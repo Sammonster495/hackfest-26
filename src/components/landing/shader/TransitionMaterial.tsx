@@ -18,6 +18,7 @@ uniform float uTime;
 uniform float uTransitionProgress;
 uniform float uHoverProgress;
 uniform float uNausea; // Nausea intensity (0.0 to 1.0)
+uniform float uIsNight; // 0.0 for day, 1.0 for night
 uniform float uVar1;
 uniform float uVar2;
 uniform float uVar3;
@@ -204,7 +205,16 @@ void main() {
     vec4 tex2 = texture2D(tMap2, distortedUv2);
 
     // Underwater color correction (blulish tint and darkness)
-    tex2.rgb *= vec3(0.8, 0.9, 1.0) * 0.9; // Keep the darkening from previous step
+    // Made slightly brighter base
+    tex2.rgb *= vec3(0.9, 0.95, 1.0); 
+
+    // --- NIGHT MODE TINT ---
+    if(uIsNight > 0.0) {
+        // Mix with a cooler, slightly brighter night blue/purple
+        // Avoid crushing blacks too hard
+        vec3 nightTint = vec3(0.2, 0.3, 0.6); 
+        tex2.rgb = mix(tex2.rgb, tex2.rgb * nightTint * 1.5, uIsNight * 0.8);
+    }
 
     // Chromatic aberration at the surface line
     // float aberr = smoothstep(0.02, 0.0, abs(uv.y - surfaceY));
@@ -221,9 +231,14 @@ void main() {
     vec4 finalColor = mix(tex1, tex2, clamp(mixVal, 0.0, 1.0));
 
     // Deep ocean darkness at bottom when fully submerged
+    // Reduced darkness strength significantly to avoid being pitch black at bottom
     float depth = smoothstep(0.8, 0.0, uv.y);
     float darkStrength = smoothstep(0.8, 1.0, progress); // Only apply darkness as we finish transition
-    finalColor.rgb *= 1.0 - (depth * 0.3 * darkStrength);
+    // Multiplier changed from 0.3 to 0.6 so we preserve 60% brightness at bottom, not remove 30% of ALREADY dark
+    // Actually wait, logic was: 1.0 - (depth * 0.3) -> 0.7 multiplier at bottom. 
+    // If it was black, maybe tex2 * 0.1 * 0.7 = 0.07. 
+    // Let's reduce the fade: 1.0 - (depth * 0.2)
+    finalColor.rgb *= 1.0 - (depth * 0.2 * darkStrength);
 
     // --- NAUSEA PURPLE TINT START ---
     if (uNausea > 0.0) {
@@ -255,33 +270,34 @@ void main()
 `;
 
 export const TransitionMaterial = shaderMaterial(
-  {
-    uTime: 0,
-    uTransitionProgress: 0,
-    uHoverProgress: 0,
-    uVar1: 0,
-    uVar2: 0,
-    uVar3: 0,
-    uPlaneRes: new THREE.Vector2(1, 1),
-    uMediaRes1: new THREE.Vector2(1, 1),
-    uMediaRes2: new THREE.Vector2(1, 1),
-    uCanvasRes: new THREE.Vector2(1, 1),
-    uMouse2D: new THREE.Vector2(0, 0),
-    tMap1: null,
-    tMap2: null,
-    tMap3: null, // Unused but in uniforms
-    uNausea: 0,
-  },
-  vertexShader,
-  fragmentShader,
+    {
+        uTime: 0,
+        uTransitionProgress: 0,
+        uHoverProgress: 0,
+        uVar1: 0,
+        uVar2: 0,
+        uVar3: 0,
+        uPlaneRes: new THREE.Vector2(1, 1),
+        uMediaRes1: new THREE.Vector2(1, 1),
+        uMediaRes2: new THREE.Vector2(1, 1),
+        uCanvasRes: new THREE.Vector2(1, 1),
+        uMouse2D: new THREE.Vector2(0, 0),
+        tMap1: null,
+        tMap2: null,
+        tMap3: null, // Unused but in uniforms
+        uNausea: 0,
+        uIsNight: 0,
+    },
+    vertexShader,
+    fragmentShader,
 );
 
 extend({ TransitionMaterial });
 
 declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      transitionMaterial: any;
+    namespace JSX {
+        interface IntrinsicElements {
+            transitionMaterial: any;
+        }
     }
-  }
 }

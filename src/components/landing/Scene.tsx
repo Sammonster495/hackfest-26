@@ -97,6 +97,12 @@ function Background({
         0,
         0.02,
       );
+
+      materialRef.current.uIsNight = THREE.MathUtils.lerp(
+        materialRef.current.uIsNight,
+        isNight ? 1.0 : 0.0,
+        0.05
+      );
     }
   });
 
@@ -290,7 +296,7 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
           transition={{ duration: 1.5 }}
         >
           {/* Darkening overlay */}
-          <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/80 to-black pointer-events-none -z-10" />
+          <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/20 to-black/60 pointer-events-none -z-10" />
 
           <div className="relative z-10 flex flex-col items-center text-center w-full pb-16">
             <motion.h2
