@@ -2,7 +2,7 @@ import type { NextRequest, NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
-import { getCurrentUser } from "./get-current-user";
+import { getCurrentEventUser, getCurrentUser } from "./get-current-user";
 
 type RouteHandler = (
   request: NextRequest,
@@ -16,6 +16,30 @@ export function protectedRoute(handler: RouteHandler) {
     context: { params: Promise<Record<string, string>> },
   ) => {
     const user = await getCurrentUser();
+
+    if (!user) {
+      return errorResponse(
+        new AppError("UNAUTHORIZED", 401, {
+          title: "Unauthorized",
+          description: "You must be logged in to perform this action.",
+        }),
+      );
+    }
+
+    try {
+      return await handler(request, context, user);
+    } catch (err) {
+      return errorResponse(err);
+    }
+  };
+}
+
+export function protectedEventRoute(handler: RouteHandler) {
+  return async (
+    request: NextRequest,
+    context: { params: Promise<Record<string, string>> },
+  ) => {
+    const user = await getCurrentEventUser();
 
     if (!user) {
       return errorResponse(

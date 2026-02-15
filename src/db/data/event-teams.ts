@@ -1,31 +1,47 @@
+import { count, eq } from "drizzle-orm";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
+import { successResponse } from "~/lib/response/success";
 import db from "..";
 import { eventParticipants, eventTeams } from "../schema";
 import { query } from ".";
-import { deleteParticipant, findByEvent } from "./event-users";
+import { deleteParticipant } from "./event-users";
 
 export async function createEventTeam(
   eventId: string,
   userId: string,
   teamName: string,
+  confirm = false,
 ) {
-  const eventUser = await findByEvent(eventId, userId);
+  const event = await query.events.findOne({
+    where: (e, { and, eq, not }) =>
+      and(eq(e.id, eventId), not(eq(e.status, "Draft"))),
+  });
 
-  if (eventUser)
+  const teamCount =
+    (
+      await db
+        .select({ value: count() })
+        .from(eventTeams)
+        .where(eq(eventTeams.eventId, eventId))
+    )[0].value ?? 0;
+
+  if (event && teamCount >= event.maxTeams)
     return errorResponse(
-      new AppError("ALREADY_REGISTERED", 400, {
-        title: "Already registered",
-        description: "You are already registered for this event.",
+      new AppError("MAX_TEAMS_REACHED", 400, {
+        title: "Max teams reached",
+        description:
+          "The maximum number of teams for this event has been reached.",
       }),
     );
 
-  const eventTeam = db.transaction(async (tx) => {
+  const eventTeam = await db.transaction(async (tx) => {
     const [team] = await tx
       .insert(eventTeams)
       .values({
         eventId: eventId,
         name: teamName,
+        isComplete: confirm,
       })
       .returning();
 
@@ -48,8 +64,15 @@ export async function createEventTeam(
       }),
     );
   }
+  console.log("Created team:", eventTeam);
 
-  return eventTeam;
+  return successResponse(
+    { team: eventTeam },
+    {
+      title: "Team Created",
+      description: "Your team has been created successfully.",
+    },
+  );
 }
 
 export async function leaveEventTeam(
@@ -57,16 +80,6 @@ export async function leaveEventTeam(
   teamId: string,
   userId: string,
 ) {
-  const eventUser = await findByEvent(eventId, userId);
-
-  if (!eventUser)
-    return errorResponse(
-      new AppError("NOT_REGISTERED", 400, {
-        title: "Not registered",
-        description: "You are not registered for this event.",
-      }),
-    );
-
   const participant = await query.eventParticipants.findOne({
     where: (p, { and, eq }) =>
       and(eq(p.eventId, eventId), eq(p.teamId, teamId), eq(p.userId, userId)),
@@ -80,7 +93,13 @@ export async function leaveEventTeam(
       }),
     );
 
-  return deleteParticipant(participant.id);
+  return successResponse(
+    { team: await deleteParticipant(participant.id) },
+    {
+      title: "Left Team",
+      description: "You have left the team successfully.",
+    },
+  );
 }
 
 export async function joinEventTeam(
@@ -88,16 +107,6 @@ export async function joinEventTeam(
   teamId: string,
   userId: string,
 ) {
-  const eventUser = await findByEvent(eventId, userId);
-
-  if (eventUser)
-    return errorResponse(
-      new AppError("ALREADY_REGISTERED", 400, {
-        title: "Already registered",
-        description: "You are already registered for this event.",
-      }),
-    );
-
   const team = await query.eventTeams.findOne({
     where: (t, { and, eq }) => and(eq(t.id, teamId), eq(t.eventId, eventId)),
   });
@@ -126,31 +135,50 @@ export async function joinEventTeam(
       }),
     );
 
-  return participant;
+  return successResponse(
+    { team: participant },
+    {
+      title: "Joined Team",
+      description: "You have joined the team successfully.",
+    },
+  );
 }
 
-export async function deleteEventTeam(
-  eventId: string,
-  teamId: string,
-  userId: string,
-) {
-  const eventUser = await findByEvent(eventId, userId);
+export async function confirmEventTeam(eventId: string, teamId: string) {
+  const event = await query.events.findOne({
+    where: (e, { eq }) => eq(e.id, eventId),
+  });
+  const memberCount =
+    (
+      await db
+        .select({ value: count() })
+        .from(eventParticipants)
+        .where(eq(eventParticipants.teamId, teamId))
+    )[0].value ?? 0;
 
-  if (!eventUser)
+  if (event && memberCount < event.minTeamSize)
     return errorResponse(
-      new AppError("NOT_REGISTERED", 400, {
-        title: "Not registered",
-        description: "You are not registered for this event.",
+      new AppError("MIN_TEAM_SIZE_NOT_MET", 400, {
+        title: "Minimum team size not met",
+        description: `Your team must have at least ${event.minTeamSize} members to be confirmed.`,
       }),
     );
 
-  if (!eventUser.isLeader)
-    return errorResponse(
-      new AppError("NOT_TEAM_LEADER", 403, {
-        title: "Not team leader",
-        description: "Only the team leader can delete the team.",
-      }),
-    );
+  return successResponse(
+    { team: await query.eventTeams.update(teamId, { isComplete: true }) },
+    {
+      title: "Team Confirmed",
+      description: "Your team has been confirmed successfully.",
+    },
+  );
+}
 
-  return query.eventTeams.delete(teamId);
+export async function deleteEventTeam(teamId: string) {
+  return successResponse(
+    { team: await query.eventTeams.delete(teamId) },
+    {
+      title: "Team Deleted",
+      description: "Your team has been deleted successfully.",
+    },
+  );
 }
