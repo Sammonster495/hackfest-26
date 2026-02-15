@@ -136,83 +136,48 @@ function Background({ isNight }: { isNight: boolean }) {
   );
 }
 
-function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
+function LandingContent({
+  setPages,
+  pages,
+}: {
+  setPages: (pages: number) => void;
+  pages: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const initialViewportHeight = useRef<number>(0);
-  const hasCalculated = useRef(false);
-  const lastHeight = useRef<number>(0);
+  const [, setContentHeight] = useState<number>(0);
 
   useEffect(() => {
     const calculatePages = () => {
-      if (!ref.current) return;
+      if (ref.current) {
+        const { height } = ref.current.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        // Exact pages needed for content
+        const newPages = Math.max(3, height / viewportHeight);
 
-      // Lock to initial viewport height on first calculation
-      if (initialViewportHeight.current === 0) {
-        initialViewportHeight.current = window.innerHeight;
+        // Only update if difference is significant
+        if (Math.abs(newPages - pages) > 0.02) {
+          setPages(newPages);
+        }
+        setContentHeight(height);
       }
-
-      const { height } = ref.current.getBoundingClientRect();
-      const vh = initialViewportHeight.current;
-      const newPages = Math.max(3, height / vh);
-
-      // Only update if height changed significantly (> 10px) to prevent loops
-      if (
-        Math.abs(height - lastHeight.current) > 10 ||
-        !hasCalculated.current
-      ) {
-        lastHeight.current = height;
-        setPages(newPages);
-        hasCalculated.current = true;
-      }
-    };
-
-    // Defer measurement to let layout & animations settle
-    let rafId: number;
-    const deferredCalculate = () => {
-      rafId = requestAnimationFrame(() => {
-        // Wait one more frame to ensure framer-motion initial renders have settled
-        rafId = requestAnimationFrame(() => {
-          calculatePages();
-        });
-      });
     };
 
     const observer = new ResizeObserver(() => {
-      if (!hasCalculated.current) {
-        deferredCalculate();
-      }
+      calculatePages();
     });
 
     if (ref.current) {
       observer.observe(ref.current);
-      deferredCalculate();
+      calculatePages();
     }
 
-    // Only listen to actual window resize (orientation change, desktop resize)
-    // Ignore mobile browser chrome changes
-    const handleResize = () => {
-      const widthChanged =
-        Math.abs(
-          window.innerWidth -
-            initialViewportHeight.current *
-              (window.innerWidth / window.innerHeight),
-        ) > 100;
-
-      if (widthChanged && ref.current) {
-        hasCalculated.current = false;
-        initialViewportHeight.current = window.innerHeight;
-        deferredCalculate();
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", calculatePages);
 
     return () => {
-      cancelAnimationFrame(rafId);
       observer.disconnect();
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", calculatePages);
     };
-  }, [setPages]);
+  }, [setPages, pages]);
 
   // Prevent default scroll behavior when focusing on elements
   useEffect(() => {
@@ -239,13 +204,21 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
   return (
     <div
       ref={ref}
-      className="w-full min-h-full text-white no-scrollbar pointer-events-auto flex flex-col"
+      className="w-full text-white no-scrollbar pointer-events-auto flex flex-col"
+      style={{
+        minHeight: "100dvh",
+      }}
     >
       {/* Main content wrapper */}
-      <div className="flex-1 relative">
-        <div className="absolute bottom-0 left-0 w-full h-[40vh] bg-linear-to-t from-black via-black/40 to-transparent pointer-events-none z-0" />
+      <div className="flex-1">
         {/* HERITAGE SECTION (SUNNY) */}
-        <section className="h-screen flex flex-col items-center justify-center relative p-8 text-center bg-linear-to-b from-black/20 via-transparent to-transparent">
+        <motion.section
+          className="h-screen flex flex-col items-center justify-center relative p-8 text-center bg-linear-to-b from-black/20 via-transparent to-transparent"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
+          viewport={{ once: true }}
+        >
           <img
             src="/logo.png"
             alt="HF Logo"
@@ -262,7 +235,7 @@ function LandingContent({ setPages }: { setPages: (pages: number) => void }) {
               Scroll to Dive
             </p>
           </div>
-        </section>
+        </motion.section>
 
         {/* SPACER FOR TRANSITION */}
         <section className="h-[10vh]"></section>
@@ -487,18 +460,18 @@ export default function Scene({ session }: { session: Session | null }) {
         color="black"
       >
         <Suspense fallback={null}>
-          <ScrollControls key={pages} pages={pages} damping={0.2}>
+          <ScrollControls pages={pages} damping={0.2}>
             <ScrollSync setUnderwater={setIsUnderwater} />
             <Background isNight={isNight} />
             {/* Scroll content */}
             <Scroll
               html
               style={{
-                width: "100vw",
-                height: "100vh",
+                width: "100%",
+                height: "100%",
               }}
             >
-              <LandingContent setPages={setPages} />
+              <LandingContent setPages={setPages} pages={pages} />
             </Scroll>
           </ScrollControls>
         </Suspense>

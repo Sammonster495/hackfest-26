@@ -367,7 +367,7 @@ export default function TracksSection() {
                           opacity: isActive ? 1 : 0,
                           boxShadow: isActive
                             ? "inset 0 0 20px rgba(34, 211, 238, 0.1)"
-                            : "none",
+                            : "inset 0 0 0px rgba(34, 211, 238, 0)",
                         }}
                         transition={{ duration: 0.3 }}
                       />
@@ -380,7 +380,7 @@ export default function TracksSection() {
                           scaleY: isActive ? 1 : 0,
                           boxShadow: isActive
                             ? "0 0 10px rgba(34, 211, 238, 0.8)"
-                            : "none",
+                            : "0 0 0px rgba(34, 211, 238, 0)",
                         }}
                         transition={{ duration: 0.2 }}
                       />
@@ -392,7 +392,7 @@ export default function TracksSection() {
                           color: isActive ? "#67e8f9" : "#9ca3af",
                           textShadow: isActive
                             ? "0 0 20px rgba(103, 232, 249, 0.6), 0 0 40px rgba(103, 232, 249, 0.3)"
-                            : "none",
+                            : "0 0 0px rgba(103, 232, 249, 0), 0 0 0px rgba(103, 232, 249, 0)",
                         }}
                         transition={{ duration: 0.3 }}
                       >
