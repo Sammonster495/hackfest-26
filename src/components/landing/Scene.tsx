@@ -5,7 +5,7 @@ import { useTexture } from "@react-three/drei";
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber";
 import { motion } from "framer-motion";
 import type { Session } from "next-auth";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useDayNight } from "~/components/providers/useDayNight";
 import BrochureDownload from "./Brochure";
@@ -469,17 +469,15 @@ export default function Scene({ session }: { session: Session | null }) {
       >
         <LandingContent setPages={setPages} pages={pages} />
       </div>
-
       <div className="absolute inset-0 pointer-events-none z-40">
         {/* The Navbar component itself handles pointer-events-auto for buttons */}
         <Navbar isUnderwater={isUnderwater} session={session} />
       </div>
-
       <Canvas
         className="canvas1"
         gl={{ antialias: true, alpha: false }}
         dpr={[1, 1.5]}
-        color="black"
+        camera={{ position: [0, 0, 5] }}
       >
         <Suspense fallback={null}>
           <ScrollSync
