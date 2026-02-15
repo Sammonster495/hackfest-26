@@ -174,7 +174,7 @@ function TimelineItem({
               {/* Big day number */}
               <div className="relative shrink-0">
                 <span
-                  className="text-7xl md:text-8xl font-black font-sans leading-none tracking-tight block"
+                  className={`${event.label ? "text-5xl md:text-8xl" : "text-7xl md:text-8xl"} font-black font-sans leading-none tracking-tight block`}
                   style={{
                     color: event.accent,
                     textShadow: `0 0 40px rgba(${event.accentRgb}, 0.4), 0 0 80px rgba(${event.accentRgb}, 0.2)`,
@@ -186,23 +186,25 @@ function TimelineItem({
 
               {/* Month + year stacked */}
               <div
-                className={`flex flex-col ${
-                  isEven ? "md:items-end" : "items-start"
-                }`}
+                className={`flex ${
+                  event.label
+                    ? "flex-row items-center gap-2 flex-wrap min-w-0"
+                    : "flex-col"
+                } ${isEven ? "md:items-end md:flex-col" : "md:flex-col md:items-start"}`}
               >
                 <span
-                  className="text-2xl md:text-3xl font-pirate font-bold tracking-[0.15em] leading-tight"
+                  className={`${event.label ? "text-xl md:text-3xl" : "text-2xl md:text-3xl"} font-pirate font-bold tracking-[0.15em] leading-tight min-w-0`}
                   style={{ color: event.accent }}
                 >
                   {event.month}
                 </span>
-                <span className="text-sm font-mono text-white/30 tracking-widest">
+                <span className="text-sm font-mono text-white/30 tracking-widest self-center md:self-auto min-w-0">
                   {event.year}
                 </span>
                 {/* Optional label (e.g. "36 HOURS") */}
                 {event.label && (
                   <span
-                    className="mt-1 text-[10px] font-mono font-bold tracking-[0.3em] px-2 py-0.5 rounded border"
+                    className="text-[10px] font-mono font-bold tracking-[0.3em] px-2 py-0.5 rounded border md:mt-1"
                     style={{
                       color: event.accent,
                       borderColor: `rgba(${event.accentRgb}, 0.3)`,
