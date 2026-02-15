@@ -266,9 +266,9 @@ function LandingContent({
             >
               <div className="group relative w-72 md:w-96 aspect-video bg-white/70 backdrop-blur-sm border-2 border-cyan-400/50 rounded-2xl flex items-center justify-center hover:border-cyan-300 transition-all duration-500 overflow-hidden shadow-[0_0_25px_rgba(0,200,255,0.2)] hover:shadow-[0_0_40px_rgba(0,200,255,0.4)]">
                 <img
-                  src="/logos/nitte.png"
+                  src="/logos/nmamit.png"
                   alt="NITTE"
-                  className="w-3/4 h-auto object-contain group-hover:scale-105 transition-transform duration-500"
+                  className="w-3/4 h-auto object-contain group-hover:scale-105 transition-transform duration-500 scale-125"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
