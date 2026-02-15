@@ -62,7 +62,7 @@ export function Navbar({
       ref={navRef}
       layout // This enables the smooth height expansion
       className={cn(
-        "fixed left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-4xl pointer-events-auto",
+        "fixed left-1/2 -translate-x-1/2 z-100 w-[95%] max-w-4xl pointer-events-auto",
         "transition-all duration-500 ease-out",
         // Disable shrinking if menu is open so it doesn't look cramped
         scrolled && !isMobileMenuOpen ? "top-2 scale-[0.98]" : "top-6",
@@ -132,7 +132,7 @@ export function Navbar({
       <div className="relative flex items-center justify-between px-6 py-3 md:px-20 md:py-4">
         <Link
           href="/"
-          className="group relative flex-shrink-0 transition-transform hover:scale-105 active:scale-95"
+          className="group relative shrink-0 transition-transform hover:scale-105 active:scale-95"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           {/* Logo Glow */}
@@ -141,8 +141,8 @@ export function Navbar({
               className={cn(
                 "w-16 h-16 md:w-20 md:h-5 rounded-full blur-2xl opacity-100 transition-colors duration-500",
                 isUnderwater
-                  ? "bg-gradient-to-r from-cyan-400 via-blue-300 to-cyan-500"
-                  : "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500",
+                  ? "bg-linear-to-r from-cyan-400 via-blue-300 to-cyan-500"
+                  : "bg-linear-to-r from-amber-400 via-yellow-300 to-amber-500",
               )}
             />
           </div>
@@ -179,7 +179,7 @@ export function Navbar({
                 {link.name}
                 <span
                   className={cn(
-                    "absolute -bottom-1 left-0 h-[2px] w-full transition-transform duration-300 origin-left scale-x-0 rounded-full opacity-100",
+                    "absolute -bottom-1 left-0 h-0.5 w-full transition-transform duration-300 origin-left scale-x-0 rounded-full opacity-100",
                     isUnderwater
                       ? "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]"
                       : "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]",
@@ -322,7 +322,7 @@ function AuthButton({
       {/* Inner faint border for depth */}
       <div
         className={cn(
-          "absolute inset-[3px] border rounded-sm opacity-50 transition-colors duration-500",
+          "absolute inset-0.75 border rounded-sm opacity-50 transition-colors duration-500",
           isUnderwater ? "border-cyan-200/20" : "border-amber-200/20",
         )}
       />

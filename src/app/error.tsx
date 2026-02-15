@@ -13,12 +13,12 @@ export default function ErrorPage({
 }) {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a1628]">
-      <div className="absolute top-1/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-500/30 to-transparent" />
+      <div className="absolute top-1/3 left-0 right-0 h-px bg-linear-to-r from-transparent via-slate-500/30 to-transparent" />
 
-      <div className="absolute bottom-1/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-500/30 to-transparent" />
+      <div className="absolute bottom-1/3 left-0 right-0 h-px bg-linear-to-r from-transparent via-slate-500/30 to-transparent" />
 
       <div className="z-10 flex flex-col items-center px-4 text-center">
-        <h1 className="mb-4 text-7xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-slate-200 to-slate-400 sm:text-8xl">
+        <h1 className="mb-4 text-7xl font-bold tracking-tight text-transparent bg-clip-text bg-linear-to-b from-slate-200 to-slate-400 sm:text-8xl">
           Oops!
         </h1>
 
