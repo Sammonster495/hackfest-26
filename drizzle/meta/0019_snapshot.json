@@ -1,6 +1,6 @@
 {
-  "id": "e68fd355-de40-4719-a668-2bc6279a4769",
-  "prevId": "09fca9bd-c7bf-418a-9cd2-bf9c59d719a1",
+  "id": "0ca08b1c-e099-482b-a5dd-074f43369bdb",
+  "prevId": "e68fd355-de40-4719-a668-2bc6279a4769",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -448,8 +448,14 @@
           "primaryKey": true,
           "notNull": true
         },
-        "participant_id": {
-          "name": "participant_id",
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -459,6 +465,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_leader": {
+          "name": "is_leader",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -470,13 +483,22 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "event_participant_participant_id_event_user_id_fk": {
-          "name": "event_participant_participant_id_event_user_id_fk",
+        "event_participant_event_id_event_id_fk": {
+          "name": "event_participant_event_id_event_id_fk",
+          "tableFrom": "event_participant",
+          "tableTo": "event",
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "event_participant_user_id_event_user_id_fk": {
+          "name": "event_participant_user_id_event_user_id_fk",
           "tableFrom": "event_participant",
           "tableTo": "event_user",
-          "columnsFrom": ["participant_id"],
+          "columnsFrom": ["user_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "event_participant_team_id_event_teams_id_fk": {
@@ -485,12 +507,28 @@
           "tableTo": "event_teams",
           "columnsFrom": ["team_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "event_participant_unique": {
+          "name": "event_participant_unique",
+          "nullsNotDistinct": false,
+          "columns": ["event_id", "user_id"]
+        },
+        "team_participant_unique": {
+          "name": "team_participant_unique",
+          "nullsNotDistinct": false,
+          "columns": ["team_id", "user_id"]
+        },
+        "event_team_leader_unique": {
+          "name": "event_team_leader_unique",
+          "nullsNotDistinct": false,
+          "columns": ["event_id", "is_leader", "user_id"]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -518,12 +556,6 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'Pending'"
-        },
-        "leader_id": {
-          "name": "leader_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
         },
         "event_id": {
           "name": "event_id",
@@ -562,22 +594,13 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "event_teams_leader_id_event_user_id_fk": {
-          "name": "event_teams_leader_id_event_user_id_fk",
-          "tableFrom": "event_teams",
-          "tableTo": "event_user",
-          "columnsFrom": ["leader_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "event_teams_event_id_event_id_fk": {
           "name": "event_teams_event_id_event_id_fk",
           "tableFrom": "event_teams",
           "tableTo": "event",
           "columnsFrom": ["event_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

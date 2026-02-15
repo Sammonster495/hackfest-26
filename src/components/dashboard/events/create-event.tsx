@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
 import { cn } from "~/lib/utils";
 import { eventSchema } from "~/lib/validation/event";
@@ -153,7 +153,7 @@ export default function CreateEventTab({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: parseInt(value) || 0,
+      [name]: parseInt(value, 10) || 0,
     }));
   };
 

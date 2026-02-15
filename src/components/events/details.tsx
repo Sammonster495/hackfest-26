@@ -1,8 +1,8 @@
-import Image from "next/image";
-import { Event } from "./layout";
-import { getEventAttributes } from "./utils";
-import { Button } from "../ui/button";
 import { Compass } from "lucide-react";
+import Image from "next/image";
+import { Button } from "../ui/button";
+import type { Event } from "./layout";
+import { getEventAttributes } from "./utils";
 
 export default function EventDetails({
   events,

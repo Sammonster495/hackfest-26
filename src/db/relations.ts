@@ -159,10 +159,6 @@ export const eventTeamRelations = relations(eventTeams, ({ many, one }) => ({
     fields: [eventTeams.eventId],
     references: [events.id],
   }),
-  leader: one(eventParticipants, {
-    fields: [eventTeams.leaderId],
-    references: [eventParticipants.id],
-  }),
   members: many(eventParticipants),
 }));
 
@@ -184,12 +180,16 @@ export const eventParticipantRelations = relations(
   eventParticipants,
   ({ one }) => ({
     user: one(eventUsers, {
-      fields: [eventParticipants.participantId],
+      fields: [eventParticipants.userId],
       references: [eventUsers.id],
     }),
     team: one(eventTeams, {
       fields: [eventParticipants.teamId],
       references: [eventTeams.id],
+    }),
+    event: one(events, {
+      fields: [eventParticipants.eventId],
+      references: [events.id],
     }),
   }),
 );

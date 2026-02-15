@@ -68,7 +68,7 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
     }
 
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -87,7 +87,7 @@ export async function createEvent(
     }
 
     return true;
-  } catch (error) {
+  } catch (_error) {
     toast.error("Failed to create event. Please try again.");
     return false;
   }
@@ -102,7 +102,7 @@ export async function getEventById(eventId: string): Promise<EventData | null> {
       return null;
     }
     return data;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -122,7 +122,7 @@ export async function updateEvent(
     }
 
     return data;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }

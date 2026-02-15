@@ -118,7 +118,7 @@ export default function UpdateEventTab({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: parseInt(value) || 0,
+      [name]: parseInt(value, 10) || 0,
     }));
   };
 

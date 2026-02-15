@@ -6,8 +6,14 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
-import { eventAudienceEnum, eventStatusEnum, eventTypeEnum, paymentStatusEnum } from "../enum";
+import {
+  eventAudienceEnum,
+  eventStatusEnum,
+  eventTypeEnum,
+  paymentStatusEnum,
+} from "../enum";
 import { eventUsers } from "./event-auth";
 
 export const events = pgTable(
@@ -40,32 +46,44 @@ export const events = pgTable(
   ],
 );
 
-export const eventParticipants = pgTable("event_participant", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  participantId: text("participant_id")
-    .notNull()
-    .references((): PgColumn => eventUsers.id),
-  teamId: text("team_id")
-    .notNull()
-    .references(() => eventTeams.id),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const eventParticipants = pgTable(
+  "event_participant",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references((): PgColumn => eventUsers.id, { onDelete: "cascade" }),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => eventTeams.id, { onDelete: "cascade" }),
+    isLeader: boolean("is_leader").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("event_participant_unique").on(table.eventId, table.userId),
+    unique("team_participant_unique").on(table.teamId, table.userId),
+    unique("event_team_leader_unique").on(
+      table.eventId,
+      table.isLeader,
+      table.userId,
+    ),
+  ],
+);
 
-// Table for event teams
 export const eventTeams = pgTable("event_teams", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
-  leaderId: text("leader_id")
-    .notNull()
-    .references((): PgColumn => eventUsers.id),
   eventId: text("event_id")
     .notNull()
-    .references(() => events.id),
+    .references(() => events.id, { onDelete: "cascade" }),
   attended: boolean("attended").notNull().default(false),
   isComplete: boolean("is_complete").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),

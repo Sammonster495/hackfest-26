@@ -1,16 +1,10 @@
 "use client";
 import { Check, Edit2, MoreVertical, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -108,7 +102,9 @@ export default function EventListTab({
 
         setEvents(
           events.map((e) =>
-            e.id === selectedEvent.id ? { ...e, status: newStatus as any } : e,
+            e.id === selectedEvent.id
+              ? { ...e, status: newStatus as EventData["status"] }
+              : e,
           ),
         );
         setStatusDialogOpen(false);

@@ -1,14 +1,14 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import Image from "next/image";
+import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { Button } from "../ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer";
+import type { Event } from "./layout";
 import { getDate, getTeamSize } from "./utils";
-import { Event } from "./layout";
-import Image from "next/image";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
 
 export default function EventDrawer({
   event,
@@ -33,8 +33,9 @@ export default function EventDrawer({
           <VisuallyHidden>Event Details</VisuallyHidden>
         </DrawerTitle>
         <div
-          className={`flex flex-col gap-6 px-4 pb-8 overflow-y-auto flex-1 ${drawerDirection === "bottom" ? "pt-2" : "pt-6"
-            }`}
+          className={`flex flex-col gap-6 px-4 pb-8 overflow-y-auto flex-1 ${
+            drawerDirection === "bottom" ? "pt-2" : "pt-6"
+          }`}
         >
           <h2 className="text-4xl lg:text-5xl font-bold text-[#f4d35e] wrap-break-word text-center">
             {event?.title}
@@ -135,7 +136,11 @@ export default function EventDrawer({
               <>
                 <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-300 text-amber-900 text-xs sm:text-sm">
                   <p className="font-bold">Note for Hackfest Participants:</p>
-                  <p>If you previously registered for Hackfest, please log in using the same email address used during that registration. If this does not apply to you, you may ignore this message and continue normally.
+                  <p>
+                    If you previously registered for Hackfest, please log in
+                    using the same email address used during that registration.
+                    If this does not apply to you, you may ignore this message
+                    and continue normally.
                   </p>
                 </div>
                 <Button

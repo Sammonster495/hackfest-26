@@ -1,9 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth as dashboardAuth } from "~/auth/dashboard-config";
 import db from "~/db";
 import { query } from "~/db/data";
-import { getAllEvents, getAllEventsForAdmin } from "~/db/data/events";
+import { getAllEventsForAdmin } from "~/db/data/events";
 import { events } from "~/db/schema";
 import { hasPermission } from "~/lib/auth/permissions";
 import { AppError } from "~/lib/errors/app-error";
@@ -19,13 +19,9 @@ export async function GET(req: NextRequest) {
 
   try {
     switch (action) {
-      case "getAll":
-        return NextResponse.json(await getAllEvents());
-
       case "getAllForAdmin":
         if (
-          session &&
-          session.dashboardUser &&
+          session?.dashboardUser &&
           hasPermission(session.dashboardUser, "events:manage")
         ) {
           return NextResponse.json(await getAllEventsForAdmin());

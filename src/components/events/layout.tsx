@@ -1,15 +1,12 @@
 "use client";
 
-import { Compass, TriangleAlert } from "lucide-react";
-import Image from "next/image";
-import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "~/components/ui/button";
-import { getEventAttributes } from "./utils";
-import EventDrawer from "./drawer";
-import EventDetails from "./details";
-import { Skeleton } from "../ui/skeleton";
+import { apiFetch } from "~/lib/fetcher";
 import { Card, CardContent, CardHeader } from "../ui/card";
+import { Skeleton } from "../ui/skeleton";
+import EventDetails from "./details";
+import EventDrawer from "./drawer";
 
 export type Event = {
   id: string;
@@ -49,19 +46,13 @@ const Events = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch("/api/events/getAll", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await apiFetch<{ events: Event[] | null }>(
+          "/api/events/getAll",
+          {
+            method: "GET",
           },
-        });
-        const data = await response.json();
-        if (data.success) {
-          console.log("Fetched events:", data.data);
-          setEvents(data.data);
-        } else {
-          console.error("Failed to fetch events:", data.error);
-        }
+        );
+        if (response) setEvents(response?.events as Event[]);
       } catch (error) {
         console.error("Error fetching events:", error);
       } finally {
@@ -89,14 +80,17 @@ const Events = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-20">
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wide text-[#133c55] drop-shadow-[0_0_12px_rgba(255,191,0,1)]">
+          <h2 className="text-5xl md:text-7xl font-pirate text-transparent bg-clip-text bg-linear-to-b from-[#0f1823] to-[#133c88] drop-shadow-[0_0_12px_rgba(255,191,0,0.8)] tracking-wider">
             Events
-          </h1>
+          </h2>
         </div>
         {loading ? (
           <div className="w-full h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:gap-16 md:gap-10 gap-6 justify-center items-center">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Card key={index} className="w-full max-w-xs bg-[#0f1823]">
+            {Array.from({ length: 6 }, (_, i) => i).map((i) => (
+              <Card
+                key={`event-skeleton-${i}`}
+                className="w-full max-w-xs bg-[#0f1823]"
+              >
                 <CardHeader>
                   <Skeleton className="h-4 w-2/3 bg-[#133c55]" />
                   <Skeleton className="h-4 w-1/2 bg-[#133c55]" />

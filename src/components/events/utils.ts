@@ -1,5 +1,5 @@
 import { CalendarDays, MapPin, User, Users } from "lucide-react";
-import { Event } from "./layout";
+import type { Event } from "./layout";
 
 export const getTeamSize = (minSize: number, maxSize: number) => {
   if (minSize === maxSize) {
@@ -44,11 +44,12 @@ export const getEventAttributes = (data: Event) => {
     },
     {
       name: "Audience",
-      text: (data.audience === "Participants"
-        ? "Hackfest participants Only"
-        : data.audience === "Non-Participants"
-        ? "Hackfest non-participants Only"
-        : "Open to All"),
+      text:
+        data.audience === "Participants"
+          ? "Hackfest participants Only"
+          : data.audience === "Non-Participants"
+            ? "Hackfest non-participants Only"
+            : "Open to All",
       Icon: User,
     },
     {
