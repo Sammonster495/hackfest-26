@@ -43,7 +43,7 @@ export const WaveTransitionMaterial = shaderMaterial(
             uv.y * ratio.y + (1.0 - ratio.y) * 0.5
         );
         
-        float zoom = 1.6;
+        float zoom = 1.0;
         finalUv = (finalUv - 0.5) * zoom + 0.5;
         
         return finalUv;
