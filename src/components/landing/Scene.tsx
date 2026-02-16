@@ -4,6 +4,7 @@
 import { useTexture } from "@react-three/drei";
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber";
 import { motion } from "framer-motion";
+import Lenis from "lenis";
 import type { Session } from "next-auth";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
@@ -27,31 +28,43 @@ useTexture.preload([
 
 function Background({
   isNight,
-  scrollProgress,
+  scrollRef,
 }: {
   isNight: boolean;
-  scrollProgress: number;
+  scrollRef: React.MutableRefObject<number>;
 }) {
   const { viewport } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
   // biome-ignore lint/suspicious/noExplicitAny: <TODO: MIGHT CHANGE LATER>
   const materialRef = useRef<any>(null);
+  const dampedProgress = useRef(0);
+
   const [morning, night, underwater] = useTexture([
     "/images/morningnew3.webp",
     "/images/night.webp",
     "/images/underwater.webp",
   ]) as [THREE.Texture, THREE.Texture, THREE.Texture];
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const time = state.clock.elapsedTime;
 
-    // Boat sway effect
+    // Smooth damping for "sloppy" feel
+    // With Lenis controlling scroll, we can reduce this or keep it for extra "float"
+    // Lambda 2.5 + Lenis smoothing = very fluid underwater feel
+    dampedProgress.current = THREE.MathUtils.damp(
+      dampedProgress.current,
+      scrollRef.current,
+      2.5,
+      delta,
+    );
+
+    const progress = dampedProgress.current;
+
     // Boat sway effect
     if (meshRef.current) {
       // Fade out sway between scroll 0.1 (start of transition) and 0.3 (deep in water)
       // smoothstep returns 0->1 between min/max, so 1 - smoothstep gives 1->0
-      const swayFactor =
-        1 - THREE.MathUtils.smoothstep(scrollProgress, 0.1, 0.3);
+      const swayFactor = 1 - THREE.MathUtils.smoothstep(progress, 0.1, 0.3);
 
       if (swayFactor > 0.001) {
         // Roll (z-axis) - faster rocking
@@ -83,8 +96,12 @@ function Background({
 
     if (materialRef.current) {
       materialRef.current.uTime = time * 0.6;
-      const progress = Math.max(0, Math.min(1, (scrollProgress - 0.05) / 0.14));
-      materialRef.current.uTransitionProgress = progress;
+      // Use damped progress for smoother transition
+      const transitionProgress = Math.max(
+        0,
+        Math.min(1, (progress - 0.05) / 0.14),
+      );
+      materialRef.current.uTransitionProgress = transitionProgress;
       materialRef.current.uHoverProgress = state.pointer.x * 0.5 + 0.5;
 
       const currentSunImg = (
@@ -352,20 +369,6 @@ function LandingContent({
                 IN PRIZES
               </span>
             </motion.div>
-
-            {/* <Link href="/timeline" passHref>
-              <button
-                type="button"
-                className="group relative px-10 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-pirate font-bold text-2xl transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black tracking-wide"
-                // Prevent scroll on focus
-                onFocus={(e) => {
-                  e.preventDefault();
-                }}
-              >
-                <span className="relative z-10">Explore Timeline</span>
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              </button>
-            </Link> */}
           </div>
         </motion.section>
       </div>
@@ -377,13 +380,51 @@ function LandingContent({
 
 function ScrollSync({
   setUnderwater,
-  scrollProgress,
+  scrollRef,
 }: {
   setUnderwater: (v: boolean) => void;
-  scrollProgress: number;
+  scrollRef: React.MutableRefObject<number>;
 }) {
+  const isUnderwaterRef = useRef(false);
+
   useFrame(() => {
-    setUnderwater(scrollProgress > 0.15);
+    // Check raw progress for responsive state toggle
+    // or we could check damped progress if passed down.
+    // Using raw progress (scrollRef.current) ensures UI snaps when user scrolls past threshold quickly.
+    const isNowUnderwater = scrollRef.current > 0.15;
+
+    if (isUnderwaterRef.current !== isNowUnderwater) {
+      isUnderwaterRef.current = isNowUnderwater;
+      setUnderwater(isNowUnderwater);
+    }
+  });
+
+  return null;
+}
+
+// Lenis updater component inside Canvas to hook into useFrame loop
+function LenisUpdater({
+  lenisRef,
+  scrollRef,
+  htmlElement,
+}: {
+  lenisRef: React.MutableRefObject<Lenis | null>;
+  scrollRef: React.MutableRefObject<number>;
+  htmlElement: HTMLDivElement | null;
+}) {
+  useFrame((state) => {
+    if (lenisRef.current) {
+      // Update Lenis
+      lenisRef.current.raf(state.clock.elapsedTime * 1000);
+
+      // Sync custom scroll ref for 3D logic
+      if (htmlElement) {
+        const scrollTop = htmlElement.scrollTop;
+        const maxScroll = htmlElement.scrollHeight - htmlElement.clientHeight;
+        const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
+        scrollRef.current = progress;
+      }
+    }
   });
 
   return null;
@@ -392,25 +433,37 @@ function ScrollSync({
 export default function Scene({ session }: { session: Session | null }) {
   const [pages, setPages] = useState(3);
   const [isUnderwater, setIsUnderwater] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Refactor: Use useRef instead of useState for scroll progress to prevent re-renders
+  const scrollRef = useRef(0);
+  const lenisRef = useRef<Lenis | null>(null);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const htmlScrollRef = useRef<HTMLDivElement>(null);
   const { isNight } = useDayNight();
 
-  // Track HTML scroll position
+  // Initialize Lenis
   useEffect(() => {
     const htmlElement = htmlScrollRef.current;
     if (!htmlElement) return;
 
-    const handleScroll = () => {
-      const scrollTop = htmlElement.scrollTop;
-      const maxScroll = htmlElement.scrollHeight - htmlElement.clientHeight;
-      const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
-      setScrollProgress(progress);
-    };
+    // Initialize Lenis
+    const lenis = new Lenis({
+      wrapper: htmlElement, // The container with overflow: auto
+      content: htmlElement.firstElementChild as HTMLElement, // The content inside
+      duration: 1.5, // Slower duration for "stronger" smooth effect
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom easing
+      smoothWheel: true,
+      syncTouch: false, // Don't hijack touch unless desired
+    });
 
-    htmlElement.addEventListener("scroll", handleScroll, { passive: true });
-    return () => htmlElement.removeEventListener("scroll", handleScroll);
+    lenisRef.current = lenis;
+
+    // Cleanup
+    return () => {
+      lenis.destroy();
+      lenisRef.current = null;
+    };
   }, []);
 
   // Prevent keyboard navigation from breaking scroll sync
@@ -441,6 +494,9 @@ export default function Scene({ session }: { session: Session | null }) {
         }
 
         focusableElements[nextIndex]?.focus({ preventScroll: true });
+
+        // Also scroll Lenis to element if needed
+        lenisRef.current?.scrollTo(focusableElements[nextIndex]);
       }
     };
 
@@ -480,11 +536,13 @@ export default function Scene({ session }: { session: Session | null }) {
         camera={{ position: [0, 0, 5] }}
       >
         <Suspense fallback={null}>
-          <ScrollSync
-            setUnderwater={setIsUnderwater}
-            scrollProgress={scrollProgress}
+          <LenisUpdater
+            lenisRef={lenisRef}
+            scrollRef={scrollRef}
+            htmlElement={htmlScrollRef.current}
           />
-          <Background isNight={isNight} scrollProgress={scrollProgress} />
+          <ScrollSync setUnderwater={setIsUnderwater} scrollRef={scrollRef} />
+          <Background isNight={isNight} scrollRef={scrollRef} />
         </Suspense>
       </Canvas>
       <style jsx global>{`
