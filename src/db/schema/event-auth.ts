@@ -6,6 +6,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { colleges } from "./participant";
 
 export const eventUsers = pgTable("event_user", {
   id: text("id")
@@ -15,6 +16,9 @@ export const eventUsers = pgTable("event_user", {
   email: text("email").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  collegeId: text("college_id").references(() => colleges.id, {
+    onDelete: "set null",
+  }),
 });
 
 export const eventAccounts = pgTable(

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -194,23 +195,6 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
-.dashboard-theme,
-.dashboard-theme h1,
-.dashboard-theme h2,
-.dashboard-theme h3,
-.dashboard-theme h4,
-.dashboard-theme h5,
-.dashboard-theme h6,
-.dashboard-theme p,
-.dashboard-theme span,
-.dashboard-theme div,
-.dashboard-theme button,
-.dashboard-theme input,
-.dashboard-theme textarea,
-.dashboard-theme select {
-  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -232,6 +216,23 @@
   h6 {
     font-family: var(--font-crimson), serif;
   }
+}
+
+.dashboard-theme,
+.dashboard-theme h1,
+.dashboard-theme h2,
+.dashboard-theme h3,
+.dashboard-theme h4,
+.dashboard-theme h5,
+.dashboard-theme h6,
+.dashboard-theme p,
+.dashboard-theme span,
+.dashboard-theme div,
+.dashboard-theme button,
+.dashboard-theme input,
+.dashboard-theme textarea,
+.dashboard-theme select {
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
 ::-webkit-scrollbar {

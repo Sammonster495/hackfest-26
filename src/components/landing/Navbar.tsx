@@ -289,7 +289,7 @@ function AuthButton({
   isUnderwater: boolean;
   onNavigate?: () => void;
 }) {
-  const isLoggedIn = !!session?.user;
+  const isLoggedIn = !!session?.user && !session?.eventUser;
   const href = isLoggedIn
     ? session.user.isRegistrationComplete
       ? "/teams"

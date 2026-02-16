@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { and, count, eq } from "drizzle-orm";
 import { hashPassword } from "~/lib/auth/password";
+import { eventStatusEnum } from "./enum";
 import db from "./index";
 import {
   colleges,
@@ -106,6 +107,7 @@ async function seed() {
     { key: "settings:manage", description: "Manage system settings" },
     { key: "roles:manage", description: "Manage roles" },
     { key: "users:manage_staff", description: "Manage staff users" },
+    { key: "events:manage", description: "Manage events" },
     // Participant / Team Visibility
     { key: "team:view_all", description: "View all teams" },
     { key: "team:view_top60", description: "View top 60 teams" },
@@ -308,15 +310,19 @@ async function seed() {
   console.log("Seeding events...");
   const existingEventsCount = await db.select({ count: count() }).from(events);
   if (existingEventsCount.length > 0 && existingEventsCount[0].count === 0) {
+    const eventLength = 20;
     await db.insert(events).values(
-      Array.from({ length: 5 }, (_, i) => ({
+      Array.from({ length: eventLength }, (_, i) => ({
         title: `Event ${i + 1}`,
         description: `Description for Event ${i + 1}. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Laudantium reiciendis provident quidem eligendi animi praesentium natus dolores accusantium quibusdam nulla vitae deserunt quam iusto, voluptatibus mollitia autem. Laudantium, fuga tempora?`,
-        date: new Date(
-          Date.now() + (i + 1) * 24 * 60 * 60 * 1000,
-        ).toISOString(),
+        date: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000),
+        venue: `Venue ${i + 1}`,
         image: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQl_LkmRRISlkI9wz7dZCmGDHJ68mMWaW4zZg&s`,
         teamSize: i % 3 === 0 ? 1 : 4,
+        status:
+          eventStatusEnum.enumValues[
+            Math.floor(i % eventStatusEnum.enumValues.length)
+          ],
       })),
     );
 

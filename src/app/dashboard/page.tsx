@@ -48,6 +48,9 @@ export default async function DashboardPage() {
       userIsAdmin || hasPermission(dashboardUser, "attendance:mark"),
     // Results
     canViewResults: userIsAdmin || hasPermission(dashboardUser, "results:view"),
+    // Events
+    canManageEvents:
+      userIsAdmin || hasPermission(dashboardUser, "events:manage"),
   };
 
   const hasDashboardAccess =

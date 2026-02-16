@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { QuickboardTab } from "./quickboard-tab";
 
-type SubTabConfig = {
+export type SubTabConfig = {
   id: string;
   label: string;
   component: React.ReactNode;

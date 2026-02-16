@@ -27,6 +27,22 @@ type Track = {
   createdAt: string;
 };
 
+async function fetchTracks(
+  setTracks: React.Dispatch<React.SetStateAction<Track[]>>,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+) {
+  try {
+    const res = await fetch("/api/tracks");
+    if (!res.ok) throw new Error("Failed to fetch tracks");
+    const data = await res.json();
+    setTracks(data);
+  } catch (_error) {
+    toast.error("Error loading tracks");
+  } finally {
+    setIsLoading(false);
+  }
+}
+
 export function SettingsTab() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [newTrackName, setNewTrackName] = useState("");
@@ -37,22 +53,9 @@ export function SettingsTab() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  async function fetchTracks() {
-    try {
-      const res = await fetch("/api/tracks");
-      if (!res.ok) throw new Error("Failed to fetch tracks");
-      const data = await res.json();
-      setTracks(data);
-    } catch (_error) {
-      toast.error("Error loading tracks");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   useEffect(() => {
-    fetchTracks();
-  });
+    fetchTracks(setTracks, setIsLoading);
+  }, []);
 
   async function handleAddTrack(e: React.FormEvent) {
     e.preventDefault();

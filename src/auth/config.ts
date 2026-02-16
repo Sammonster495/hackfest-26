@@ -1,5 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import NextAuth, { type DefaultSession } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import db from "~/db";
@@ -31,76 +31,73 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     GitHub({
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      profile(profile) {
-        return {
-          id: profile.id.toString(),
-          name: profile.name || profile.login,
-          email: profile.email,
-          image: profile.avatar_url,
-        };
-      },
     }),
   ],
-  callbacks: {
+  events: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "github" && profile?.login && user.id) {
-        const githubUsername = profile.login as string;
-        try {
-          const existingUser = await db
-            .select()
-            .from(participants)
-            .where(eq(participants.id, user.id))
-            .limit(1);
-
-          if (existingUser[0] && !existingUser[0].github && githubUsername) {
+      try {
+        if (account?.provider === "github" && user.id) {
+          const githubUsername = (
+            await db
+              .select()
+              .from(participants)
+              .where(eq(participants.id, user.id))
+              .limit(1)
+          )[0]?.github;
+          if (githubUsername) return;
+          if (profile?.login) {
             await db
               .update(participants)
-              .set({ github: githubUsername as string })
+              .set({ github: profile.login as string })
               .where(eq(participants.id, user.id));
+          } else if (account.access_token) {
+            try {
+              const githubResponse = await fetch(
+                "https://api.github.com/user",
+                {
+                  headers: {
+                    Authorization: `Bearer ${account.access_token}`,
+                  },
+                },
+              );
+              if (githubResponse.ok) {
+                const githubUser = (await githubResponse.json()) as {
+                  login: string;
+                };
+                const githubUsername = githubUser.login;
+                await db
+                  .update(participants)
+                  .set({ github: githubUsername })
+                  .where(eq(participants.id, user.id));
+              }
+            } catch (error) {
+              console.error(
+                "Error fetching GitHub profile during sign-in:",
+                error,
+              );
+            }
           }
-        } catch {}
+        }
+      } catch (error) {
+        console.error("Error during sign-in event:", error);
       }
-      return true;
+    },
+  },
+  callbacks: {
+    async redirect({ baseUrl }) {
+      return baseUrl;
     },
     async session({ session, user }) {
       session.user.id = user.id;
-      const dbUser = await db
-        .select()
-        .from(participants)
-        .where(eq(participants.id, user.id))
-        .limit(1);
-      const userData = dbUser[0];
-      session.user.isRegistrationComplete =
-        userData?.isRegistrationComplete ?? false;
-      if (!userData?.github && user.id) {
-        const githubAccount = await db
+      const dbUser = (
+        await db
           .select()
-          .from(accounts)
-          .where(
-            and(eq(accounts.userId, user.id), eq(accounts.provider, "github")),
-          )
-          .limit(1);
-
-        if (githubAccount[0]?.access_token) {
-          try {
-            const githubResponse = await fetch("https://api.github.com/user", {
-              headers: {
-                Authorization: `Bearer ${githubAccount[0].access_token}`,
-              },
-            });
-            if (githubResponse.ok) {
-              const githubUser = (await githubResponse.json()) as {
-                login: string;
-              };
-              const githubUsername = githubUser.login;
-              await db
-                .update(participants)
-                .set({ github: githubUsername })
-                .where(eq(participants.id, user.id));
-            }
-          } catch {}
-        }
-      }
+          .from(participants)
+          .where(eq(participants.id, user.id))
+          .limit(1)
+      )[0];
+      session.user.isRegistrationComplete =
+        dbUser?.isRegistrationComplete ?? false;
 
       return session;
     },

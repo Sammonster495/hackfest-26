@@ -2,12 +2,20 @@ import type { NextRequest, NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
-import { getCurrentUser } from "./get-current-user";
+import { getCurrentEventUser, getCurrentUser } from "./get-current-user";
 
 type RouteHandler = (
   request: NextRequest,
   context: { params: Promise<Record<string, string>> },
   user: Session["user"],
+) => Promise<NextResponse>;
+
+type EventUser = NonNullable<Session["eventUser"]>;
+
+type EventRouteHandler = (
+  request: NextRequest,
+  context: { params: Promise<Record<string, string>> },
+  user: EventUser,
 ) => Promise<NextResponse>;
 
 export function protectedRoute(handler: RouteHandler) {
@@ -52,4 +60,28 @@ export function registrationRequiredRoute(handler: RouteHandler) {
       return errorResponse(err);
     }
   });
+}
+
+export function protectedEventRoute(handler: EventRouteHandler) {
+  return async (
+    request: NextRequest,
+    context: { params: Promise<Record<string, string>> },
+  ) => {
+    try {
+      const user = await getCurrentEventUser();
+
+      if (!user) {
+        return errorResponse(
+          new AppError("UNAUTHORIZED", 401, {
+            title: "Unauthorized",
+            description: "You must be logged in to perform this action.",
+          }),
+        );
+      }
+
+      return await handler(request, context, user);
+    } catch (err) {
+      return errorResponse(err);
+    }
+  };
 }

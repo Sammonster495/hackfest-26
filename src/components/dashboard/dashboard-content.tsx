@@ -2,10 +2,15 @@
 
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { DashboardTabs } from "~/components/dashboard/dashboard-tabs";
 import { OrganiserDashboard } from "~/components/dashboard/organiser";
 import { Card, CardDescription, CardTitle } from "~/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import CreateEventTab from "./events/create-event";
+import EventListTab from "./events/event-list";
+import UpdateEventTab from "./events/update-event";
+import type { SubTabConfig } from "./organiser/organiser-dashboard";
 
 type DashboardContentProps = {
   permissions: {
@@ -22,6 +27,7 @@ type DashboardContentProps = {
     canViewSelection: boolean;
     canMarkAttendance: boolean;
     canViewResults: boolean;
+    canManageEvents: boolean;
   };
 };
 
@@ -225,6 +231,86 @@ function MentorTab() {
   );
 }
 
+function ManageEventsTab() {
+  const [activeTab, setActiveTab] = useState("eventList");
+  const [isClient, setIsClient] = useState(false);
+
+  const SUB_TABS: SubTabConfig[] = [
+    {
+      id: "eventList",
+      label: "Event List",
+      component: <EventListTab setTab={setActiveTab} />,
+    },
+    {
+      id: "createEvent",
+      label: "Create Event",
+      component: <CreateEventTab setTab={setActiveTab} />,
+    },
+    {
+      id: "updateEvent",
+      label: "Update Event",
+      component: <UpdateEventTab setTab={setActiveTab} />,
+    },
+  ];
+
+  useEffect(() => {
+    setIsClient(true);
+    const stored = localStorage.getItem("manageEventsActiveTab");
+    if (stored && ["manageEvents", "eventSchedule"].includes(stored)) {
+      setActiveTab(stored);
+    }
+  }, []);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    localStorage.setItem("manageEventsActiveTab", value);
+  };
+
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Manage Events</h2>
+        <p className="text-muted-foreground">
+          Manage events and schedules for the hackathon
+        </p>
+      </div>
+
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+        defaultValue="eventList"
+      >
+        <TabsList className="w-fit justify-between h-auto flex-wrap gap-1 bg-muted/50 p-1">
+          {SUB_TABS.map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-3 py-1.5 text-sm"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {SUB_TABS.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id} className="mt-6">
+            {tab.component}
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+}
+
 export function DashboardContent({ permissions }: DashboardContentProps) {
   const {
     isAdmin,
@@ -235,6 +321,7 @@ export function DashboardContent({ permissions }: DashboardContentProps) {
     canViewSelection,
     canViewTop60,
     canViewResults,
+    canManageEvents,
   } = permissions;
 
   const tabs = [
@@ -249,6 +336,12 @@ export function DashboardContent({ permissions }: DashboardContentProps) {
       label: "Teams",
       hasAccess: isAdmin || canViewAllTeams,
       content: <TeamsTab />,
+    },
+    {
+      id: "events",
+      label: "Events",
+      hasAccess: isAdmin || canManageEvents,
+      content: <ManageEventsTab />,
     },
     {
       id: "evaluator",
