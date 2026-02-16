@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { paymentStatusEnum } from "../enum";
+import { eventParticipants, eventTeams } from "./event";
 import { participants } from "./participant";
 import { teams } from "./team";
 
@@ -17,6 +18,9 @@ export const payment = pgTable("payment", {
 
   userId: text("user_id").references(() => participants.id),
   teamId: text("team_id").references(() => teams.id),
+
+  eventUserId: text("event_user_id").references(() => eventParticipants.id),
+  eventTeamId: text("event_team_id").references(() => eventTeams.id),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")

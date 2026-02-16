@@ -16,6 +16,8 @@ export const dashboardUsers = pgTable(
     username: text("username").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
     name: text("name").notNull(),
+    email: text("email").unique(),
+    phone: text("phone").unique(),
     isActive: boolean("is_active").notNull().default(true),
     lastLoginAt: timestamp("last_login_at", { mode: "date" }),
     createdAt: timestamp("created_at").notNull().defaultNow(),

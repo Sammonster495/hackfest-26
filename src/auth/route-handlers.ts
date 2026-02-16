@@ -10,36 +10,20 @@ type RouteHandler = (
   user: Session["user"],
 ) => Promise<NextResponse>;
 
+type EventUser = NonNullable<Session["eventUser"]>;
+
+type EventRouteHandler = (
+  request: NextRequest,
+  context: { params: Promise<Record<string, string>> },
+  user: EventUser,
+) => Promise<NextResponse>;
+
 export function protectedRoute(handler: RouteHandler) {
   return async (
     request: NextRequest,
     context: { params: Promise<Record<string, string>> },
   ) => {
     const user = await getCurrentUser();
-
-    if (!user) {
-      return errorResponse(
-        new AppError("UNAUTHORIZED", 401, {
-          title: "Unauthorized",
-          description: "You must be logged in to perform this action.",
-        }),
-      );
-    }
-
-    try {
-      return await handler(request, context, user);
-    } catch (err) {
-      return errorResponse(err);
-    }
-  };
-}
-
-export function protectedEventRoute(handler: RouteHandler) {
-  return async (
-    request: NextRequest,
-    context: { params: Promise<Record<string, string>> },
-  ) => {
-    const user = await getCurrentEventUser();
 
     if (!user) {
       return errorResponse(
@@ -76,4 +60,28 @@ export function registrationRequiredRoute(handler: RouteHandler) {
       return errorResponse(err);
     }
   });
+}
+
+export function protectedEventRoute(handler: EventRouteHandler) {
+  return async (
+    request: NextRequest,
+    context: { params: Promise<Record<string, string>> },
+  ) => {
+    try {
+      const user = await getCurrentEventUser();
+
+      if (!user) {
+        return errorResponse(
+          new AppError("UNAUTHORIZED", 401, {
+            title: "Unauthorized",
+            description: "You must be logged in to perform this action.",
+          }),
+        );
+      }
+
+      return await handler(request, context, user);
+    } catch (err) {
+      return errorResponse(err);
+    }
+  };
 }

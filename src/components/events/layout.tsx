@@ -52,6 +52,7 @@ const Events = () => {
             method: "GET",
           },
         );
+        console.log("Fetched events:", response);
         if (response) setEvents(response?.events as Event[]);
       } catch (error) {
         console.error("Error fetching events:", error);

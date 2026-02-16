@@ -1,5 +1,5 @@
 {
-  "id": "0ca08b1c-e099-482b-a5dd-074f43369bdb",
+  "id": "643e5cc9-451b-4fac-8ade-808f24cd8882",
   "prevId": "e68fd355-de40-4719-a668-2bc6279a4769",
   "version": "7",
   "dialect": "postgresql",
@@ -438,6 +438,63 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.event_organizers": {
+      "name": "event_organizers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organizer_id": {
+          "name": "organizer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "event_organizers_event_id_event_id_fk": {
+          "name": "event_organizers_event_id_event_id_fk",
+          "tableFrom": "event_organizers",
+          "tableTo": "event",
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "event_organizers_organizer_id_dashboard_user_id_fk": {
+          "name": "event_organizers_organizer_id_dashboard_user_id_fk",
+          "tableFrom": "event_organizers",
+          "tableTo": "dashboard_user",
+          "columnsFrom": ["organizer_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.event_participant": {
       "name": "event_participant",
       "schema": "",
@@ -468,6 +525,13 @@
         },
         "is_leader": {
           "name": "is_leader",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "attended": {
+          "name": "attended",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -522,11 +586,6 @@
           "name": "team_participant_unique",
           "nullsNotDistinct": false,
           "columns": ["team_id", "user_id"]
-        },
-        "event_team_leader_unique": {
-          "name": "event_team_leader_unique",
-          "nullsNotDistinct": false,
-          "columns": ["event_id", "is_leader", "user_id"]
         }
       },
       "policies": {},
@@ -681,6 +740,34 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'Both'"
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Technical'"
+        },
+        "hf_amount": {
+          "name": "hf_amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "college_amount": {
+          "name": "college_amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "non_college_amount": {
+          "name": "non_college_amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "max_teams": {
           "name": "max_teams",
@@ -1425,6 +1512,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "event_user_id": {
+          "name": "event_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_team_id": {
+          "name": "event_team_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -1456,6 +1555,24 @@
           "tableFrom": "payment",
           "tableTo": "team",
           "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payment_event_user_id_event_participant_id_fk": {
+          "name": "payment_event_user_id_event_participant_id_fk",
+          "tableFrom": "payment",
+          "tableTo": "event_participant",
+          "columnsFrom": ["event_user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payment_event_team_id_event_teams_id_fk": {
+          "name": "payment_event_team_id_event_teams_id_fk",
+          "tableFrom": "payment",
+          "tableTo": "event_teams",
+          "columnsFrom": ["event_team_id"],
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -1611,6 +1728,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "is_active": {
           "name": "is_active",
           "type": "boolean",
@@ -1663,6 +1792,16 @@
           "name": "dashboard_user_username_unique",
           "nullsNotDistinct": false,
           "columns": ["username"]
+        },
+        "dashboard_user_email_unique": {
+          "name": "dashboard_user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": ["email"]
+        },
+        "dashboard_user_phone_unique": {
+          "name": "dashboard_user_phone_unique",
+          "nullsNotDistinct": false,
+          "columns": ["phone"]
         }
       },
       "policies": {},

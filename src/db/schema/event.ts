@@ -15,6 +15,7 @@ import {
   paymentStatusEnum,
 } from "../enum";
 import { eventUsers } from "./event-auth";
+import { dashboardUsers } from "./rbac";
 
 export const events = pgTable(
   "event",
@@ -31,6 +32,10 @@ export const events = pgTable(
     type: eventTypeEnum("event_type").notNull().default("Solo"),
     status: eventStatusEnum("event_status").notNull().default("Draft"),
     audience: eventAudienceEnum("event_audience").notNull().default("Both"),
+    category: text("category").notNull().default("Technical"),
+    hfAmount: integer("hf_amount").notNull().default(0),
+    collegeAmount: integer("college_amount").notNull().default(0),
+    nonCollegeAmount: integer("non_college_amount").notNull().default(0),
     maxTeams: integer("max_teams").notNull().default(0),
     minTeamSize: integer("min_team_size").notNull().default(1),
     maxTeamSize: integer("max_team_size").notNull().default(1),
@@ -62,16 +67,12 @@ export const eventParticipants = pgTable(
       .notNull()
       .references(() => eventTeams.id, { onDelete: "cascade" }),
     isLeader: boolean("is_leader").notNull().default(false),
+    attended: boolean("attended").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
     unique("event_participant_unique").on(table.eventId, table.userId),
     unique("team_participant_unique").on(table.teamId, table.userId),
-    unique("event_team_leader_unique").on(
-      table.eventId,
-      table.isLeader,
-      table.userId,
-    ),
   ],
 );
 
@@ -91,4 +92,17 @@ export const eventTeams = pgTable("event_teams", {
     .notNull()
     .defaultNow()
     .$onUpdateFn(() => new Date()),
+});
+
+export const eventOrganizers = pgTable("event_organizers", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  organizerId: text("organizer_id")
+    .notNull()
+    .references(() => dashboardUsers.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -93,6 +93,18 @@ export async function leaveEventTeam(
       }),
     );
 
+  const team = await query.eventTeams.findOne({
+    where: (t, { and, eq }) => and(eq(t.id, teamId), eq(t.eventId, eventId)),
+  });
+
+  if (team?.isComplete)
+    return errorResponse(
+      new AppError("TEAM_ALREADY_CONFIRMED", 400, {
+        title: "Team already confirmed",
+        description: "You cannot leave a team that has already been confirmed.",
+      }),
+    );
+
   return successResponse(
     { team: await deleteParticipant(participant.id) },
     {

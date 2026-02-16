@@ -13,7 +13,9 @@ import { env } from "~/env";
 // Separate key for eventUsers
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    eventUser: DefaultSession["user"];
+    eventUser: {
+      id: string;
+    } & DefaultSession["user"];
   }
 }
 
@@ -41,6 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, user }) {
       if (user) {
+        session.eventUser.id = user.id;
         session.eventUser = user;
       }
       return session;
