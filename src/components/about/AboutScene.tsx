@@ -8,7 +8,7 @@ import { TransitionMaterial } from "~/components/landing/shader/TransitionMateri
 
 extend({ TransitionMaterial });
 
-function ContactBackground({ isNight }: { isNight: boolean }) {
+function AboutBackground({ isNight }: { isNight: boolean }) {
   const { viewport } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<any>(null);
@@ -71,22 +71,21 @@ function ContactBackground({ isNight }: { isNight: boolean }) {
   );
 }
 
-export default function ContactScene() {
+export default function AboutScene() {
   return (
-    <div className="fixed inset-0 w-full h-full -z-10 bg-black">
+    <div className="fixed inset-0 w-full h-full -z-10 bg-black/80">
       <Canvas
-        className="canvas-contact"
+        className="canvas-about"
         gl={{ antialias: true, alpha: false }}
-        dpr={[1, 1.5]}
-        color="black"
+        dpr={[1, 1.25]}
       >
         <Suspense fallback={null}>
-          <ContactBackground isNight={true} />
+          <AboutBackground isNight={true} />
         </Suspense>
       </Canvas>
 
       <style jsx global>{`
-        .canvas-contact {
+        .canvas-about {
           position: fixed !important;
           top: 0;
           left: 0;

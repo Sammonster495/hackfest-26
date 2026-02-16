@@ -192,7 +192,7 @@ function TrackCard3D({ activeIndex }: { activeIndex: number }) {
       }}
     >
       <motion.div
-        className="w-full h-full relative rounded-2xl shadow-2xl overflow-hidden border border-cyan-500/30 bg-black/40 backdrop-blur-md"
+        className="w-full h-full relative rounded-2xl shadow-2xl overflow-hidden border border-cyan-500/30 bg-black/40"
         style={{
           rotateX: rotateX,
           rotateY: rotateY,
@@ -244,7 +244,7 @@ function MobileTrackStack() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeIndex}
-            className="absolute inset-0 w-full h-full bg-black/40 backdrop-blur-md border border-cyan-500/30 rounded-2xl overflow-hidden shadow-2xl"
+            className="absolute inset-0 w-full h-full bg-black/60 border border-cyan-500/30 rounded-2xl overflow-hidden shadow-2xl"
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
@@ -306,14 +306,14 @@ export default function TracksSection() {
   }, []);
 
   return (
-    <section className="relative w-full py-32 px-4 flex flex-col items-center justify-center overflow-hidden">
+    <section className="relative w-full pt-8 pb-16 px-4 flex flex-col items-center justify-center overflow-hidden">
       {/* Background Elements */}
-      <div className="absolute top-1/4 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/4 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container mx-auto max-w-6xl z-10">
         <motion.h2
-          className="text-5xl md:text-7xl font-pirate font-black text-center mb-8 text-transparent bg-clip-text bg-linear-to-b from-yellow-300 to-yellow-600 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-wider"
+          className="text-6xl md:text-7xl font-pirate font-black text-center mb-4 text-transparent bg-clip-text bg-linear-to-b from-yellow-300 to-yellow-600 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-wider"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
