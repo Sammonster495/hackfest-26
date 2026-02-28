@@ -1,0 +1,1 @@
+ALTER TYPE "public"."course" ADD VALUE 'BArch (Nitte DU)';

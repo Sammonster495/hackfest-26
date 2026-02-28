@@ -183,6 +183,13 @@
       "when": 1772260379398,
       "tag": "0025_clammy_tony_stark",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1772301845397,
+      "tag": "0026_clean_power_man",
+      "breakpoints": true
     }
   ]
 }

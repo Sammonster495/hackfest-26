@@ -85,6 +85,7 @@ export const courseEnum = pgEnum("course", [
   "BE",
   "BCA",
   "BSc",
+  "BArch (Nitte DU)",
   "MCA",
   "MTech",
 ]);
