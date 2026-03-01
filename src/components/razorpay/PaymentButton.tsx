@@ -1,35 +1,38 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import Script from "next/script";
-import { useSession } from "next-auth/react";
 import { forwardRef } from "react";
-import { env } from "~/env";
+
 import { Button, type ButtonProps } from "../ui/button";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
 const PaymentButton = forwardRef<
   HTMLButtonElement,
   ButtonProps & {
     onStart?: () => void;
     description: string;
+    user: User;
     extraClassName?: string;
-    onSuccess: (paymentId: string) => void;
-    onFailure: (error?: string) => void;
+    onSuccess?: (paymentId: string) => void;
+    onFailure?: (error?: string) => void;
     onEnd?: () => void;
-  } & (
-      | {
-          paymentType: "EVENT";
-          amountInINR: number;
-          teamId: string;
-        }
-      | {
-          paymentType: "MEMBERSHIP";
-          amountInINR?: never;
-          teamId?: never;
-        }
-    )
+  } & {
+    paymentType: "EVENT" | "PARTICIPATION";
+    amountInINR: number;
+    teamId: string;
+  }
 >(
   (
     {
       onStart,
       description,
+      user,
       extraClassName,
       paymentType,
       amountInINR,
@@ -41,26 +44,27 @@ const PaymentButton = forwardRef<
     },
     ref,
   ) => {
-    const session = useSession();
+    const router = useRouter();
 
-    if (!session || !session.data?.user) {
-      return (
-        <Button
-          ref={ref}
-          {...props}
-          disabled
-          className="bg-gray-500 text-white cursor-not-allowed"
-        >
-          Please login to make a payment
-        </Button>
-      );
-    }
+    const handleSuccess =
+      onSuccess ??
+      ((paymentId: string) => {
+        console.log("Payment successful", paymentId);
+        router.refresh();
+      });
+
+    const handleFailure =
+      onFailure ??
+      ((error?: string) => {
+        console.error("Payment failed", error);
+      });
 
     return (
       <>
         <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 
         <Button
+          name="Pay Now"
           ref={ref}
           className={`z-20 flex-1 font-bold text-md ${extraClassName}`}
           onClick={async () => {
@@ -74,16 +78,16 @@ const PaymentButton = forwardRef<
                 paymentType: paymentType,
                 amountInINR: amountInINR,
                 teamId: teamId,
-                sessionUserId: session.data.user.id, // TODO [RAHUL] : ADD USER ID TO SESSION
+                sessionUserId: user.id,
               }),
             });
             const orderData = await order.json();
             if (!orderData || !orderData.orderId) {
               console.error("Failed to create order", orderData);
               if (orderData.error) {
-                onFailure(orderData.error);
+                handleFailure(orderData.error);
               } else {
-                onFailure();
+                handleFailure();
               }
               return;
             }
@@ -91,7 +95,7 @@ const PaymentButton = forwardRef<
             console.log("Order created successfully", orderData);
 
             const paymentObj = new window.Razorpay({
-              key: env.NEXT_PUBLIC_RAZORPAY_API_KEY_ID || "",
+              key: process.env.NEXT_PUBLIC_RAZORPAY_API_KEY_ID || "",
               order_id: orderData.orderId,
               amount: orderData.orderAmount,
               currency: orderData.orderCurrency,
@@ -103,14 +107,14 @@ const PaymentButton = forwardRef<
                 paymentType: paymentType,
                 paymentName: description,
                 teamId: teamId,
-                sessionUserId: session.data.user.id,
+                sessionUserId: user.id,
               },
               theme: {
                 color: "#3399cc",
               },
               prefill: {
-                name: session.data.user?.name || "",
-                email: session.data.user?.email || "",
+                name: user.name || "",
+                email: user.email || "",
               },
               handler: async (response) => {
                 console.log("Payment response received", response);
@@ -129,7 +133,7 @@ const PaymentButton = forwardRef<
                       razorpayOrderId: response.razorpay_order_id,
                       razorpayPaymentId: response.razorpay_payment_id,
                       razorpaySignature: response.razorpay_signature,
-                      sessionUserId: session.data.user.id,
+                      sessionUserId: user.id,
                     }),
                   });
                   const paymentData = await payment.json();
@@ -142,10 +146,10 @@ const PaymentButton = forwardRef<
                     throw new Error("Payment save failed");
                   }
                   console.log("Payment saved successfully", paymentData);
-                  onSuccess(paymentData.paymentDbId);
+                  handleSuccess(paymentData.paymentDbId);
                 } catch (error) {
                   console.error("Error saving payment", error);
-                  onFailure();
+                  handleFailure();
                   return;
                 }
               },

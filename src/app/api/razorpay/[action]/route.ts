@@ -6,8 +6,7 @@ import { rateLimiters } from "~/lib/rate-limit";
 export const POST = registrationRequiredRoute(
   async (req: NextRequest, _context, user) => {
     let body = null;
-    const url = new URL(req.url);
-    const action = url.pathname.split("/").pop() || "";
+    const action = req.nextUrl.pathname.split("/").pop() || "";
     console.log("Payment route action:", action);
 
     if (["create-order", "save-payment"].includes(action)) {

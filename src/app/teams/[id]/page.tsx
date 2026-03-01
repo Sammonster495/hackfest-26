@@ -5,7 +5,6 @@ import {
   BookUser,
   CheckCircle2,
   Clock,
-  CreditCard,
   Home,
   Users,
   XCircle,
@@ -14,6 +13,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "~/auth/config";
 import SignOut from "~/components/auth/authButtons/signOut";
+import PaymentButton from "~/components/razorpay/PaymentButton";
 import { ConfirmTeamButton } from "~/components/teams/confirm-team-button";
 import { DeleteTeamButton } from "~/components/teams/delete-team-button";
 import { LeaveTeamButton } from "~/components/teams/leave-team-button";
@@ -33,6 +33,7 @@ import { getSiteSettings } from "~/db/data/siteSettings";
 import * as teamData from "~/db/data/teams";
 import { getIdeaSubmission } from "~/db/services/idea-services";
 import { getFormStatus } from "~/db/services/team-services";
+import { calculateTotalAmount } from "~/lib/utils";
 
 type TeamStatus =
   | "NOT_FOUND"
@@ -51,7 +52,6 @@ export default async function TeamDetailsPage({
 }) {
   const { id } = await params;
   const session = await auth();
-
   if (!session?.user?.email) {
     redirect("/");
   }
@@ -73,6 +73,12 @@ export default async function TeamDetailsPage({
   if (user.teamId !== team.id) {
     redirect("/teams");
   }
+
+  const userForPayment: { id: string; name: string; email: string } = {
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email ?? "",
+  };
 
   const members = await teamData.listMembers(id);
   const siteSettingsData = await getSiteSettings();
@@ -117,7 +123,6 @@ export default async function TeamDetailsPage({
             <Card className="border-amber-200 bg-white/90 backdrop-blur-md shadow-lg">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <CreditCard className="h-6 w-6 text-amber-500" />
                   <CardTitle className="text-amber-700 font-pirate text-2xl tracking-wide">
                     Payment Pending
                   </CardTitle>
@@ -126,18 +131,22 @@ export default async function TeamDetailsPage({
               <CardContent className="space-y-4">
                 <p className="text-sm md:text-base text-amber-700/80 font-medium">
                   Congratulations! Your team has been selected! Please complete
-                  the payment to confirm your participation.
+                  the payment of{" "}
+                  <b>{calculateTotalAmount(400, members.length, 2)}rs</b>{" "}
+                  (including GST) to confirm your participation.
                 </p>
                 {team.leaderId === user.id ? (
                   paymentsOpen ? (
-                    <Button
-                      asChild
-                      className="bg-amber-500 text-white hover:bg-amber-600 font-bold border-none shadow-md h-12 rounded-xl text-lg tracking-wide transition-all hover:scale-[1.01] active:scale-[0.99]"
-                    >
-                      <Link href={`/teams/${id}/payment`}>
-                        Complete Payment
-                      </Link>
-                    </Button>
+                    <PaymentButton
+                      name="Pay Now"
+                      paymentType="PARTICIPATION"
+                      amountInINR={Number(
+                        calculateTotalAmount(400, members.length, 2),
+                      )}
+                      teamId={id}
+                      user={userForPayment}
+                      description="Participation Fee"
+                    />
                   ) : (
                     <p className="text-sm text-amber-700/80 italic font-medium">
                       Payment portal will open soon. Stay tuned!

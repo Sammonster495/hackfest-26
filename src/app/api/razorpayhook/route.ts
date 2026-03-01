@@ -44,6 +44,7 @@ export const POST = publicRoute(async (req: NextRequest) => {
       10,
     );
     const teamId = data.payload.payment.entity.notes?.teamId;
+    const eventTeamId = data.payload.payment.entity.notes?.eventTeamId;
 
     try {
       await webhookCapture(
@@ -55,6 +56,7 @@ export const POST = publicRoute(async (req: NextRequest) => {
         sessionUserId,
         paymentSignature || "webhook-capture",
         teamId,
+        eventTeamId,
       );
       console.log("Payment captured successfully:", paymentId);
     } catch (error) {
