@@ -101,7 +101,7 @@ function Background({
       // Use damped progress for smoother transition
       const transitionProgress = Math.max(
         0,
-        Math.min(1, (progress - 0.05) / 0.14),
+        Math.min(1, (progress - 0.05) / 0.1),
       );
       materialRef.current.uTransitionProgress = transitionProgress;
       materialRef.current.uHoverProgress = state.pointer.x * 0.5 + 0.5;
@@ -546,6 +546,13 @@ export default function Scene({ session }: { session: Session | null }) {
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.classList.add("scene-active");
+    return () => {
+      document.documentElement.classList.remove("scene-active");
+    };
+  }, []);
+
   // Prevent keyboard navigation from breaking scroll sync
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -641,8 +648,8 @@ export default function Scene({ session }: { session: Session | null }) {
         }
 
         /* Lock viewport to prevent mobile browser chrome from causing layout shifts */
-        html,
-        body {
+        .scene-active,
+        .scene-active body {
           overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
           /* Prevent address bar resize from affecting layout */
@@ -653,8 +660,8 @@ export default function Scene({ session }: { session: Session | null }) {
 
         /* Fix for iOS Safari */
         @supports (-webkit-touch-callout: none) {
-          html,
-          body {
+          .scene-active,
+          .scene-active body {
             height: -webkit-fill-available;
           }
         }

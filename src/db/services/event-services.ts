@@ -55,6 +55,7 @@ type Event = {
   title: string;
   date: Date;
   image: string;
+  priority: number;
   venue: string;
   description: string;
   type: string;
@@ -86,6 +87,7 @@ export async function getAllEvents(userId?: string) {
         title: e.title,
         date: e.date,
         image: e.image,
+        priority: e.priority,
         venue: e.venue,
         description: e.description,
         type: e.type,

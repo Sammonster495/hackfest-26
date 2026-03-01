@@ -7,7 +7,11 @@ import { Navbar } from "~/components/landing/Navbar";
 
 export const metadata: Metadata = {
   title: "About Us",
-  description: "Learn more about Hackfest.",
+  description:
+    "Learn about Hackfest'26 – a 36-hour national hackathon at NMAMIT, Nitte, Karnataka. Organised by Finite Loop Club, bringing 500+ developers together for innovation.",
+  alternates: {
+    canonical: "https://hackfest.dev/about",
+  },
 };
 
 export default async function AboutPage() {

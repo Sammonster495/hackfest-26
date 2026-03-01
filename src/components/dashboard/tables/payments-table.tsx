@@ -59,7 +59,7 @@ type PaymentsData = {
 };
 
 type PaymentsTableProps = {
-  initialData: PaymentsData;
+  initialData?: PaymentsData;
 };
 
 const columnHelper = createColumnHelper<Payment>();
@@ -83,7 +83,12 @@ async function fetchPayments(params: {
   return res.json();
 }
 
-export function PaymentsTable({ initialData }: PaymentsTableProps) {
+const emptyData: PaymentsData = {
+  payments: [],
+  pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+};
+
+export function PaymentsTable({ initialData = emptyData }: PaymentsTableProps) {
   const [data, setData] = useState<Payment[]>(initialData.payments);
   const [pagination, setPagination] = useState<Pagination>(
     initialData.pagination,

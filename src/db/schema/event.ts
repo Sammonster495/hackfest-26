@@ -26,6 +26,7 @@ export const events = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     date: timestamp("date").notNull().defaultNow(),
+    priority: integer("priority").notNull().default(0),
     venue: text("venue").notNull(),
     deadline: timestamp("deadline").notNull().defaultNow(),
     image: text("image").notNull(),

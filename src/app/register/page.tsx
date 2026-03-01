@@ -6,7 +6,11 @@ import * as userData from "~/db/data/participant";
 
 export const metadata: Metadata = {
   title: "Register",
-  description: "Register for Hackfest'26",
+  description:
+    "Register for Hackfest'26 – the 36-hour national hackathon at NMAMIT, Nitte. Sign up with your team and compete for the prizes.",
+  alternates: {
+    canonical: "https://hackfest.dev/register",
+  },
 };
 
 export default async function RegisterPage() {

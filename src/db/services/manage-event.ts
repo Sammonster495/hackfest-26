@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { query } from "~/db/data";
@@ -48,6 +48,7 @@ export async function getAllEventsForAdmin({
       image: string;
       createdAt: Date;
       updatedAt: Date;
+      priority: number;
       title: string;
       description: string;
       venue: string;
@@ -84,12 +85,12 @@ export async function getAllEventsForAdmin({
               e.id,
               organizers.map((o) => o.eventId),
             ),
-          orderBy: (events, { asc }) => asc(events.date),
+          orderBy: (events, { asc }) => asc(events.priority),
         });
       });
     } else {
       events = await query.events.findMany({
-        orderBy: (events, { asc }) => asc(events.date),
+        orderBy: (events, { asc }) => asc(events.priority),
       });
     }
 
@@ -320,9 +321,18 @@ export async function createNewEvent(data: any): Promise<NextResponse> {
       );
     }
 
+    const priorityMax = await db
+      .select()
+      .from(events)
+      .orderBy(desc(events.priority))
+      .limit(1);
+
     const newEvent = await db
       .insert(events)
-      .values(parsedData.data)
+      .values({
+        ...parsedData.data,
+        priority: (priorityMax[0]?.priority ?? 0) + 1,
+      })
       .returning();
 
     if (newEvent.length === 0) {
@@ -559,6 +569,45 @@ export async function toggleParticipantAttendanceById(
         toast: true,
         title: "Failed to update attendance",
         description: "An unknown error occurred while updating attendance.",
+      }),
+    );
+  }
+}
+
+export async function reorderEventPriorities(
+  orderedIds: string[],
+): Promise<NextResponse> {
+  try {
+    if (!orderedIds || orderedIds.length === 0) {
+      return errorResponse(
+        new AppError("Missing required field", 400, {
+          toast: true,
+          title: "Reorder Failed",
+          description: "Ordered event IDs are required.",
+        }),
+      );
+    }
+
+    await db.transaction(async (tx) => {
+      const updates = orderedIds.map((id, index) =>
+        tx
+          .update(events)
+          .set({ priority: index + 1 })
+          .where(eq(events.id, id)),
+      );
+      await Promise.all(updates);
+    });
+
+    return successResponse(true, {
+      toast: true,
+      title: "Events Reordered",
+      description: "Event priority order has been updated.",
+    });
+  } catch (_error) {
+    return errorResponse(
+      new AppError("Failed to reorder events.", 500, {
+        toast: true,
+        title: "Failed to reorder events",
       }),
     );
   }

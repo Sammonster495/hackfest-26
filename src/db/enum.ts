@@ -85,6 +85,7 @@ export const courseEnum = pgEnum("course", [
   "BE",
   "BCA",
   "BSc",
+  "BArch (Nitte DU)",
   "MCA",
   "MTech",
 ]);
@@ -132,4 +133,10 @@ export const teamProgressEnum = pgEnum("team_progress", [
   "SECOND_RUNNER",
   "TRACK",
   "PARTICIPATION",
+]);
+
+export const collegeRequestStatusEnum = pgEnum("college_request_status", [
+  "Pending",
+  "Approved",
+  "Rejected",
 ]);

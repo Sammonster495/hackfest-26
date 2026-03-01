@@ -47,6 +47,7 @@ export type Event = {
   description: string;
   date: string;
   venue: string;
+  priority: number;
   type: "Solo" | "Team";
   status: "Draft" | "Published" | "Ongoing" | "Completed";
   audience: "Participants" | "Non-Participants" | "Both";

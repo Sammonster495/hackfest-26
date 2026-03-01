@@ -1,4 +1,5 @@
 export * from "./schema/auth";
+export * from "./schema/college_request";
 export * from "./schema/dashboard-auth";
 export * from "./schema/event";
 export * from "./schema/event-auth";

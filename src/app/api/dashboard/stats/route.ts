@@ -14,11 +14,18 @@ export const GET = permissionProtected(["dashboard:access"], async () => {
       getCollegeRankingsBySelections(),
     ]);
 
-    return NextResponse.json({
-      quickStats,
-      statesStats,
-      collegeRankings,
-    });
+    return NextResponse.json(
+      {
+        quickStats,
+        statesStats,
+        collegeRankings,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+        },
+      },
+    );
   } catch (error) {
     console.error("Failed to fetch dashboard stats:", error);
     return new NextResponse("Internal Server Error", { status: 500 });

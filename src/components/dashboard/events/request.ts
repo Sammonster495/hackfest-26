@@ -16,6 +16,7 @@ export type EventData = {
   venue: string;
   deadline: Date;
   status: "Draft" | "Published" | "Ongoing" | "Completed";
+  priority: number;
   maxTeams: number;
   minTeamSize: number;
   maxTeamSize: number;
@@ -164,6 +165,19 @@ export async function fetchAllEvents(assigned: boolean): Promise<EventData[]> {
   } catch (error) {
     console.error("Error fetching events:", error);
     return [];
+  }
+}
+
+export async function reorderEvents(orderedIds: string[]): Promise<boolean> {
+  try {
+    await apiFetch("/api/dashboard/events/reorder", {
+      method: "POST",
+      body: JSON.stringify({ orderedIds }),
+    });
+    return true;
+  } catch (_error) {
+    toast.error("Failed to reorder events");
+    return false;
   }
 }
 

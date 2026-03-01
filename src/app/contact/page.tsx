@@ -7,7 +7,11 @@ import { Navbar } from "~/components/landing/Navbar";
 
 export const metadata: Metadata = {
   title: "Contact Us",
-  description: "Get in touch with the Hackfest organizers.",
+  description:
+    "Get in touch with the Hackfest'26 organizers at Finite Loop Club, NMAMIT. Reach out for sponsorships, queries, or collaboration opportunities.",
+  alternates: {
+    canonical: "https://hackfest.dev/contact",
+  },
 };
 
 export default async function ContactPage() {

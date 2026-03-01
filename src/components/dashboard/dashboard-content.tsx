@@ -4,6 +4,7 @@ import type { Session } from "next-auth";
 import { Suspense } from "react";
 import { AdminDashboard } from "~/components/dashboard/admin/admin-dashboard";
 import { DashboardTabs } from "~/components/dashboard/dashboard-tabs";
+import { useDashboardPermissions } from "~/components/dashboard/permissions-context";
 import { TeamsTab } from "../tabs";
 import { EvaluatorTab } from "./tabs/Evaluator";
 import { FinalJudgeTab } from "./tabs/FinalJudge";
@@ -13,29 +14,12 @@ import { MentorTab } from "./tabs/Mentor";
 import { SelectorTab } from "./tabs/Selector";
 
 type DashboardContentProps = {
-  permissions: {
-    // Role-based checks
-    isAdmin: boolean;
-    // Permission-based checks
-    canManageSettings: boolean;
-    canManageRoles: boolean;
-    canViewAllTeams: boolean;
-    canViewTop60: boolean;
-    canScoreSubmissions: boolean;
-    canRemarkSubmissions: boolean;
-    canPromoteSelection: boolean;
-    canViewSelection: boolean;
-    canMarkAttendance: boolean;
-    canViewResults: boolean;
-    canManageEvents: boolean;
-  };
   session: Session;
 };
 
-export function DashboardContent({
-  permissions,
-  session,
-}: DashboardContentProps) {
+export function DashboardContent({ session }: DashboardContentProps) {
+  const permissions = useDashboardPermissions();
+
   const {
     isAdmin,
     canViewAllTeams,
@@ -58,43 +42,43 @@ export function DashboardContent({
     {
       id: "teams",
       label: "Teams",
-      hasAccess: isAdmin || canViewAllTeams,
+      hasAccess: canViewAllTeams,
       content: <TeamsTab />,
     },
     {
       id: "events",
       label: "Events",
-      hasAccess: isAdmin || canManageEvents,
+      hasAccess: canManageEvents,
       content: <ManageEventsTab session={session} />,
     },
     {
       id: "evaluator",
       label: "Evaluator",
-      hasAccess: isAdmin || (canScoreSubmissions && canViewAllTeams),
+      hasAccess: canScoreSubmissions && canViewAllTeams,
       content: <EvaluatorTab />,
     },
     {
       id: "selector",
       label: "Selection",
-      hasAccess: isAdmin || (canPromoteSelection && canViewSelection),
+      hasAccess: canPromoteSelection && canViewSelection,
       content: <SelectorTab />,
     },
     {
       id: "judge",
       label: "Judge",
-      hasAccess: isAdmin || (canScoreSubmissions && canViewTop60),
+      hasAccess: canScoreSubmissions && canViewTop60,
       content: <JudgeTab />,
     },
     {
       id: "finalJudge",
       label: "Final Judge",
-      hasAccess: isAdmin || (canScoreSubmissions && canViewResults),
+      hasAccess: canScoreSubmissions && canViewResults,
       content: <FinalJudgeTab />,
     },
     {
       id: "mentor",
       label: "Mentor",
-      hasAccess: isAdmin || canRemarkSubmissions,
+      hasAccess: canRemarkSubmissions,
       content: <MentorTab />,
     },
   ];

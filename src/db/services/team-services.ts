@@ -1,4 +1,16 @@
-import { eq, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  eq,
+  gt,
+  type InferSelectModel,
+  ilike,
+  isNotNull,
+  type SQL,
+  sql,
+} from "drizzle-orm";
+import { cacheLife, cacheTag } from "next/cache";
 import db from "~/db";
 import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
@@ -248,40 +260,124 @@ export async function deleteTeam(userId: string, teamId: string) {
 export async function fetchTeams({
   cursor,
   limit = 50,
+  search,
+  filter,
 }: {
   cursor?: string;
   limit?: number;
-}): Promise<{ teams: TeamWithMemberCount[]; nextCursor: string | null }> {
-  const allTeams = await db
-    .select()
-    .from(teams)
-    .orderBy(teams.createdAt)
-    .limit(limit + 1);
+  search?: string;
+  filter?: {
+    isCompleted?: string;
+    paymentStatus?: string;
+    attended?: string;
+  };
+}): Promise<{
+  teams: TeamWithMemberCount[];
+  nextCursor: string | null;
+  totalCount: number;
+  confirmedCount: number;
+}> {
+  "use cache";
+  cacheLife("seconds");
+  cacheTag("teams");
 
-  let startIndex = 0;
+  const conditions: SQL[] = [];
+
   if (cursor) {
-    startIndex = allTeams.findIndex((t) => t.id === cursor) + 1;
+    const cursorTeam = await db
+      .select({ createdAt: teams.createdAt })
+      .from(teams)
+      .where(eq(teams.id, cursor))
+      .limit(1);
+
+    if (cursorTeam[0]) {
+      conditions.push(gt(teams.createdAt, cursorTeam[0].createdAt));
+    }
   }
 
-  const paginatedTeams = allTeams.slice(startIndex, startIndex + limit);
-  const hasMore = allTeams.length > startIndex + limit;
+  if (search?.trim()) {
+    conditions.push(ilike(teams.name, `%${search.trim()}%`));
+  }
+
+  if (filter?.isCompleted && filter.isCompleted !== "all") {
+    conditions.push(eq(teams.isCompleted, filter.isCompleted === "true"));
+  }
+  if (filter?.paymentStatus && filter.paymentStatus !== "all") {
+    conditions.push(
+      eq(
+        teams.paymentStatus,
+        filter.paymentStatus as "Pending" | "Paid" | "Refunded",
+      ),
+    );
+  }
+  if (filter?.attended && filter.attended !== "all") {
+    conditions.push(eq(teams.attended, filter.attended === "true"));
+  }
+
+  const memberCount = db
+    .select({
+      teamId: participants.teamId,
+      count: count().as("member_count"),
+    })
+    .from(participants)
+    .where(isNotNull(participants.teamId))
+    .groupBy(participants.teamId)
+    .as("member_counts");
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const result = await db
+    .select({
+      id: teams.id,
+      name: teams.name,
+      paymentStatus: teams.paymentStatus,
+      leaderId: teams.leaderId,
+      attended: teams.attended,
+      isCompleted: teams.isCompleted,
+      createdAt: teams.createdAt,
+      updatedAt: teams.updatedAt,
+      memberCount: sql<number>`COALESCE(${memberCount.count}, 0)`.mapWith(
+        Number,
+      ),
+    })
+    .from(teams)
+    .leftJoin(memberCount, eq(teams.id, memberCount.teamId))
+    .where(whereClause)
+    .orderBy(asc(teams.createdAt))
+    .limit(limit + 1);
+
+  const hasMore = result.length > limit;
+  const paginatedTeams = hasMore ? result.slice(0, limit) : result;
   const nextCursor = hasMore
-    ? paginatedTeams[paginatedTeams.length - 1]?.id
+    ? (paginatedTeams[paginatedTeams.length - 1]?.id ?? null)
     : null;
 
-  const teamsWithCounts = await Promise.all(
-    paginatedTeams.map(async (team) => {
-      const members = await teamData.listMembers(team.id);
-      return {
-        ...team,
-        memberCount: members.length,
-      };
-    }),
-  );
+  const { totalCount, confirmedCount } = await getTeamCounts();
 
   return {
-    teams: teamsWithCounts,
+    teams: paginatedTeams,
     nextCursor,
+    totalCount,
+    confirmedCount,
+  };
+}
+
+export async function getTeamCounts() {
+  "use cache";
+  cacheLife("seconds");
+  cacheTag("team-counts");
+
+  const [[totalResult], [confirmedResult]] = await Promise.all([
+    db.select({ count: count() }).from(teams),
+    db
+      .select({ count: count() })
+      .from(teams)
+      .where(eq(teams.isCompleted, true)),
+  ]);
+
+  return {
+    totalCount: totalResult?.count ?? 0,
+    confirmedCount: confirmedResult?.count ?? 0,
   };
 }
 

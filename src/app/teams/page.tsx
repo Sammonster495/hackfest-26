@@ -12,7 +12,10 @@ import * as userData from "~/db/data/participant";
 export const metadata: Metadata = {
   title: "Teams",
   description:
-    "Manage your team for Hackfest. Create a new team or join an existing one.",
+    "Manage your team for Hackfest'26. Create a new team or join an existing one for the 36-hour national hackathon at NMAMIT, Nitte.",
+  alternates: {
+    canonical: "https://hackfest.dev/teams",
+  },
 };
 
 export default async function TeamsPage() {

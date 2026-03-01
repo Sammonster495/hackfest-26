@@ -1,4 +1,4 @@
-import { desc, eq, not } from "drizzle-orm";
+import { asc, eq, not } from "drizzle-orm";
 import db from "..";
 import { dashboardUsers, eventOrganizers, events } from "../schema";
 import { query } from ".";
@@ -28,5 +28,5 @@ export async function findAllPublishedEvents() {
       eq(eventOrganizers.organizerId, dashboardUsers.id),
     )
     .where(not(eq(events.status, "Draft")))
-    .orderBy(desc(events.date));
+    .orderBy(asc(events.priority));
 }

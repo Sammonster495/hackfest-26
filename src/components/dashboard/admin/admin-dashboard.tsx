@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useDashboardPermissions } from "~/components/dashboard/permissions-context";
 import {
   AllocationsTab,
   AttendanceTab,
@@ -13,78 +14,90 @@ import {
   TeamsTab,
 } from "~/components/tabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { PaymentsTable } from "../tables/payments-table";
 import { QuickboardTab } from "../tabs/QuickBoard";
 
 export type SubTabConfig = {
   id: string;
   label: string;
   component: React.ReactNode;
+  hasAccess?: boolean;
 };
 
-const SUB_TABS: SubTabConfig[] = [
-  {
-    id: "quickboard",
-    label: "Quickboard",
-    component: <QuickboardTab />,
-  },
-  {
-    id: "teams",
-    label: "Teams",
-    component: <TeamsTab />,
-  },
-  {
-    id: "submissions",
-    label: "Submissions",
-    component: <SubmissionsTab />,
-  },
-  {
-    id: "selection",
-    label: "Selection",
-    component: <SelectionsTab />,
-  },
-  {
-    id: "results",
-    label: "Results",
-    component: <ResultsTab />,
-  },
-  {
-    id: "attendance",
-    label: "Attendance",
-    component: <AttendanceTab />,
-  },
-  {
-    id: "meals",
-    label: "Meals",
-    component: <MealsTab />,
-  },
-  {
-    id: "allocations",
-    label: "Allocations",
-    component: <AllocationsTab />,
-  },
-  {
-    id: "roles",
-    label: "Roles",
-    component: <RolesTab />,
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    component: <SettingsTab />,
-  },
-];
-
 export function AdminDashboard() {
+  const permissions = useDashboardPermissions();
   const [activeTab, setActiveTab] = useState("quickboard");
   const [isClient, setIsClient] = useState(false);
+
+  const subTabs: SubTabConfig[] = [
+    {
+      id: "quickboard",
+      label: "Quickboard",
+      component: <QuickboardTab />,
+    },
+    {
+      id: "teams",
+      label: "Teams",
+      component: <TeamsTab />,
+    },
+    {
+      id: "payments",
+      label: "Payments",
+      component: <PaymentsTable />,
+    },
+    {
+      id: "submissions",
+      label: "Submissions",
+      component: <SubmissionsTab />,
+    },
+    {
+      id: "selection",
+      label: "Selection",
+      component: <SelectionsTab />,
+    },
+    {
+      id: "results",
+      label: "Results",
+      component: <ResultsTab />,
+    },
+    {
+      id: "attendance",
+      label: "Attendance",
+      component: <AttendanceTab />,
+    },
+    {
+      id: "meals",
+      label: "Meals",
+      component: <MealsTab />,
+    },
+    {
+      id: "allocations",
+      label: "Allocations",
+      component: <AllocationsTab />,
+    },
+    {
+      id: "roles",
+      label: "Roles",
+      hasAccess: permissions.canManageRoles,
+      component: <RolesTab />,
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      hasAccess: permissions.canManageSettings,
+      component: <SettingsTab />,
+    },
+  ];
+
+  const accessibleTabs = subTabs.filter((t) => t.hasAccess !== false);
 
   useEffect(() => {
     setIsClient(true);
     const stored = localStorage.getItem("adminActiveTab");
-    if (stored && SUB_TABS.some((t) => t.id === stored)) {
+    if (stored && accessibleTabs.some((t) => t.id === stored)) {
       setActiveTab(stored);
     }
-  }, []);
+  }, [accessibleTabs.some]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -114,7 +127,7 @@ export function AdminDashboard() {
         className="w-full"
       >
         <TabsList className="w-full justify-between h-auto flex-wrap gap-1 bg-muted/50 p-1">
-          {SUB_TABS.map((tab) => (
+          {accessibleTabs.map((tab) => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
@@ -125,7 +138,7 @@ export function AdminDashboard() {
           ))}
         </TabsList>
 
-        {SUB_TABS.map((tab) => (
+        {accessibleTabs.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-6">
             {tab.component}
           </TabsContent>

@@ -54,14 +54,14 @@ export function CommandMenu({ isAdmin, dashboardUser }: CommandMenuProps) {
     },
     {
       label: "Teams",
-      href: "/dashboard/teams",
+      href: "/dashboard?tab=teams",
       show: dashboardUser
         ? hasPermission(dashboardUser, "team:view_all")
         : false,
     },
     {
       label: "Payments",
-      href: "/dashboard/payments",
+      href: "/dashboard?tab=admin",
       show: isAdmin,
     },
   ];

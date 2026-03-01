@@ -9,7 +9,8 @@ export function ThemeToggle() {
   const { isNight, toggleTheme } = useDayNight();
   const pathname = usePathname();
 
-  if (pathname === "/timeline" || pathname === "/dashboard") return null;
+  if (pathname === "/timeline" || pathname.startsWith("/dashboard"))
+    return null;
 
   return (
     <motion.button

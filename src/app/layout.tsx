@@ -30,35 +30,53 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://hackfest.dev"),
   title: {
     template: "%s | Hackfest",
-    default: "Hackfest",
+    default: "Hackfest - 36-Hour National Level Hackathon",
   },
   description:
-    "Hackfest is a 36-hour National Level Hackathon organised by Finite Loop Club, NMAMIT, Nitte",
+    "Hackfest is a 36-hour National Level Hackathon organised by Finite Loop Club at NMAMIT, Nitte. Win from a ₹4,00,000+ prize pool. April 17-19, 2026.",
   keywords: [
     "Hackfest",
     "Hackfest 26",
+    "Hackfest 2026",
+    "hackathon 2026",
+    "national hackathon India",
+    "college hackathon India",
+    "36 hour hackathon",
+    "coding competition",
     "Karnataka Hackathons",
     "Hackathon",
     "Finite Loop Club",
+    "NMAMIT hackathon",
     "NMAMIT",
     "Nitte",
   ],
   authors: [{ name: "Finite Loop Club" }],
+  alternates: {
+    canonical: "https://hackfest.dev",
+  },
   openGraph: {
     type: "website",
     locale: "en_IN",
     url: "https://hackfest.dev",
-    title: "Hackfest",
+    title: "Hackfest - 36-Hour National Level Hackathon",
     description:
-      "Hackfest is a 36-hour National Level Hackathon organised by Finite Loop Club, NMAMIT, Nitte",
+      "Hackfest is a 36-hour National Level Hackathon organised by Finite Loop Club at NMAMIT, Nitte. Win from a ₹4,00,000+ prize pool. April 17-19, 2026.",
     siteName: "Hackfest",
+    images: [
+      {
+        url: "/logos/hflogowithbg.webp",
+        width: 1200,
+        height: 630,
+        alt: "Hackfest - 36-Hour National Level Hackathon by Finite Loop Club, NMAMIT",
+      },
+    ],
   },
   twitter: {
     images: ["/logos/hflogowithbg.webp"],
     card: "summary_large_image",
-    title: "Hackfest",
+    title: "Hackfest - 36-Hour National Level Hackathon",
     description:
-      "Hackfest is a 36-hour National Level Hackathon organised by Finite Loop Club, NMAMIT, Nitte",
+      "Hackfest is a 36-hour National Level Hackathon organised by Finite Loop Club at NMAMIT, Nitte. Win from a ₹4,00,000+ prize pool. April 17-19, 2026.",
   },
   icons: {
     icon: [
@@ -90,9 +108,9 @@ export default function RootLayout({
             {children}
             <ThemeToggle />
             <ToasterWrapper />
-            <JsonLd />
           </DayNightProvider>
         </SessionProvider>
+        <JsonLd />
         {/* Umami Analytics */}
         <Script
           defer

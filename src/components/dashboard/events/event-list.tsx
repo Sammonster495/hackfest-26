@@ -1,5 +1,21 @@
 "use client";
-import { Edit2, Flag, Trash2 } from "lucide-react";
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Edit2, Flag, GripVertical, Trash2 } from "lucide-react";
 import type { Session } from "next-auth";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +50,7 @@ import {
   deleteEvent,
   type EventData,
   fetchAllEvents,
+  reorderEvents,
   updateEventStatus,
 } from "./request";
 
@@ -46,6 +63,53 @@ async function getData(
   const data = await fetchAllEvents(assigned);
   setEvents(data);
   setLoading(false);
+}
+
+function SortableRow({
+  event,
+  children,
+  canDrag,
+}: {
+  event: EventData;
+  children: React.ReactNode;
+  canDrag: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: event.id, disabled: !canDrag });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className="hover:bg-muted/30 transition-colors"
+    >
+      {canDrag && (
+        <TableCell className="w-8 px-2">
+          <button
+            type="button"
+            className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        </TableCell>
+      )}
+      {children}
+    </TableRow>
+  );
 }
 
 export default function EventListTab({
@@ -68,6 +132,18 @@ export default function EventListTab({
   const [eventToDelete, setEventToDelete] = useState<EventData | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
+  const canDrag =
+    hasPermission(session.dashboardUser, "event:update") && !assigned;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
   useEffect(() => {
     getData(setLoading, setEvents, assigned);
   }, [assigned]);
@@ -78,6 +154,28 @@ export default function EventListTab({
       setDeleteConfirmation("");
     }
   }, [deleteDialogOpen]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = events.findIndex((e) => e.id === active.id);
+    const newIndex = events.findIndex((e) => e.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = [...events];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    setEvents(reordered);
+
+    const orderedIds = reordered.map((e) => e.id);
+    const success = await reorderEvents(orderedIds);
+    if (!success) {
+      setEvents(events);
+    } else {
+      toast.success("Event order updated");
+    }
+  };
 
   const handleEdit = (event: EventData) => {
     onEdit(event.id);
@@ -186,114 +284,133 @@ export default function EventListTab({
       <Card>
         <CardContent>
           <div className="w-full overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">Title</TableHead>
-                  <TableHead className="font-semibold">Type</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold">Date</TableHead>
-                  <TableHead className="font-semibold">Deadline</TableHead>
-                  <TableHead className="font-semibold">Venue</TableHead>
-                  <TableHead className="font-semibold">Team Size</TableHead>
-                  <TableHead className="font-semibold">Max Teams</TableHead>
-                  <TableHead className="text-right font-semibold">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {events.map((event) => (
-                  <TableRow
-                    key={event.id}
-                    className="hover:bg-muted/30 transition-colors"
-                  >
-                    <TableCell className="font-medium max-w-xs truncate">
-                      {event.title}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {event.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={getStatusBadgeVariant(event.status)}
-                        className="text-xs cursor-pointer"
-                        onClick={() => handleStatusEdit(event)}
-                      >
-                        {event.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {formatDate(event.date)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {formatDate(event.deadline)}
-                    </TableCell>
-                    <TableCell className="text-sm max-w-xs truncate">
-                      {event.venue}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {event.minTeamSize}-{event.maxTeamSize}
-                    </TableCell>
-                    <TableCell className="text-sm">{event.maxTeams}</TableCell>
-                    {/* Actions */}
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant={"ghost"}
-                          size="icon-sm"
-                          onClick={() => handleAttendance(event)}
-                          title="Mark attendace"
-                          hidden={
-                            !hasPermission(
-                              session.dashboardUser,
-                              "event:attendance",
-                            ) ||
-                            !["Ongoing", "Published"].includes(event.status)
-                          }
-                        >
-                          <Flag />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleEdit(event)}
-                          title="Edit event"
-                          disabled={
-                            !hasPermission(
-                              session.dashboardUser,
-                              "event:update",
-                            )
-                          }
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => {
-                            setEventToDelete(event);
-                            setDeleteDialogOpen(true);
-                          }}
-                          title="Delete event"
-                          disabled={
-                            !hasPermission(
-                              session.dashboardUser,
-                              "event:delete",
-                            )
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    {canDrag && <TableHead className="w-8 px-2" />}
+                    <TableHead className="font-semibold">#</TableHead>
+                    <TableHead className="font-semibold">Title</TableHead>
+                    <TableHead className="font-semibold">Type</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Date</TableHead>
+                    <TableHead className="font-semibold">Deadline</TableHead>
+                    <TableHead className="font-semibold">Venue</TableHead>
+                    <TableHead className="font-semibold">Team Size</TableHead>
+                    <TableHead className="font-semibold">Max Teams</TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Actions
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <SortableContext
+                  items={events.map((e) => e.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <TableBody>
+                    {events.map((event, index) => (
+                      <SortableRow
+                        key={event.id}
+                        event={event}
+                        canDrag={canDrag}
+                      >
+                        <TableCell className="text-sm text-muted-foreground font-mono w-8">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell className="font-medium max-w-xs truncate">
+                          {event.title}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {event.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={getStatusBadgeVariant(event.status)}
+                            className="text-xs cursor-pointer"
+                            onClick={() => handleStatusEdit(event)}
+                          >
+                            {event.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {formatDate(event.date)}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {formatDate(event.deadline)}
+                        </TableCell>
+                        <TableCell className="text-sm max-w-xs truncate">
+                          {event.venue}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {event.minTeamSize}-{event.maxTeamSize}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {event.maxTeams}
+                        </TableCell>
+                        {/* Actions */}
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant={"ghost"}
+                              size="icon-sm"
+                              onClick={() => handleAttendance(event)}
+                              title="Mark attendance"
+                              hidden={
+                                !hasPermission(
+                                  session.dashboardUser,
+                                  "event:attendance",
+                                ) ||
+                                !["Ongoing", "Published"].includes(event.status)
+                              }
+                            >
+                              <Flag />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => handleEdit(event)}
+                              title="Edit event"
+                              disabled={
+                                !hasPermission(
+                                  session.dashboardUser,
+                                  "event:update",
+                                )
+                              }
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                setEventToDelete(event);
+                                setDeleteDialogOpen(true);
+                              }}
+                              title="Delete event"
+                              disabled={
+                                !hasPermission(
+                                  session.dashboardUser,
+                                  "event:delete",
+                                )
+                              }
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </SortableRow>
+                    ))}
+                  </TableBody>
+                </SortableContext>
+              </Table>
+            </DndContext>
           </div>
         </CardContent>
       </Card>

@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { UserPermissions } from "~/app/dashboard/teams/page";
+import {
+  PermissionGate,
+  useDashboardPermissions,
+} from "~/components/dashboard/permissions-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,7 +51,6 @@ type TeamDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
-  permissions: UserPermissions;
 };
 
 export function TeamDetailDialog({
@@ -58,8 +60,8 @@ export function TeamDetailDialog({
   open,
   onOpenChange,
   onUpdate,
-  permissions,
 }: TeamDetailDialogProps) {
+  const permissions = useDashboardPermissions();
   const [team, setTeam] = useState<TeamWithMembers | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [localAttended, setLocalAttended] = useState(teamAttended);
@@ -278,12 +280,11 @@ export function TeamDetailDialog({
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Members</p>
-            <Badge variant="secondary">{team.members.length}/4</Badge>
+            <Badge variant="secondary">{team.members.length}</Badge>
           </div>
         </div>
 
-        {/* Team Actions */}
-        {(permissions.canMarkAttendance || permissions.isAdmin) && (
+        <PermissionGate permission="team:mark_attendance">
           <div className="flex gap-2 py-2">
             {(permissions.canMarkAttendance || permissions.isAdmin) && (
               <Button
@@ -295,18 +296,18 @@ export function TeamDetailDialog({
                 {team.attended ? "Mark Not Attended" : "Mark Attended"}
               </Button>
             )}
-            {permissions.isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleToggleCompleted}
-                disabled={isLoading}
-              >
-                {team.isCompleted ? "Mark Incomplete" : "Mark Complete"}
-              </Button>
-            )}
           </div>
-        )}
+        </PermissionGate>
+        <PermissionGate beAdmin>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleCompleted}
+            disabled={isLoading}
+          >
+            {team.isCompleted ? "Mark Incomplete" : "Mark Complete"}
+          </Button>
+        </PermissionGate>
 
         {/* Members List */}
         <div className="space-y-3 pt-4 border-t">

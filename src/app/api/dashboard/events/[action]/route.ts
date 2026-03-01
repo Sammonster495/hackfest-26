@@ -7,6 +7,7 @@ import {
   getEventById,
   getEventTeams,
   getTeamDetails,
+  reorderEventPriorities,
   toggleAttendanceById,
   toggleParticipantAttendanceById,
   updateEventById,
@@ -203,6 +204,23 @@ export const POST = permissionProtected<ActionParams>(
         ) {
           const { participantId, attended } = await req.json();
           return toggleParticipantAttendanceById(participantId, attended);
+        }
+        return errorResponse(
+          new AppError("Unauthorized", 401, {
+            toast: true,
+            title: "Unauthorized",
+            description: "You are not authorized to perform this action",
+          }),
+        );
+      }
+
+      case "reorder": {
+        if (
+          isAdmin(session.dashboardUser) ||
+          hasPermission(session.dashboardUser, "event:update")
+        ) {
+          const { orderedIds } = await req.json();
+          return await reorderEventPriorities(orderedIds);
         }
         return errorResponse(
           new AppError("Unauthorized", 401, {
