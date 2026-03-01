@@ -20,6 +20,7 @@ type StatCardProps = {
 
 type QuickStats = {
   totalTeams: number;
+  totalUsers: number;
   totalParticipants: number;
   uniqueColleges: number;
   uniqueStates: number;
@@ -115,30 +116,37 @@ export function QuickboardTab() {
         <p className="text-muted-foreground">Overview of Hackfest Stats</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          title="Total Teams"
+          title="Total Users Accounts"
+          value={quickStats?.totalUsers ?? 0}
+          icon={<Users className="h-4 w-4" />}
+        />
+        <StatCard
+          title="Total Teams registered"
           value={quickStats?.totalTeams ?? 0}
           icon={<Users className="h-4 w-4" />}
         />
         <StatCard
-          title="Total Participants"
+          title="Total Participants registered"
           value={quickStats?.totalParticipants ?? 0}
           icon={<Users className="h-4 w-4" />}
         />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Unique Colleges"
           value={quickStats?.uniqueColleges ?? 0}
+          description="Colleges from which teams have registered"
           icon={<Building2 className="h-4 w-4" />}
         />
         <StatCard
           title="Unique States"
           value={quickStats?.uniqueStates ?? 0}
+          description="States from which teams have registered"
           icon={<MapPin className="h-4 w-4" />}
         />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
         <StatCard
           title="Confirmed Teams"
           value={quickStats?.confirmedTeams ?? 0}

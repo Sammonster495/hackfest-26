@@ -3,6 +3,9 @@ import "./src/env";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  experimental: {
+    useCache: true,
+  },
   async redirects() {
     return [
       {

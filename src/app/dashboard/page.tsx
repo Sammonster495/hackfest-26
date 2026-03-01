@@ -72,17 +72,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex-1">
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
             Welcome back, {dashboardUser.name}
           </p>
         </div>
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex justify-start md:justify-center">
           <LiveClock />
         </div>
-        <div className="flex-1 flex justify-end gap-2">
+        <div className="flex-1 flex justify-start md:justify-end gap-2">
           <form
             action={async () => {
               "use server";

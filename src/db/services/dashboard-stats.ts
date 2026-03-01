@@ -1,4 +1,5 @@
 import { and, count, countDistinct, desc, eq, isNotNull } from "drizzle-orm";
+import { cacheLife, cacheTag } from "next/cache";
 import { AppError } from "~/lib/errors/app-error";
 import db from "..";
 import { colleges, participants, teams } from "../schema";
@@ -6,9 +7,18 @@ import { ideaSubmission } from "../schema/ideaSubmission";
 import { selected } from "../schema/team-progress";
 
 export async function getDashboardStats() {
+  "use cache";
+  cacheLife("seconds");
+  cacheTag("dashboard-stats");
+
   try {
     const [teamsResult] = await db.select({ count: count() }).from(teams);
     const totalTeams = teamsResult?.count ?? 0;
+
+    const [usersResult] = await db
+      .select({ count: count() })
+      .from(participants);
+    const totalUsers = usersResult?.count ?? 0;
 
     const [participantsResult] = await db
       .select({ count: count() })
@@ -50,6 +60,7 @@ export async function getDashboardStats() {
 
     return {
       totalTeams,
+      totalUsers,
       totalParticipants,
       uniqueColleges,
       uniqueStates,
@@ -64,6 +75,10 @@ export async function getDashboardStats() {
 }
 
 export async function getStatesStats() {
+  "use cache";
+  cacheLife("seconds");
+  cacheTag("dashboard-stats");
+
   try {
     const statesStatsResult = await db
       .select({
@@ -86,6 +101,10 @@ export async function getStatesStats() {
 }
 
 export async function getCollegeRankingsBySelections() {
+  "use cache";
+  cacheLife("seconds");
+  cacheTag("dashboard-stats");
+
   try {
     const collegeRankingsResult = await db
       .select({

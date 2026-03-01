@@ -278,7 +278,7 @@ export function TeamDetailDialog({
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Members</p>
-            <Badge variant="secondary">{team.members.length}/4</Badge>
+            <Badge variant="secondary">{team.members.length}</Badge>
           </div>
         </div>
 
