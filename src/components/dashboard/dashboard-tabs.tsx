@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 type TabConfig = {
   id: string;
-  label: string;
+  label: React.ReactNode;
   hasAccess: boolean;
   content: React.ReactNode;
 };

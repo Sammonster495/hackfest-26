@@ -1,11 +1,12 @@
 "use client";
 
 import type { Session } from "next-auth";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { AdminDashboard } from "~/components/dashboard/admin/admin-dashboard";
 import { DashboardTabs } from "~/components/dashboard/dashboard-tabs";
 import { useDashboardPermissions } from "~/components/dashboard/permissions-context";
 import { TeamsTab } from "../tabs";
+import { CollegesTab } from "./tabs/colleges/CollegesTab";
 import { EvaluatorTab } from "./tabs/Evaluator";
 import { FinalJudgeTab } from "./tabs/FinalJudge";
 import { JudgeTab } from "./tabs/Judge";
@@ -19,6 +20,27 @@ type DashboardContentProps = {
 
 export function DashboardContent({ session }: DashboardContentProps) {
   const permissions = useDashboardPermissions();
+  const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchCounts = () => {
+      if (permissions.isAdmin || permissions.canViewColleges) {
+        fetch("/api/dashboard/college-requests/count")
+          .then((res) => res.json())
+          .then((data) => {
+            if (typeof data.count === "number") {
+              setPendingRequestsCount(data.count);
+            }
+          })
+          .catch(console.error);
+      }
+    };
+
+    fetchCounts();
+    window.addEventListener("invalidate-counts-cache", fetchCounts);
+    return () =>
+      window.removeEventListener("invalidate-counts-cache", fetchCounts);
+  }, [permissions.isAdmin, permissions.canViewColleges]);
 
   const {
     isAdmin,
@@ -30,6 +52,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
     canViewTop60,
     canViewResults,
     canManageEvents,
+    canViewColleges,
   } = permissions;
 
   const tabs = [
@@ -44,6 +67,21 @@ export function DashboardContent({ session }: DashboardContentProps) {
       label: "Teams",
       hasAccess: canViewAllTeams,
       content: <TeamsTab />,
+    },
+    {
+      id: "colleges",
+      label: (
+        <span className="flex items-center gap-2">
+          Colleges
+          {pendingRequestsCount > 0 && (
+            <span className="bg-red-500 text-white min-w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold px-1.5">
+              {pendingRequestsCount}
+            </span>
+          )}
+        </span>
+      ),
+      hasAccess: isAdmin || canViewColleges, // or specific permission
+      content: <CollegesTab />,
     },
     {
       id: "events",
