@@ -2,6 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { publicRoute } from "~/auth/route-handlers";
 import { rateLimiters } from "~/lib/rate-limit";
+import db from "~/db";
+import { collegeRequests } from "~/db/schema";
+import crypto from "crypto";
 
 export const POST = publicRoute(async (req: NextRequest) => {
   const SMTP_HOST = process.env.SMTP_HOST;
@@ -55,6 +58,24 @@ export const POST = publicRoute(async (req: NextRequest) => {
       console.error(
         "Failed to send email (likely due to missing SMTP credentials), but proceeding:",
         emailError,
+      );
+    }
+
+    // Save to database
+    try {
+      await db.insert(collegeRequests).values({
+        id: crypto.randomUUID(),
+        requested_name: customCollegeName,
+        state: participantData.state, // extract state from participantData
+        status: "Pending",
+      });
+    } catch (dbError) {
+      console.error("Failed to insert college request into database:", dbError);
+      // We can choose to fail or succeed here. Assuming we still want to succeed if email sent, 
+      // but ideally we want database to be primary Source of Truth now.
+      return NextResponse.json(
+        { message: "Failed to save college request." },
+        { status: 500 }
       );
     }
 
