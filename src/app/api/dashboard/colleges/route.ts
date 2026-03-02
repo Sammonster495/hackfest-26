@@ -3,7 +3,7 @@ import { permissionProtected, type RouteContext } from "~/auth/routes-wrapper";
 import { fetchCollegesPaginated } from "~/db/services/college-requests";
 
 export const GET = permissionProtected(
-  ["college:view"], // Or a more specific permission if available
+  ["college:view_all"], // Or a more specific permission if available
   async (request: Request, _context: RouteContext) => {
     const { searchParams } = new URL(request.url);
     const cursor = searchParams.get("cursor") || undefined;

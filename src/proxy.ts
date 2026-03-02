@@ -6,7 +6,10 @@ export async function proxy(request: NextRequest) {
 
   const normalizedPath = pathname.replace(/\/$/, "");
 
-  if (normalizedPath === "/dashboard/login") {
+  if (
+    normalizedPath === "/dashboard/login" ||
+    normalizedPath === "/dashboard/signup"
+  ) {
     return NextResponse.next();
   }
 

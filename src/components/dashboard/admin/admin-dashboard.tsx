@@ -5,6 +5,7 @@ import { useDashboardPermissions } from "~/components/dashboard/permissions-cont
 import {
   AllocationsTab,
   AttendanceTab,
+  DashboardUsersTab,
   MealsTab,
   ResultsTab,
   RolesTab,
@@ -23,6 +24,8 @@ export type SubTabConfig = {
   component: React.ReactNode;
   hasAccess?: boolean;
 };
+
+// Have kept for future safety, not needed actually
 
 export function AdminDashboard() {
   const permissions = useDashboardPermissions();
@@ -80,6 +83,12 @@ export function AdminDashboard() {
       label: "Roles",
       hasAccess: permissions.canManageRoles,
       component: <RolesTab />,
+    },
+    {
+      id: "users",
+      label: "Users",
+      hasAccess: permissions.canManageRoles,
+      component: <DashboardUsersTab />,
     },
     {
       id: "settings",

@@ -52,6 +52,7 @@ export function CollegesTable() {
   const [data, setData] = useState<College[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [totalCount, setTotalCount] = useState(0);
 
@@ -77,6 +78,7 @@ export function CollegesTable() {
   const fetchData = useCallback(
     async (append = false, cursorVal?: string) => {
       if (!append) setIsLoading(true);
+      setIsError(false);
       try {
         const cacheKey = `${debouncedSearch}-${cursorVal || "start"}`;
 
@@ -110,6 +112,7 @@ export function CollegesTable() {
         setTotalCount(result.totalCount);
       } catch (err) {
         console.error(err);
+        setIsError(true);
       } finally {
         setIsLoading(false);
       }
@@ -173,9 +176,9 @@ export function CollegesTable() {
   const virtualRows = rowVirtualizer.getVirtualItems();
 
   const loadMore = useCallback(async () => {
-    if (!cursor || isLoading) return;
+    if (!cursor || isLoading || isError) return;
     await fetchData(true, cursor);
-  }, [cursor, isLoading, fetchData]);
+  }, [cursor, isLoading, isError, fetchData]);
 
   useEffect(() => {
     const container = tableContainerRef.current;
@@ -183,7 +186,7 @@ export function CollegesTable() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && cursor && !isLoading) {
+        if (entries[0]?.isIntersecting && cursor && !isLoading && !isError) {
           void loadMore();
         }
       },
@@ -194,7 +197,7 @@ export function CollegesTable() {
     if (sentinel) observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [cursor, isLoading, loadMore]);
+  }, [cursor, isLoading, isError, loadMore]);
 
   return (
     <>
@@ -306,7 +309,11 @@ export function CollegesTable() {
                       colSpan={columns.length}
                       className="text-center py-4 text-muted-foreground"
                     >
-                      {isLoading ? "Loading more..." : "Scroll for more"}
+                      {isError
+                        ? "Error loading more. Try refreshing."
+                        : isLoading
+                          ? "Loading more..."
+                          : "Scroll for more"}
                     </TableCell>
                   </TableRow>
                 )}
@@ -317,9 +324,11 @@ export function CollegesTable() {
                   colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  {search.trim() !== ""
-                    ? "No colleges match your search."
-                    : "No colleges found."}
+                  {isError
+                    ? "Failed to load colleges."
+                    : search.trim() !== ""
+                      ? "No colleges match your search."
+                      : "No colleges found."}
                 </TableCell>
               </TableRow>
             )}

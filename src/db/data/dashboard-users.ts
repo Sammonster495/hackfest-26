@@ -16,9 +16,10 @@ export async function findById(id: string) {
   });
 }
 
-export async function findByUsername(username: string) {
+export async function findByUsernameOrEmail(identifier: string) {
   return query.dashboardUsers.findOne({
-    where: (u, { eq }) => eq(u.username, username),
+    where: (u, { eq, or }) =>
+      or(eq(u.username, identifier), eq(u.email, identifier)),
   });
 }
 

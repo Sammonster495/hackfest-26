@@ -387,17 +387,23 @@ export async function getPayments({
   status,
   search,
   sortOrder = "desc",
+  type = "PARTICIPATION",
 }: {
   page?: number;
   limit?: number;
   status?: "Pending" | "Paid" | "Refunded";
   search?: string;
   sortOrder?: "asc" | "desc";
+  type?: "PARTICIPATION" | "EVENT" | "ALL";
 }) {
   const conditions: SQL[] = [];
 
   if (status) {
     conditions.push(eq(payment.paymentStatus, status));
+  }
+
+  if (type !== "ALL") {
+    conditions.push(eq(payment.paymentType, type));
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -414,6 +420,16 @@ export async function getPayments({
         },
         user: {
           columns: { id: true, name: true, email: true },
+        },
+        eventTeam: {
+          columns: { id: true, name: true },
+        },
+        eventUser: {
+          with: {
+            user: {
+              columns: { id: true, name: true, email: true },
+            },
+          },
         },
       },
       orderBy: [
@@ -433,6 +449,9 @@ export async function getPayments({
         p.team?.name?.toLowerCase().includes(searchLower) ||
         p.user?.name?.toLowerCase().includes(searchLower) ||
         p.user?.email?.toLowerCase().includes(searchLower) ||
+        p.eventTeam?.name?.toLowerCase().includes(searchLower) ||
+        p.eventUser?.user?.name?.toLowerCase().includes(searchLower) ||
+        p.eventUser?.user?.email?.toLowerCase().includes(searchLower) ||
         p.razorpayOrderId?.toLowerCase().includes(searchLower),
     );
   }

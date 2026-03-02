@@ -143,7 +143,10 @@ async function seed() {
     { key: "settings:manage", description: "Manage system settings" },
     { key: "roles:manage", description: "Manage roles" },
     { key: "users:manage_staff", description: "Manage staff users" },
-    { key: "college:view", description: "View and manage college requests" },
+    {
+      key: "college:view_all",
+      description: "View and manage college requests",
+    },
     // Participant / Team Visibility
     { key: "team:view_all", description: "View all teams" },
     { key: "team:view_top60", description: "View top 60 teams" },

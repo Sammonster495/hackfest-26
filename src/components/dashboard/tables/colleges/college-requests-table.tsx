@@ -291,7 +291,7 @@ export function CollegeRequestsTable({
           if (editingId === req.id) {
             return (
               <div className="flex gap-2 items-center">
-                <Button
+                {/* <Button
                   size="sm"
                   variant="default"
                   disabled={isUpdating}
@@ -300,7 +300,7 @@ export function CollegeRequestsTable({
                   }
                 >
                   Save
-                </Button>
+                </Button> */}
                 {req.status !== "Approved" && (
                   <Button
                     size="sm"

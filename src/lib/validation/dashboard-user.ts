@@ -5,6 +5,8 @@ export const dashboardUserSchema = z.object({
   username: z.string(),
   passwordHash: z.string(),
   name: z.string(),
+  email: z.string().email().nullable().optional(),
+  phone: z.string().nullable().optional(),
   isActive: z.boolean().default(true),
   lastLoginAt: z.date().nullable(),
   createdAt: z.date(),
@@ -13,6 +15,8 @@ export const dashboardUserSchema = z.object({
 
 export const createDashboardUserSchema = z.object({
   username: z.string().min(1, "Username is required"),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().optional().nullable(),
   passwordHash: z.string().min(1, "Password hash is required"),
   name: z.string().min(1, "Name is required"),
   isActive: z.boolean().default(true).optional(),
