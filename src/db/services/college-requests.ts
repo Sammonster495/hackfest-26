@@ -141,15 +141,25 @@ export async function updateCollegeRequestStatus(
   id: string,
   status: "Pending" | "Approved" | "Rejected",
   approvedName?: string,
+  stateOverride?: string,
 ) {
   return await db.transaction(async (tx) => {
-    // Update the request
     const updatePayload: {
       status: "Pending" | "Approved" | "Rejected";
       approved_name?: string | null;
+      state?: StateEnum;
     } = { status };
     if (approvedName) {
       updatePayload.approved_name = approvedName;
+    }
+    if (stateOverride) {
+      if (!stateEnum.enumValues.includes(stateOverride as StateEnum)) {
+        throw new AppError("BAD_REQUEST", 400, {
+          title: "Invalid State in Request",
+          description: `The state '${stateOverride}' is not a valid state.`,
+        });
+      }
+      updatePayload.state = stateOverride as StateEnum;
     }
 
     const [updatedRequest] = await tx

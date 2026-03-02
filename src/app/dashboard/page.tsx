@@ -39,7 +39,7 @@ export default async function DashboardPage() {
     canViewResults: hasPermission(dashboardUser, "results:view"),
     canManageEvents: hasPermission(dashboardUser, "event:manage"),
     canViewTeamDetails: hasPermission(dashboardUser, "team:view_team_details"),
-    canViewColleges: hasPermission(dashboardUser, "college:view"),
+    canViewColleges: hasPermission(dashboardUser, "colleges:manage"),
   };
 
   if (!permissions.isAdmin) {

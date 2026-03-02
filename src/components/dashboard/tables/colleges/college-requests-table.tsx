@@ -31,6 +31,13 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -38,6 +45,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { StateEnum } from "~/db/enum";
 
 type CollegeRequest = {
   id: string;
@@ -75,6 +83,7 @@ export function CollegeRequestsTable({
   const [data, setData] = useState<CollegeRequest[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [totalCount, setTotalCount] = useState(0);
 
@@ -84,21 +93,21 @@ export function CollegeRequestsTable({
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Client-side cache (Map to hold search string + mode -> Cached Data)
-  const cacheRef = useRef<Map<string, CollegeRequestsData>>(new Map());
-
   // Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editState, setEditState] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Confirmation State
   const [confirmApproval, setConfirmApproval] = useState<{
     id: string;
     name: string;
+    state: string;
     source: "direct" | "edit";
   } | null>(null);
 
+  // Debounce search input
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
@@ -109,38 +118,28 @@ export function CollegeRequestsTable({
     };
   }, [search]);
 
+  // Main data fetcher
   const fetchData = useCallback(
     async (append = false, cursorVal?: string) => {
       if (!append) setIsLoading(true);
+      setIsError(false);
       try {
-        const cacheKey = `${statusMode}-${debouncedSearch}-${cursorVal || "start"}`;
-
-        // Use cache if not appending and query matches
-        if (!append && cacheRef.current.has(cacheKey)) {
-          const cached = cacheRef.current.get(cacheKey);
-          if (!cached) return;
-          setData(cached.requests);
-          setCursor(cached.nextCursor);
-          setTotalCount(cached.totalCount);
-          setIsLoading(false);
-          return;
-        }
-
         const url = buildUrl(debouncedSearch, statusMode, cursorVal);
         const res = await fetch(url);
         if (!res.ok) throw new Error("Failed to fetch requests");
+
         const result: CollegeRequestsData = await res.json();
 
         if (append) {
           setData((prev) => [...prev, ...result.requests]);
         } else {
           setData(result.requests);
-          cacheRef.current.set(cacheKey, result);
         }
         setCursor(result.nextCursor);
         setTotalCount(result.totalCount);
       } catch (err) {
         console.error(err);
+        setIsError(true);
       } finally {
         setIsLoading(false);
       }
@@ -148,17 +147,16 @@ export function CollegeRequestsTable({
     [debouncedSearch, statusMode],
   );
 
+  // Fetch immediately on mount / criteria changes
   useEffect(() => {
     startTransition(() => {
       void fetchData(false);
     });
   }, [fetchData]);
 
+  // Support global cache invalidation requests
   useEffect(() => {
-    const handleInvalidate = () => {
-      cacheRef.current.clear();
-      void fetchData(false);
-    };
+    const handleInvalidate = () => void fetchData(false);
     window.addEventListener(
       "invalidate-college-requests-cache",
       handleInvalidate,
@@ -174,13 +172,18 @@ export function CollegeRequestsTable({
     id: string,
     newStatus: "Pending" | "Approved" | "Rejected",
     apprName?: string,
+    stateOverride?: string,
   ) => {
     setIsUpdating(true);
     try {
+      const payload: Record<string, string> = { id, status: newStatus };
+      if (apprName) payload.approvedName = apprName;
+      if (stateOverride) payload.state = stateOverride;
+
       const res = await fetch("/api/dashboard/college-requests", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: newStatus, approvedName: apprName }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Failed to update status");
@@ -191,7 +194,7 @@ export function CollegeRequestsTable({
       // Optimistically remove/update from list
       if (statusMode !== "all") {
         if (newStatus === statusMode) {
-          // Only updated the name, keep it in the list
+          // Only updated the name/state, keep it in the list
           setData((prev) =>
             prev.map((r) =>
               r.id === id
@@ -199,6 +202,7 @@ export function CollegeRequestsTable({
                     ...r,
                     status: newStatus,
                     approved_name: apprName ?? r.approved_name,
+                    state: stateOverride ?? r.state,
                   }
                 : r,
             ),
@@ -216,17 +220,15 @@ export function CollegeRequestsTable({
                   ...r,
                   status: newStatus,
                   approved_name: apprName ?? r.approved_name,
+                  state: stateOverride ?? r.state,
                 }
               : r,
           ),
         );
       }
 
-      // Flush caches so that when user navigates to another active tab, it grabs fresh data
+      // Tell other tables it's time to refresh
       window.dispatchEvent(new CustomEvent("invalidate-colleges-cache"));
-      window.dispatchEvent(
-        new CustomEvent("invalidate-college-requests-cache"),
-      );
       window.dispatchEvent(new CustomEvent("invalidate-counts-cache"));
     } catch (error) {
       console.error(error);
@@ -239,6 +241,7 @@ export function CollegeRequestsTable({
   const startEdit = (req: CollegeRequest) => {
     setEditingId(req.id);
     setEditName(req.approved_name || req.requested_name);
+    setEditState(req.state || "");
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: hmm
@@ -261,12 +264,40 @@ export function CollegeRequestsTable({
                 onChange={(e) => setEditName(e.target.value)}
                 className="h-8 w-full max-w-[250px]"
                 autoFocus
+                placeholder="Final College Name"
               />
             );
           }
           return (
             <span className="font-medium">
               {info.getValue() || req.requested_name}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor("state", {
+        header: "State",
+        cell: (info) => {
+          const req = info.row.original;
+          if (editingId === req.id) {
+            return (
+              <Select value={editState} onValueChange={setEditState}>
+                <SelectTrigger className="h-8 w-full max-w-[200px]">
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(StateEnum).map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }
+          return (
+            <span className="text-muted-foreground">
+              {info.getValue() || "Unknown"}
             </span>
           );
         },
@@ -291,16 +322,6 @@ export function CollegeRequestsTable({
           if (editingId === req.id) {
             return (
               <div className="flex gap-2 items-center">
-                {/* <Button
-                  size="sm"
-                  variant="default"
-                  disabled={isUpdating}
-                  onClick={() =>
-                    handleUpdateStatus(req.id, req.status, editName)
-                  }
-                >
-                  Save
-                </Button> */}
                 {req.status !== "Approved" && (
                   <Button
                     size="sm"
@@ -311,6 +332,7 @@ export function CollegeRequestsTable({
                       setConfirmApproval({
                         id: req.id,
                         name: editName,
+                        state: editState,
                         source: "edit",
                       })
                     }
@@ -351,6 +373,7 @@ export function CollegeRequestsTable({
                       setConfirmApproval({
                         id: req.id,
                         name: req.approved_name || req.requested_name,
+                        state: req.state || "",
                         source: "direct",
                       })
                     }
@@ -369,6 +392,7 @@ export function CollegeRequestsTable({
                           req.id,
                           "Rejected",
                           req.approved_name || undefined,
+                          req.state || undefined,
                         )
                       }
                       title="Reject"
@@ -387,6 +411,7 @@ export function CollegeRequestsTable({
                           req.id,
                           "Pending",
                           req.approved_name || undefined,
+                          req.state || undefined,
                         )
                       }
                       title="Make Pending"
@@ -402,7 +427,7 @@ export function CollegeRequestsTable({
         },
       }),
     ],
-    [editingId, editName, isUpdating],
+    [editingId, editName, editState, isUpdating],
   );
 
   const table = useReactTable({
@@ -423,9 +448,9 @@ export function CollegeRequestsTable({
   const virtualRows = rowVirtualizer.getVirtualItems();
 
   const loadMore = useCallback(async () => {
-    if (!cursor || isLoading) return;
+    if (!cursor || isLoading || isError) return;
     await fetchData(true, cursor);
-  }, [cursor, isLoading, fetchData]);
+  }, [cursor, isLoading, isError, fetchData]);
 
   useEffect(() => {
     const container = tableContainerRef.current;
@@ -433,7 +458,7 @@ export function CollegeRequestsTable({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && cursor && !isLoading) {
+        if (entries[0]?.isIntersecting && cursor && !isLoading && !isError) {
           void loadMore();
         }
       },
@@ -444,7 +469,7 @@ export function CollegeRequestsTable({
     if (sentinel) observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [cursor, isLoading, loadMore]);
+  }, [cursor, isLoading, isError, loadMore]);
 
   return (
     <>
@@ -497,7 +522,7 @@ export function CollegeRequestsTable({
                 // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
                 <TableRow key={`skeleton-${i}`}>
                   <TableCell colSpan={columns.length}>
-                    <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-full animate-pulse rounded bg-muted max-w-[120px]" />
                   </TableCell>
                 </TableRow>
               ))
@@ -556,7 +581,11 @@ export function CollegeRequestsTable({
                       colSpan={columns.length}
                       className="text-center py-4 text-muted-foreground"
                     >
-                      {isLoading ? "Loading more..." : "Scroll for more"}
+                      {isError
+                        ? "Error loading more. Try refreshing."
+                        : isLoading
+                          ? "Loading more..."
+                          : "Scroll for more"}
                     </TableCell>
                   </TableRow>
                 )}
@@ -567,9 +596,11 @@ export function CollegeRequestsTable({
                   colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  {search.trim() !== ""
-                    ? "No requests match your search."
-                    : "No requests found."}
+                  {isError
+                    ? "Failed to load requests."
+                    : search.trim() !== ""
+                      ? "No requests match your search."
+                      : "No requests found."}
                 </TableCell>
               </TableRow>
             )}
@@ -589,6 +620,10 @@ export function CollegeRequestsTable({
               <span className="font-bold text-foreground">
                 "{confirmApproval?.name}"
               </span>{" "}
+              in{" "}
+              <span className="font-bold text-foreground">
+                "{confirmApproval?.state}"
+              </span>{" "}
               will be added to the official college list. This action cannot be
               undone once approved.
             </AlertDialogDescription>
@@ -604,6 +639,7 @@ export function CollegeRequestsTable({
                     confirmApproval.id,
                     "Approved",
                     confirmApproval.name,
+                    confirmApproval.state,
                   );
                   setConfirmApproval(null);
                 }

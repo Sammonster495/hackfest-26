@@ -13,6 +13,14 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { StateEnum } from "~/db/enum";
 import { cn } from "~/lib/utils";
 import type { RegisterParticipantInput } from "~/lib/validation/participant";
 
@@ -46,11 +54,12 @@ export function CollegeStep({
 
   const [isOtherModalOpen, setIsOtherModalOpen] = useState(false);
   const [otherCollegeName, setOtherCollegeName] = useState("");
+  const [otherCollegeState, setOtherCollegeState] = useState<string>("");
   const [isSubmittingOther, setIsSubmittingOther] = useState(false);
   const [otherSuccess, setOtherSuccess] = useState(false);
 
   const handleOtherSubmit = async () => {
-    if (!otherCollegeName.trim()) return;
+    if (!otherCollegeName.trim() || !otherCollegeState) return;
     setIsSubmittingOther(true);
 
     try {
@@ -61,6 +70,7 @@ export function CollegeStep({
         },
         body: JSON.stringify({
           customCollegeName: otherCollegeName,
+          collegeState: otherCollegeState,
           participantData: formValues,
         }),
       }).catch((error) =>
@@ -277,6 +287,22 @@ export function CollegeStep({
                     "
                   />
 
+                  <Select
+                    value={otherCollegeState}
+                    onValueChange={setOtherCollegeState}
+                  >
+                    <SelectTrigger className="w-full h-14 rounded-xl border border-white/20 bg-white/10 px-4 text-lg font-pirate text-white focus:ring-0 focus-visible:ring-2 focus-visible:ring-white">
+                      <SelectValue placeholder="Select State" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(StateEnum).map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <div className="flex gap-3 pt-2">
                     <Button
                       type="button"
@@ -290,7 +316,11 @@ export function CollegeStep({
                     <Button
                       type="button"
                       onClick={handleOtherSubmit}
-                      disabled={!otherCollegeName.trim() || isSubmittingOther}
+                      disabled={
+                        !otherCollegeName.trim() ||
+                        !otherCollegeState ||
+                        isSubmittingOther
+                      }
                       className="flex-1 bg-white text-[#10569c] hover:bg-white/90"
                     >
                       {isSubmittingOther ? (

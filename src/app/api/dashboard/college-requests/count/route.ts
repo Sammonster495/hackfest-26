@@ -6,7 +6,7 @@ import {
 } from "~/db/services/college-requests";
 
 export const GET = permissionProtected(
-  ["college:view"],
+  ["colleges:manage"],
   async (_request: Request, _context: RouteContext) => {
     try {
       const [counts, collegesCount] = await Promise.all([

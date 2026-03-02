@@ -41,7 +41,7 @@ export const GET = permissionProtected<ActionParams>(
       case "getAll": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:read_all")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           return await getAllEventsForAdmin({});
         }
@@ -57,7 +57,7 @@ export const GET = permissionProtected<ActionParams>(
       case "getAllAssigned": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:read")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           return getAllEventsForAdmin({ assigned: true, session: session });
         }
@@ -73,7 +73,7 @@ export const GET = permissionProtected<ActionParams>(
       case "getById": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:read")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           return await getEventById(searchParams.get("id") ?? null);
         }
@@ -89,7 +89,7 @@ export const GET = permissionProtected<ActionParams>(
       case "getEventTeams": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:read")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           return await getEventTeams(searchParams.get("id") ?? null);
         }
@@ -105,7 +105,7 @@ export const GET = permissionProtected<ActionParams>(
       case "getTeamDetails": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:read")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const teamId = searchParams.get("id") ?? null;
           return await getTeamDetails(teamId);
@@ -149,7 +149,7 @@ export const POST = permissionProtected<ActionParams>(
       case "updateStatus": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:update")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const { eventId, newStatus } = await req.json();
           return await updateEventStatus(eventId, newStatus);
@@ -166,7 +166,7 @@ export const POST = permissionProtected<ActionParams>(
       case "update": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:update")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const { id, data } = await req.json();
           return await updateEventById(id, data);
@@ -183,7 +183,7 @@ export const POST = permissionProtected<ActionParams>(
       case "updateAttendance": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:attendance")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const { teamId, attended } = await req.json();
           return toggleAttendanceById(teamId, attended);
@@ -200,7 +200,7 @@ export const POST = permissionProtected<ActionParams>(
       case "updateParticipantAttendance": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:attendance")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const { participantId, attended } = await req.json();
           return toggleParticipantAttendanceById(participantId, attended);
@@ -217,7 +217,7 @@ export const POST = permissionProtected<ActionParams>(
       case "reorder": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:update")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const { orderedIds } = await req.json();
           return await reorderEventPriorities(orderedIds);
@@ -261,7 +261,7 @@ export const DELETE = permissionProtected<ActionParams>(
       case "delete": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:delete")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const { eventId } = await req.json();
           return await deleteEventById(eventId);
@@ -305,7 +305,7 @@ export const PUT = permissionProtected<ActionParams>(
       case "create": {
         if (
           isAdmin(session.dashboardUser) ||
-          hasPermission(session.dashboardUser, "event:create")
+          hasPermission(session.dashboardUser, "event:manage")
         ) {
           const data = await req.json();
           return await createNewEvent(data);

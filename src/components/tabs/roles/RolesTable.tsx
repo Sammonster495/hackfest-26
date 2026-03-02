@@ -1,8 +1,9 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,6 +13,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { CreateRoleDialog } from "./CreateRoleDialog";
+import { EditRolePermissionsDialog } from "./EditRolePermissionsDialog";
 
 type Permission = {
   id: string;
@@ -31,6 +33,9 @@ type Role = {
 export function RolesTable() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const fetchRoles = async () => {
     try {
@@ -52,6 +57,11 @@ export function RolesTable() {
     fetchRoles();
   }, []);
 
+  const handleEditRole = (role: Role) => {
+    setEditingRole(role);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -68,19 +78,20 @@ export function RolesTable() {
               <TableHead>System Role</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Permissions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   <Loader2 className="mr-2 inline-flex h-4 w-4 animate-spin" />
                   Loading...
                 </TableCell>
               </TableRow>
             ) : roles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No roles found.
                 </TableCell>
               </TableRow>
@@ -127,12 +138,29 @@ export function RolesTable() {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditRole(role)}
+                    >
+                      <Settings2 className="h-4 w-4 mr-1" />
+                      Edit Permissions
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      <EditRolePermissionsDialog
+        role={editingRole}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onPermissionsUpdated={fetchRoles}
+      />
     </div>
   );
 }

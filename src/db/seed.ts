@@ -144,7 +144,7 @@ async function seed() {
     { key: "roles:manage", description: "Manage roles" },
     { key: "users:manage_staff", description: "Manage staff users" },
     {
-      key: "college:view_all",
+      key: "colleges:manage",
       description: "View and manage college requests",
     },
     // Participant / Team Visibility
@@ -185,12 +185,6 @@ async function seed() {
     { key: "slot:regenerate", description: "Regenerate slot allocations" },
     // Event management
     { key: "event:manage", description: "Get access to manage events tab" },
-    { key: "event:read_all", description: "Read all events" },
-    { key: "event:read", description: "Read assigned event" },
-    { key: "event:create", description: "Create new event" },
-    { key: "event:update", description: "Update an event" },
-    { key: "event:attendance", description: "Mark event attendance" },
-    { key: "event:delete", description: "Delete an event" },
   ];
 
   const permissionMap = new Map<string, string>(); // key -> id

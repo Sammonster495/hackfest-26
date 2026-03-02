@@ -19,7 +19,7 @@ export const dashboardFeatureTabs: FeatureTabConfig[] = [
   {
     id: "colleges",
     label: "Colleges",
-    permissions: ["college:view_all"],
+    permissions: ["colleges:manage"],
   },
   {
     id: "payments",
