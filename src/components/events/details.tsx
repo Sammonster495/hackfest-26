@@ -13,6 +13,12 @@ export default function EventDetails({
   registration: boolean;
   handleCardClick: (id: string) => void;
 }) {
+  const statusLabel = {
+    Published: "Set Sail Now!",
+    Ongoing: "Voyage in Progress...",
+    Completed: "Voyage Concluded",
+  };
+
   return (
     <div
       data-scroll-section
@@ -87,9 +93,7 @@ export default function EventDetails({
           <Button className="cursor-pointer tracking-wider text-lg text-[#0b2545] capitalize w-full py-2 flex gap-2 items-center justify-center rounded-full bg-linear-to-r from-[#cfb536] to-[#c2a341] hover:brightness-110 hover:scale-[1.02] transition-all duration-300">
             <Compass size={20} />
             {registration
-              ? event.status === "Published"
-                ? "Embark now!"
-                : "Sailed away..."
+              ? event.status !== "Draft" && statusLabel[event.status]
               : "Docking soon..."}
           </Button>
         </div>

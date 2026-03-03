@@ -39,6 +39,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     },
   },
+  basePath: "/api/auth",
   adapter: DrizzleAdapter(db, {
     usersTable: participants,
     accountsTable: accounts,

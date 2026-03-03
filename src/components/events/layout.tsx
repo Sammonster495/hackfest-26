@@ -18,9 +18,7 @@ export type EventTeam = {
   id: string;
   name: string;
   eventId: string;
-  attended: boolean;
   isComplete: boolean;
-  paymentStatus: "Pending" | "Paid" | "Refunded";
 };
 
 export type EventOrganizer = {
@@ -35,10 +33,6 @@ export type EventMember = {
   name: string;
   email: string;
   isLeader: boolean;
-  teamId: string;
-  userId: string;
-  eventId: string;
-  attended: boolean;
 };
 
 export type Event = {
@@ -47,19 +41,19 @@ export type Event = {
   description: string;
   date: string;
   venue: string;
-  priority: number;
   type: "Solo" | "Team";
   status: "Draft" | "Published" | "Ongoing" | "Completed";
   audience: "Participants" | "Non-Participants" | "Both";
+  amount: number;
   maxTeams: number;
   minTeamSize: number;
   maxTeamSize: number;
-  image?: string;
+  image: string;
   deadline: string;
-  team?: EventTeam;
+  userStatus?: "registered" | "not_registered" | "not_confirmed";
+  team?: EventTeam | null;
   isLeader?: boolean;
-  isComplete?: boolean;
-  organizers?: EventOrganizer[];
+  organizers: EventOrganizer[];
   teamMembers?: EventMember[];
 };
 
@@ -85,7 +79,6 @@ const Events = ({
 
   const router = useRouter();
   const error = use(searchParams).error;
-  // const { data: session, update } = useSession();
 
   const selectedEvent = Array.isArray(events)
     ? (events.find((e) => e.id === selectedEventId) ?? null)

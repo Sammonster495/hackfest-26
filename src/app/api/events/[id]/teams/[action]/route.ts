@@ -4,10 +4,10 @@ import {
   confirmEventTeam,
   createEventTeam,
   deleteEventTeam,
-  eventRegistrationChecker,
   joinEventTeam,
   kickMemberFromTeam,
   leaveEventTeam,
+  teamRegistrationChecker,
 } from "~/db/services/event-services";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
@@ -16,7 +16,7 @@ export const POST = registrationOpenEventRoute(
   async (req: NextRequest, context, user) => {
     const { id: eventId, action } = await context.params;
 
-    const eventUser = await eventRegistrationChecker(eventId, user.id, action);
+    const eventUser = await teamRegistrationChecker(eventId, user.id, action);
     if (eventUser instanceof AppError) return errorResponse(eventUser);
 
     try {
@@ -82,7 +82,7 @@ export const DELETE = registrationOpenEventRoute(
     const { id: eventId, action } = await context.params;
 
     if (action === "delete") {
-      const eventUser = await eventRegistrationChecker(
+      const eventUser = await teamRegistrationChecker(
         eventId,
         user.id,
         "delete",

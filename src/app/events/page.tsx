@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { auth } from "~/auth/event-config";
 import Events from "~/components/events/layout";
+import Footer from "~/components/landing/Footer";
 import { Navbar } from "~/components/landing/Navbar";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default async function EventsPage({
         <Navbar isUnderwater={true} session={session} />
       </div>
       <Events session={session} searchParams={searchParams} />
+      <Footer />
     </Suspense>
   );
 }

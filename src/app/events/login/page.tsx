@@ -1,11 +1,11 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useEffect } from "react";
+import { signInWithGoogle } from "~/lib/auth/userLogin";
 
 export default function EventsLoginPage() {
   useEffect(() => {
-    signIn("google", { callbackUrl: "/events" });
+    signInWithGoogle();
   }, []);
 
   return (

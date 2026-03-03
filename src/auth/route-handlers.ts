@@ -160,6 +160,24 @@ export function registrationOpenEventRoute(handler: EventRouteHandler) {
         );
       }
 
+      if (new Date(event.deadline) < new Date()) {
+        return errorResponse(
+          new AppError("REGISTRATION_CLOSED", 403, {
+            title: "Registration closed",
+            description: "Registrations for this event have closed.",
+          }),
+        );
+      }
+
+      if (event.status === "Ongoing" || event.status === "Completed") {
+        return errorResponse(
+          new AppError("EVENT_NOT_OPEN_FOR_REGISTRATION", 403, {
+            title: "Event not open for registration",
+            description: `Registrations for this event are closed as it is ${event.status === "Ongoing" ? "currently" : ""} ${event.status.toLowerCase()}.`,
+          }),
+        );
+      }
+
       return await handler(request, context, user);
     } catch (err) {
       return errorResponse(err);
