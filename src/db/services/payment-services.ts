@@ -17,6 +17,8 @@ import type {
   CreateOrderInput,
   VerifyAndSavePaymentInput,
 } from "~/lib/validation/payment";
+import { eventRegistrationOpen } from "../data/event";
+import { memberCount, teamCount } from "../data/event-teams";
 
 const envAmount = env.HACKFEST_AMOUNT;
 
@@ -101,18 +103,24 @@ export async function createOrder(data: CreateOrderInput) {
       throw new AppError("FAILED_TO_CREATE_PAYMENT", 500);
     }
   } else if (data.paymentType === "EVENT") {
+    const registrationsOpen = await eventRegistrationOpen();
+
+    if (!registrationsOpen)
+      throw new AppError("REGISTRATION_CLOSED", 403, {
+        title: "Registration closed",
+        description: "Event registration is currently closed.",
+      });
+
     if (!data.eventId) throw new AppError("EVENT_ID_REQUIRED", 400);
 
     const event = await db.query.events.findFirst({
       where: eq(events.id, data.eventId),
     });
-    if (!event) throw new AppError("EVENT_NOT_FOUND", 404);
-
-    const eventTeam = await db.query.eventTeams.findFirst({
-      where: eq(eventTeams.id, data.teamId),
-      columns: { id: true, name: true, paymentStatus: true, isComplete: true },
-    });
-    if (!eventTeam) throw new AppError("TEAM_NOT_FOUND", 404);
+    if (!event)
+      throw new AppError("EVENT_NOT_FOUND", 404, {
+        title: "Event not found",
+        description: "The specified event does not exist.",
+      });
 
     const userParticipant = await db.query.eventParticipants.findFirst({
       where: and(
@@ -122,13 +130,57 @@ export async function createOrder(data: CreateOrderInput) {
     });
 
     if (!userParticipant)
-      throw new AppError("USER_NOT_REGISTERED_FOR_EVENT", 400);
-    if (!userParticipant.isLeader)
-      throw new AppError("ONLY_LEADER_CAN_CREATE_PAYMENT_ORDER", 400);
+      throw new AppError("NOT_REGISTERED", 400, {
+        title: "Not registered",
+        description: "You are not registered for this event.",
+      });
 
-    if (!eventTeam.isComplete) {
-      throw new AppError("TEAM_NOT_COMPLETED", 400);
+    if (event.type === "Team" && !userParticipant.isLeader)
+      throw new AppError("NOT_TEAM_LEADER", 403, {
+        title: "Not team leader",
+        description: "Only the team leader can confirm the team.",
+      });
+
+    const eventTeam = await db.query.eventTeams.findFirst({
+      where: eq(eventTeams.id, data.teamId),
+      columns: { id: true, name: true, paymentStatus: true, isComplete: true },
+      with: {
+        members: true,
+      },
+    });
+    if (!eventTeam) throw new AppError("TEAM_NOT_FOUND", 404);
+
+    const members = await memberCount(data.eventId, eventTeam.id);
+
+    if (event && event.type === "Team" && members < event.minTeamSize)
+      throw new AppError("MIN_TEAM_SIZE_NOT_MET", 400, {
+        title: "Minimum team size not met",
+        description: `Your team must have at least ${event.minTeamSize} members to be confirmed.`,
+      });
+
+    if (new Date(event.deadline) < new Date()) {
+      new AppError("REGISTRATION_CLOSED", 403, {
+        title: "Registration closed",
+        description: "Registrations for this event have closed.",
+      });
     }
+
+    if (event.status === "Ongoing" || event.status === "Completed") {
+      new AppError("EVENT_NOT_OPEN_FOR_REGISTRATION", 403, {
+        title: "Event not open for registration",
+        description: `Registrations for this event are closed as it is ${event.status === "Ongoing" ? "currently" : ""} ${event.status.toLowerCase()}.`,
+      });
+    }
+
+    const amount: number = Number(event.amount);
+    const TO_BE_PAID = calculateTotalAmount(
+      eventTeam.members.length,
+      amount,
+      2,
+    );
+    const CURRENCY = "INR";
+    const PAYMENT_CAPTURE = true;
+    const RECEIPT = `receipt_${eventTeam.id.substring(0, 5)}_${Date.now()}`;
 
     if (eventTeam.paymentStatus === "Paid") {
       throw new AppError("PAYMENT_ALREADY_COMPLETED", 400);
@@ -140,18 +192,21 @@ export async function createOrder(data: CreateOrderInput) {
         eq(payment.paymentStatus, "Paid"),
       ),
     });
+
     if (existingPayments.length > 0)
       throw new AppError("PAYMENT_ALREADY_COMPLETED", 400);
-
-    const TO_BE_PAID = event.hfAmount;
 
     if (TO_BE_PAID <= 0) {
       throw new AppError("PAYMENT_NOT_REQUIRED", 400);
     }
 
-    const CURRENCY = "INR";
-    const PAYMENT_CAPTURE = true;
-    const RECEIPT = `receipt_${eventTeam.id.substring(0, 5)}_${Date.now()}`;
+    const teams = await teamCount(event.id);
+
+    if (event && teams >= event.maxTeams)
+      new AppError("MAX_TEAMS_REACHED", 400, {
+        title: "Max teams reached",
+        description: `The maximum number of ${event.type === "Solo" ? "registrations" : "teams"} for this event has been reached.`,
+      });
 
     try {
       const razorpay = getRazorpayClient();
@@ -257,6 +312,7 @@ export async function savePayment(data: VerifyAndSavePaymentInput) {
           .update(eventTeams)
           .set({
             paymentStatus: "Paid",
+            isComplete: true,
           })
           .where(eq(eventTeams.id, existingPendingPayment.eventTeamId));
       }
@@ -387,17 +443,23 @@ export async function getPayments({
   status,
   search,
   sortOrder = "desc",
+  type = "PARTICIPATION",
 }: {
   page?: number;
   limit?: number;
   status?: "Pending" | "Paid" | "Refunded";
   search?: string;
   sortOrder?: "asc" | "desc";
+  type?: "PARTICIPATION" | "EVENT" | "ALL";
 }) {
   const conditions: SQL[] = [];
 
   if (status) {
     conditions.push(eq(payment.paymentStatus, status));
+  }
+
+  if (type !== "ALL") {
+    conditions.push(eq(payment.paymentType, type));
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -414,6 +476,16 @@ export async function getPayments({
         },
         user: {
           columns: { id: true, name: true, email: true },
+        },
+        eventTeam: {
+          columns: { id: true, name: true },
+        },
+        eventUser: {
+          with: {
+            user: {
+              columns: { id: true, name: true, email: true },
+            },
+          },
         },
       },
       orderBy: [
@@ -433,6 +505,9 @@ export async function getPayments({
         p.team?.name?.toLowerCase().includes(searchLower) ||
         p.user?.name?.toLowerCase().includes(searchLower) ||
         p.user?.email?.toLowerCase().includes(searchLower) ||
+        p.eventTeam?.name?.toLowerCase().includes(searchLower) ||
+        p.eventUser?.user?.name?.toLowerCase().includes(searchLower) ||
+        p.eventUser?.user?.email?.toLowerCase().includes(searchLower) ||
         p.razorpayOrderId?.toLowerCase().includes(searchLower),
     );
   }

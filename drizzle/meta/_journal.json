@@ -197,6 +197,13 @@
       "when": 1772341774353,
       "tag": "0027_mixed_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1772545706641,
+      "tag": "0028_fixed_stranger",
+      "breakpoints": true
     }
   ]
 }

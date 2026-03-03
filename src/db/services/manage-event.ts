@@ -56,9 +56,7 @@ export async function getAllEventsForAdmin({
       status: "Draft" | "Published" | "Ongoing" | "Completed";
       audience: "Participants" | "Non-Participants" | "Both";
       category: string;
-      hfAmount: number;
-      collegeAmount: number;
-      nonCollegeAmount: number;
+      amount: number;
       maxTeams: number;
       minTeamSize: number;
       maxTeamSize: number;

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 type TabConfig = {
   id: string;
-  label: string;
+  label: React.ReactNode;
   hasAccess: boolean;
   content: React.ReactNode;
 };
@@ -15,12 +15,14 @@ type DashboardTabsProps = {
   tabs: TabConfig[];
   defaultTab?: string;
   storageKey?: string;
+  searchParamKey?: string;
 };
 
 export function DashboardTabs({
   tabs,
   defaultTab,
   storageKey = "dashboardActiveTab",
+  searchParamKey = "tab",
 }: DashboardTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,7 +31,7 @@ export function DashboardTabs({
   const accessibleTabs = tabs.filter((tab) => tab.hasAccess);
 
   const getInitialTab = (): string => {
-    const urlTab = searchParams.get("tab");
+    const urlTab = searchParams.get(searchParamKey);
     if (urlTab && accessibleTabs.some((t) => t.id === urlTab)) {
       return urlTab;
     }
@@ -59,7 +61,7 @@ export function DashboardTabs({
     }
 
     const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", value);
+    params.set(searchParamKey, value);
     router.push(`?${params.toString()}`, { scroll: false });
   };
 

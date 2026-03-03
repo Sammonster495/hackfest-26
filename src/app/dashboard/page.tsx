@@ -39,16 +39,32 @@ export default async function DashboardPage() {
     canViewResults: hasPermission(dashboardUser, "results:view"),
     canManageEvents: hasPermission(dashboardUser, "event:manage"),
     canViewTeamDetails: hasPermission(dashboardUser, "team:view_team_details"),
+    canViewColleges: hasPermission(dashboardUser, "colleges:manage"),
   };
 
   if (!permissions.isAdmin) {
     return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="flex items-center justify-center p-12">
+      <div className="container mx-auto p-6 flex flex-col items-center justify-center min-h-[80vh]">
+        <Card className="max-w-md w-full text-center">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>Welcome, {dashboardUser.name}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <p className="text-muted-foreground">
-              You do not have access to the dashboard. Contact an administrator.
+              You do not have the required permissions to access the dashboard.
+              Please contact an administrator if you believe this is a mistake.
             </p>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/dashboard/login" });
+              }}
+            >
+              <Button type="submit" variant="default" className="w-full">
+                Logout
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

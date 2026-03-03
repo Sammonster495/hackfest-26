@@ -76,7 +76,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        username: { label: "Username or Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -86,7 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         console.log("credentials", credentials);
 
-        const user = await dashboardUserData.findByUsername(
+        const user = await dashboardUserData.findByUsernameOrEmail(
           credentials.username as string,
         );
 

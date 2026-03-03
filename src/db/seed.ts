@@ -143,6 +143,10 @@ async function seed() {
     { key: "settings:manage", description: "Manage system settings" },
     { key: "roles:manage", description: "Manage roles" },
     { key: "users:manage_staff", description: "Manage staff users" },
+    {
+      key: "colleges:manage",
+      description: "View and manage college requests",
+    },
     // Participant / Team Visibility
     { key: "team:view_all", description: "View all teams" },
     { key: "team:view_top60", description: "View top 60 teams" },
@@ -181,12 +185,6 @@ async function seed() {
     { key: "slot:regenerate", description: "Regenerate slot allocations" },
     // Event management
     { key: "event:manage", description: "Get access to manage events tab" },
-    { key: "event:read_all", description: "Read all events" },
-    { key: "event:read", description: "Read assigned event" },
-    { key: "event:create", description: "Create new event" },
-    { key: "event:update", description: "Update an event" },
-    { key: "event:attendance", description: "Mark event attendance" },
-    { key: "event:delete", description: "Delete an event" },
   ];
 
   const permissionMap = new Map<string, string>(); // key -> id
@@ -429,9 +427,7 @@ async function seed() {
               Math.floor(Math.random() * eventAudienceEnum.enumValues.length)
             ],
           category: Math.random() > 0.5 ? "Technical" : "Non-Technical",
-          hfAmount: 100 + i * 100,
-          collegeAmount: 200 + i * 100,
-          nonCollegeAmount: 300 + i * 100,
+          amount: 100 + i * 100,
           maxTeams: 10 + i,
           minTeamSize: Math.floor(Math.random() * 3) + 1,
           maxTeamSize: Math.floor(Math.random() * 3) + 2,

@@ -13,6 +13,11 @@ export const GET = adminProtected(async (request: Request) => {
     | undefined;
   const search = searchParams.get("search") ?? undefined;
   const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
+  const type = searchParams.get("type") as
+    | "PARTICIPATION"
+    | "EVENT"
+    | "ALL"
+    | undefined;
 
   const result = await getPayments({
     page,
@@ -20,6 +25,7 @@ export const GET = adminProtected(async (request: Request) => {
     status: status || undefined,
     search: search || undefined,
     sortOrder,
+    type,
   });
 
   return NextResponse.json(result);

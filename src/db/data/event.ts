@@ -1,3 +1,4 @@
+import type { EventOrganizer } from "~/components/events/layout";
 import db from "..";
 import { query } from ".";
 
@@ -33,7 +34,7 @@ export async function findAllPublishedEvents() {
         name: org.user.name,
         email: org.user.email,
         phone: org.user.phone,
-      };
-    }),
+      } as EventOrganizer;
+    }) as EventOrganizer[],
   }));
 }

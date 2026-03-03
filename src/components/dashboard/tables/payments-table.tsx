@@ -6,11 +6,13 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDownUp, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { ArrowDownUp, Search, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -44,6 +46,10 @@ type Payment = {
   createdAt: string;
   team: { id: string; name: string } | null;
   user: { id: string; name: string | null; email: string | null } | null;
+  eventTeam: { id: string; name: string } | null;
+  eventUser: {
+    user: { id: string; name: string | null; email: string | null } | null;
+  } | null;
 };
 
 type Pagination = {
@@ -58,97 +64,137 @@ type PaymentsData = {
   pagination: Pagination;
 };
 
-type PaymentsTableProps = {
-  initialData?: PaymentsData;
+type Filters = {
+  status: string;
+  sortOrder: string;
+  type: string;
 };
 
 const columnHelper = createColumnHelper<Payment>();
 
-async function fetchPayments(params: {
-  page?: number;
-  limit?: number;
-  status?: string;
-  search?: string;
-  sortOrder?: string;
-}): Promise<PaymentsData> {
-  const searchParams = new URLSearchParams();
-  if (params.page) searchParams.set("page", params.page.toString());
-  if (params.limit) searchParams.set("limit", params.limit.toString());
-  if (params.status) searchParams.set("status", params.status);
-  if (params.search) searchParams.set("search", params.search);
-  if (params.sortOrder) searchParams.set("sortOrder", params.sortOrder);
+function buildUrl(search: string, filters: Filters, page: number): string {
+  const params = new URLSearchParams();
+  params.set("page", page.toString());
+  params.set("limit", "20");
+  if (search.trim()) params.set("search", search.trim());
+  if (filters.status !== "all") params.set("status", filters.status);
+  params.set("sortOrder", filters.sortOrder);
+  params.set("type", filters.type);
 
-  const res = await fetch(`/api/dashboard/payments?${searchParams.toString()}`);
-  if (!res.ok) throw new Error("Failed to fetch payments");
-  return res.json();
+  const qs = params.toString();
+  return qs ? `/api/dashboard/payments?${qs}` : "/api/dashboard/payments";
 }
 
-const emptyData: PaymentsData = {
-  payments: [],
-  pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
-};
-
-export function PaymentsTable({ initialData = emptyData }: PaymentsTableProps) {
-  const [data, setData] = useState<Payment[]>(initialData.payments);
-  const [pagination, setPagination] = useState<Pagination>(
-    initialData.pagination,
-  );
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortOrder, setSortOrder] = useState<string>("desc");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+export function PaymentsTable() {
+  const [data, setData] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+  });
 
-  // Debounce search
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filters, setFilters] = useState<Filters>({
+    status: "all",
+    sortOrder: "desc",
+    type: "PARTICIPATION",
+  });
+
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounce search input
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(search);
     }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [search]);
 
-  const loadData = useCallback(
-    async (page: number) => {
-      startTransition(async () => {
-        try {
-          const result = await fetchPayments({
-            page,
-            limit: 20,
-            status: statusFilter !== "all" ? statusFilter : undefined,
-            search: debouncedSearch || undefined,
-            sortOrder,
+  const fetchData = useCallback(
+    async (append = false, pageVal = 1) => {
+      if (!append) setIsLoading(true);
+      try {
+        const url = buildUrl(debouncedSearch, filters, pageVal);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch payments");
+        const result: PaymentsData = await res.json();
+
+        if (append) {
+          setData((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const newPayments = result.payments.filter(
+              (p) => !existingIds.has(p.id),
+            );
+            return [...prev, ...newPayments];
           });
+        } else {
           setData(result.payments);
-          setPagination(result.pagination);
-        } catch (error) {
-          console.error("Failed to load payments:", error);
         }
-      });
+        setPagination(result.pagination);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [statusFilter, debouncedSearch, sortOrder],
+    [debouncedSearch, filters],
   );
 
   useEffect(() => {
-    void loadData(1);
-    console.log("check");
-  }, [loadData]);
+    startTransition(() => {
+      void fetchData(false, 1);
+    });
+  }, [fetchData]);
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor((row) => row.team?.name ?? "—", {
-        id: "teamName",
-        header: "Team",
-        cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-      }),
-      columnHelper.accessor((row) => row.user?.name ?? row.user?.email ?? "—", {
-        id: "payer",
-        header: "Payer",
-        cell: (info) => <span>{info.getValue()}</span>,
+      columnHelper.accessor(
+        (row) => row.team?.name ?? row.eventTeam?.name ?? "—",
+        {
+          id: "teamName",
+          header: "Team",
+          cell: (info) => (
+            <span className="font-medium">{info.getValue()}</span>
+          ),
+        },
+      ),
+      columnHelper.accessor(
+        (row) =>
+          row.user?.name ??
+          row.user?.email ??
+          row.eventUser?.user?.name ??
+          row.eventUser?.user?.email ??
+          "—",
+        {
+          id: "payer",
+          header: "Payer",
+          cell: (info) => <span>{info.getValue()}</span>,
+        },
+      ),
+      columnHelper.accessor("paymentType", {
+        header: "Type",
+        cell: (info) => {
+          const type = info.getValue() || "N/A";
+          if (type === "PARTICIPATION")
+            return <Badge variant="secondary">Participation</Badge>;
+          if (type === "EVENT") return <Badge variant="outline">Event</Badge>;
+          return <Badge variant="outline">{type}</Badge>;
+        },
       }),
       columnHelper.accessor("amount", {
         header: "Amount",
         cell: (info) => (
-          <span className="font-crimson">₹{info.getValue()}</span>
+          <span className="font-crimson flex items-center gap-1">
+            ₹{info.getValue()}
+          </span>
         ),
       }),
       columnHelper.accessor("paymentStatus", {
@@ -192,47 +238,150 @@ export function PaymentsTable({ initialData = emptyData }: PaymentsTableProps) {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    estimateSize: () => 56,
+    getScrollElement: () => tableContainerRef.current,
+    overscan: 10,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+
+  const loadMore = useCallback(async () => {
+    if (pagination.page >= pagination.totalPages || isLoading) return;
+    await fetchData(true, pagination.page + 1);
+  }, [pagination.page, pagination.totalPages, isLoading, fetchData]);
+
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0]?.isIntersecting &&
+          pagination.page < pagination.totalPages &&
+          !isLoading
+        ) {
+          void loadMore();
+        }
+      },
+      { root: container, threshold: 0.1 },
+    );
+
+    const sentinel = container.querySelector("[data-sentinel]");
+    if (sentinel) observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [pagination.page, pagination.totalPages, isLoading, loadMore]);
+
+  const handleFilterChange = useCallback(
+    (key: keyof Filters, value: string) => {
+      setFilters((prev) => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
+
+  const clearFilters = useCallback(() => {
+    setSearch("");
+    setFilters({
+      status: "all",
+      sortOrder: "desc",
+      type: "PARTICIPATION",
+    });
+  }, []);
+
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    filters.status !== "all" ||
+    filters.sortOrder !== "desc" ||
+    filters.type !== "PARTICIPATION";
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by team, payer, or order ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by team, payer, or ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Paid">Paid</SelectItem>
-            <SelectItem value="Refunded">Refunded</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortOrder} onValueChange={setSortOrder}>
-          <SelectTrigger className="w-[140px]">
-            <ArrowDownUp className="size-4 mr-1" />
-            <SelectValue placeholder="Sort" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="desc">Newest First</SelectItem>
-            <SelectItem value="asc">Oldest First</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="text-sm text-muted-foreground">
-          {pagination.total} payment{pagination.total !== 1 ? "s" : ""}
+        <div className="flex gap-2 flex-wrap">
+          <Select
+            value={filters.type}
+            onValueChange={(v) => handleFilterChange("type", v)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Entity Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Payments</SelectItem>
+              <SelectItem value="PARTICIPATION">Participation</SelectItem>
+              <SelectItem value="EVENT">Event</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.status}
+            onValueChange={(v) => handleFilterChange("status", v)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Paid">Paid</SelectItem>
+              <SelectItem value="Refunded">Refunded</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.sortOrder}
+            onValueChange={(v) => handleFilterChange("sortOrder", v)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <ArrowDownUp className="size-4 mr-1" />
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">Newest First</SelectItem>
+              <SelectItem value="asc">Oldest First</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-9 px-3"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card overflow-auto">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <span>
+          {isPending ? "Searching..." : `${pagination.total} payments found`}
+        </span>
+      </div>
+
+      <div
+        ref={tableContainerRef}
+        className="rounded-lg border bg-card overflow-auto"
+        style={{ height: "calc(100vh - 200px)" }}
+      >
         <Table>
-          <TableHeader className="sticky top-0 bg-card z-10">
+          <TableHeader className="sticky top-0 bg-card z-10 shadow-sm">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -249,61 +398,93 @@ export function PaymentsTable({ initialData = emptyData }: PaymentsTableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+            {isLoading && data.length === 0 ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: it is fine for skeleton rows
+                <TableRow key={`skeleton-${i}`}>
+                  {columns.map((_, j) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fine for skeletons
+                    <TableCell key={`skeleton-${i}-${j}`}>
+                      <div className="h-4 w-full animate-pulse rounded bg-muted max-w-[120px]" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
+            ) : virtualRows.length > 0 ? (
+              <>
+                {virtualRows.length > 0 && (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      style={{
+                        height: virtualRows[0]?.start ?? 0,
+                        padding: 0,
+                        border: 0,
+                      }}
+                    />
+                  </tr>
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  if (!row) return null;
+                  return (
+                    <TableRow
+                      key={row.id}
+                      ref={rowVirtualizer.measureElement}
+                      data-index={virtualRow.index}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                })}
+                {virtualRows.length > 0 && (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      style={{
+                        height:
+                          rowVirtualizer.getTotalSize() -
+                          (virtualRows[virtualRows.length - 1]?.end ?? 0),
+                        padding: 0,
+                        border: 0,
+                      }}
+                    />
+                  </tr>
+                )}
+                {pagination.page < pagination.totalPages && (
+                  <TableRow data-sentinel>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="text-center py-4 text-muted-foreground"
+                    >
+                      {isLoading ? "Loading more..." : "Scroll for more"}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
             ) : (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  {isPending ? "Loading..." : "No payments found."}
+                  {hasActiveFilters
+                    ? "No payments match your filters."
+                    : "No payments found."}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {pagination.page} of {pagination.totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pagination.page <= 1 || isPending}
-              onClick={() => void loadData(pagination.page - 1)}
-            >
-              <ChevronLeft className="size-4 mr-1" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pagination.page >= pagination.totalPages || isPending}
-              onClick={() => void loadData(pagination.page + 1)}
-            >
-              Next
-              <ChevronRight className="size-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

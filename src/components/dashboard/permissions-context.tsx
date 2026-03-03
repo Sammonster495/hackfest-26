@@ -20,6 +20,7 @@ export type DashboardPermissions = {
   canViewResults: boolean;
   canManageEvents: boolean;
   canViewTeamDetails: boolean;
+  canViewColleges: boolean;
 };
 
 type DashboardUser = {

@@ -89,7 +89,11 @@ export default function EventDrawer({
                 },
                 {
                   label: "Entry Fee",
-                  value: "To be announced",
+                  value: session
+                    ? event?.amount !== 0
+                      ? `${event.amount}${event.type === "Solo" ? "" : " per member"}`
+                      : "Free"
+                    : "To be announced",
                 },
                 {
                   label: "Date",
@@ -184,33 +188,37 @@ export default function EventDrawer({
               </div>
             </div>
           )}
-          <div>
+          <div className="w-full flex flex-col gap-4">
             {registrationOpen &&
-              (new Date(event.deadline) > new Date() ? (
-                session ? (
-                  <RegisterButton event={event} fetchEvents={fetchEvents} />
-                ) : (
-                  <>
-                    <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-300 text-amber-900 text-xs sm:text-sm">
-                      <p className="font-bold">
-                        Note for Hackfest Participants:
-                      </p>
-                      <p>
-                        If you previously registered for Hackfest, please log in
-                        using the same email address used during that
-                        registration. If this does not apply to you, you may
-                        ignore this message and continue normally.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => redirect("/api/auth/event/signin")}
-                      className="w-full py-6 text-xl text-[#0b2545] cursor-pointer capitalize shrink-0 flex gap-2 items-center justify-center bg-linear-to-r from-[#cfb536] to-[#c2a341] hover:brightness-110 transition-all duration-300"
-                    >
-                      Log in to Register
-                    </Button>
-                  </>
-                )
-              ) : event.status === "Published" ? (
+              (session ? (
+                <RegisterButton
+                  event={event}
+                  session={session}
+                  fetchEvents={fetchEvents}
+                  setDrawerOpen={setDrawerOpen}
+                />
+              ) : (
+                <>
+                  <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-300 text-amber-900 text-xs sm:text-sm">
+                    <p className="font-bold">Note for Hackfest Participants:</p>
+                    <p>
+                      If you previously registered for Hackfest, please log in
+                      using the same email address used during that
+                      registration. If this does not apply to you, you may
+                      ignore this message and continue normally.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => redirect("/api/auth/event/signin")}
+                    className="w-full py-6 text-xl text-[#0b2545] cursor-pointer capitalize shrink-0 flex gap-2 items-center justify-center bg-linear-to-r from-[#cfb536] to-[#c2a341] hover:brightness-110 transition-all duration-300"
+                  >
+                    Log in to Register
+                  </Button>
+                </>
+              ))}
+            {registrationOpen &&
+              (event.status === "Published" &&
+              new Date(event.deadline) < new Date() ? (
                 <div className="p-4 rounded-md bg-red-900 border border-red-500 text-xl font-semibold text-red-50 text-center">
                   Registrations for this event have closed
                 </div>
@@ -218,11 +226,11 @@ export default function EventDrawer({
                 <div className="p-4 rounded-md bg-green-900 border border-green-500 text-xl font-semibold text-green-50 text-center">
                   Event is currently ongoing
                 </div>
-              ) : (
+              ) : event.status === "Completed" ? (
                 <div className="p-4 rounded-md bg-gray-800 border border-gray-500 text-xl font-semibold text-gray-50 text-center">
-                  Event has been completed
+                  Event has concluded
                 </div>
-              ))}
+              ) : null)}
           </div>
         </div>
       </DrawerContent>

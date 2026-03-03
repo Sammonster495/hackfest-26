@@ -19,8 +19,6 @@ export const POST = registrationOpenEventRoute(
       switch (action) {
         case "register":
           return await registerSoloEvent(eventId, user.id, user.name ?? "");
-        // case "confirm":
-        //   return await createEventTeam(eventId, user.id, user.name ?? "");
         case "cancel":
           return await cancelSoloEvent(eventUser?.teamId ?? "");
         default:

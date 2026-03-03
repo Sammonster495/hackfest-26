@@ -25,7 +25,7 @@ import { Input } from "~/components/ui/input";
 import { dashboardSignIn } from "~/lib/auth/dashboard-signin";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  username: z.string().min(1, "Username or Email is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -91,10 +91,10 @@ export default function LoginPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Username or Email</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your username"
+                        placeholder="Enter your username or email"
                         autoComplete="username"
                         {...field}
                       />
@@ -127,6 +127,17 @@ export default function LoginPage() {
             </form>
           </Form>
         </CardContent>
+        <div className="flex justify-center pb-6">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <a
+              href="/dashboard/signup"
+              className="text-primary hover:underline"
+            >
+              Sign up
+            </a>
+          </p>
+        </div>
       </Card>
     </div>
   );

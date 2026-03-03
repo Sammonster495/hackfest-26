@@ -5,6 +5,7 @@ import {
   findById,
   findLeaderByTeam,
   findUserParticipations,
+  type UserParticipation,
   updateById,
 } from "~/db/data/event-users";
 import { eventParticipants, eventTeams } from "~/db/schema";
@@ -20,129 +21,70 @@ import {
   findAllPublishedEvents,
   findByEventId,
 } from "../data/event";
-import {
-  findByIdandEvent,
-  findTeamsByIds,
-  memberCount,
-  teamCount,
-} from "../data/event-teams";
-
-export type Team = {
-  id: string;
-  eventId: string;
-  name: string;
-  isComplete: boolean;
-};
-
-type Organizer = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-};
-
-export type Participant = {
-  id: string;
-  userId: string;
-  isLeader: boolean;
-  name: string;
-  email: string;
-};
-
-type Event = {
-  id: string;
-  title: string;
-  date: Date;
-  image: string;
-  priority: number;
-  venue: string;
-  description: string;
-  type: string;
-  status: string;
-  audience: string;
-  category: string;
-  deadline: Date;
-  minTeamSize: number;
-  maxTeamSize: number;
-  maxTeams: number;
-  organizers: Organizer[];
-  team: Team | null;
-  isLeader: boolean;
-  teamMembers: Participant[];
-  userStatus: "not_registered" | "not_confirmed" | "registered";
-};
-
-function withoutAmount<
-  T extends {
-    priority: number;
-    hfAmount: number;
-    collegeAmount: number;
-    nonCollegeAmount: number;
-  },
->(event: T) {
-  const { priority, hfAmount, collegeAmount, nonCollegeAmount, ...rest } =
-    event;
-  return {
-    ...rest,
-    userStatus: "not_registered",
-  };
-}
+import { findByIdandEvent, memberCount, teamCount } from "../data/event-teams";
 
 export async function getAllEvents(userId?: string) {
   const registrationsOpen = await eventRegistrationOpen();
   const events = await findAllPublishedEvents();
 
-  if (!userId)
-    return successResponse(
-      {
-        events: events.map(withoutAmount),
-        registrationsOpen,
-      },
-      {
-        toast: false,
-        title: "Events fetched",
-        description: "All published events have been fetched successfully.",
-      },
-    );
+  let participations: Record<string, UserParticipation> = {};
 
-  const participations = await findUserParticipations(userId);
-
-  if (!Object.keys(participations).length) {
-    return successResponse(
-      { events: events.map(withoutAmount), registrationsOpen },
-      { toast: false, title: "Events fetched", description: "..." },
-    );
+  if (userId) {
+    participations = await findUserParticipations(userId);
   }
+
+  const formattedEvents = events.map((e) => {
+    const participation = userId ? (participations[e.id] ?? null) : null;
+
+    let userStatus:
+      | "registered"
+      | "not_confirmed"
+      | "not_registered"
+      | undefined;
+
+    if (userId) {
+      userStatus = participation?.team
+        ? participation.team.isComplete
+          ? "registered"
+          : "not_confirmed"
+        : "not_registered";
+    }
+
+    return {
+      id: e.id,
+      title: e.title,
+      date: e.date.toISOString(),
+      image: e.image,
+      venue: e.venue,
+      description: e.description,
+      type: e.type as "Solo" | "Team",
+      status: e.status as "Draft" | "Published" | "Ongoing" | "Completed",
+      audience: e.audience as "Participants" | "Non-Participants" | "Both",
+      category: e.category,
+      deadline: e.deadline.toISOString(),
+      minTeamSize: e.minTeamSize,
+      maxTeamSize: e.maxTeamSize,
+      maxTeams: e.maxTeams,
+      amount: e.amount,
+      organizers: e.organizers,
+      ...(userId && {
+        userStatus,
+        team: participation?.team ?? null,
+        isLeader: participation?.isLeader ?? false,
+        teamMembers: participation?.teamMembers ?? [],
+      }),
+    };
+  });
 
   return successResponse(
     {
-      events: events.map((e) => {
-        const {
-          priority,
-          hfAmount,
-          collegeAmount,
-          nonCollegeAmount,
-          ...event
-        } = e as any;
-        const p = participations[e.id] ?? null;
-        const userStatus = p
-          ? p.team
-            ? p.team.isComplete
-              ? "registered"
-              : "not_confirmed"
-            : "not_registered"
-          : "not_registered";
-        return {
-          ...event,
-          userStatus,
-          team: p?.team ?? null,
-          isLeader: p?.isLeader ?? false,
-          teamMembers: p?.teamMembers ?? [],
-        };
-      }),
+      events: formattedEvents,
       registrationsOpen,
     },
-    { toast: false, title: "Events fetched", description: "..." },
+    {
+      toast: false,
+      title: "Events fetched",
+    },
   );
 }
 
@@ -208,8 +150,7 @@ export async function soloRegistrationChecker(
         });
       }
       break;
-    case "confirm":
-    case "unregister":
+    case "cancel":
       if (!eventUser) {
         return new AppError("NOT_REGISTERED", 400, {
           title: "Not registered",
@@ -250,7 +191,7 @@ export async function registerSoloEvent(
       .values({
         eventId: eventId,
         name: teamName,
-        isComplete: true,
+        isComplete: event?.amount === 0,
       })
       .returning();
 
@@ -277,8 +218,8 @@ export async function registerSoloEvent(
   return successResponse(
     { team: eventTeam },
     {
-      title: "Registered",
-      description: "You have registered for the event successfully.",
+      title: event?.amount === 0 ? "Registered" : "Registration Initiated",
+      description: `You have ${event?.amount === 0 ? "registered" : "initiated registration"} for the event successfully.`,
     },
   );
 }

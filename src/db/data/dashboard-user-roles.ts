@@ -13,7 +13,7 @@ export async function findById(id: string) {
 }
 
 export async function findByDashboardUserId(dashboardUserId: string) {
-  return query.dashboardUserRoles.findMany({
+  return db.query.dashboardUserRoles.findMany({
     where: (dur, { eq }) => eq(dur.dashboardUserId, dashboardUserId),
     with: {
       role: {
@@ -32,7 +32,7 @@ export async function findByDashboardUserId(dashboardUserId: string) {
 export async function findActiveRolesByDashboardUserId(
   dashboardUserId: string,
 ) {
-  return query.dashboardUserRoles.findMany({
+  return db.query.dashboardUserRoles.findMany({
     where: (dur, { eq, and }) =>
       and(eq(dur.dashboardUserId, dashboardUserId), eq(dur.isActive, true)),
     with: {

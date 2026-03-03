@@ -1,4 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
+import type { EventMember, EventTeam } from "~/components/events/layout";
 import {
   type UpdateEventUserInput,
   updateEventUserSchema,
@@ -13,21 +14,8 @@ export type UserParticipation = {
   collegeId: string;
   teamId: string | null;
   isLeader: boolean;
-  team: {
-    id: string;
-    name: string;
-    eventId: string;
-    isComplete: boolean;
-  };
-  teamMembers:
-    | {
-        id: string;
-        name: string;
-        email: string;
-        userId: string;
-        isLeader: boolean;
-      }[]
-    | [];
+  team: EventTeam;
+  teamMembers: EventMember[];
 };
 
 export async function findById(id: string) {
@@ -106,7 +94,6 @@ export async function findUserParticipations(userId: string) {
             id: member.id,
             name: member.user.name ?? "",
             email: member.user.email ?? "",
-            userId: member.userId,
             isLeader: member.isLeader,
           })) ?? [],
       };
