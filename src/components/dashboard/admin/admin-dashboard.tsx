@@ -16,7 +16,7 @@ import {
 } from "~/components/tabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { PaymentsTable } from "../tables/payments-table";
-import { QuickboardTab } from "../tabs/QuickBoard";
+import { QuickboardTab } from "../tabs/quickboard/QuickBoard";
 
 export type SubTabConfig = {
   id: string;

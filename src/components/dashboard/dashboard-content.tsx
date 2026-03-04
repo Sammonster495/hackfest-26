@@ -21,7 +21,7 @@ import {
 } from "../tabs";
 import { CollegesTab } from "./tabs/colleges/CollegesTab";
 import { ManageEventsTab } from "./tabs/ManageEvents";
-import { QuickboardTab } from "./tabs/QuickBoard";
+import { QuickboardTab } from "./tabs/quickboard/QuickBoard";
 
 type DashboardContentProps = {
   session: Session;
