@@ -61,6 +61,21 @@ export async function updateUserProfile(
   return userData.updateUser(userId, data);
 }
 
+export async function findCollegeByUserId(userId: string) {
+  const college = await db.query.participants.findFirst({
+    where: eq(participants.id, userId),
+    with: {
+      college: {
+        columns: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  return college?.college?.name ?? null;
+}
+
 export async function fetchParticipants({
   cursor,
   limit = 50,

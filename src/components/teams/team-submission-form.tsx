@@ -53,6 +53,7 @@ interface TeamSubmissionFormProps {
     trackId: string;
     trackName: string;
   } | null;
+  onSubmitSuccess?: () => void;
 }
 
 interface Track {
@@ -92,6 +93,7 @@ const submitIdea = async ({
 export function TeamSubmissionForm({
   teamId,
   submission,
+  onSubmitSuccess,
 }: TeamSubmissionFormProps) {
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -168,6 +170,7 @@ export function TeamSubmissionForm({
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      onSubmitSuccess?.();
       router.refresh();
     } catch (error) {
       console.error("Submission error:", error);
