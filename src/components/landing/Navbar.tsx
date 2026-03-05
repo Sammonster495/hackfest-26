@@ -7,9 +7,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
-import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
+import { signOutOfGitHub } from "~/lib/auth/userLogin";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -252,6 +252,7 @@ function AuthButton({
   isUnderwater: boolean;
   onNavigate?: () => void;
 }) {
+  const pathname = usePathname();
   const isLoggedIn = !!session?.user && !session?.eventUser;
   const href = isLoggedIn
     ? session.user.isRegistrationComplete
@@ -305,7 +306,7 @@ function AuthButton({
       {isLoggedIn && (
         <button
           type="button"
-          onClick={() => signOut()}
+          onClick={() => signOutOfGitHub(pathname)}
           className={cn(
             "p-2 rounded-md transition-colors duration-300",
             isUnderwater

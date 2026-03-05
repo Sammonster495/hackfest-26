@@ -30,6 +30,7 @@ export default function EventDetails({
         // biome-ignore lint/a11y/useKeyWithClickEvents: clickable card
         <div
           key={event.id}
+          id={`event-card-${event.id}`}
           onClick={() => handleCardClick(event.id)}
           className="relative cursor-pointer hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)] transition-all duration-300 ease-out bg-[#0f1823] border border-[#39577c] rounded-2xl flex flex-col gap-3 w-full mx-auto p-3 overflow-hidden"
         >
