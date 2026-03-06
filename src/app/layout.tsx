@@ -7,6 +7,7 @@ import { DayNightProvider } from "~/components/providers/useDayNight";
 import { GlobalLoader } from "~/components/ui/global-loader";
 import { ThemeToggle } from "~/components/ui/theme-toggle";
 import "./globals.css";
+import { LoaderProvider } from "~/components/providers/loader-context";
 import { JsonLd } from "~/components/ui/json-ld";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -102,12 +103,14 @@ export default function RootLayout({
         className={`${jakarta.variable} ${pirata.variable} ${crimson.variable} antialiased dark select-none`}
       >
         {/* <ReactScan /> */}
-        <SessionProvider>
+        <SessionProvider basePath="/api/auth">
           <DayNightProvider>
-            <GlobalLoader />
-            {children}
-            <ThemeToggle />
-            <ToasterWrapper />
+            <LoaderProvider>
+              <GlobalLoader />
+              {children}
+              <ThemeToggle />
+              <ToasterWrapper />
+            </LoaderProvider>
           </DayNightProvider>
         </SessionProvider>
         <JsonLd />

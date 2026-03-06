@@ -7,6 +7,7 @@ import type { Session } from "next-auth";
 import { use, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { apiFetch } from "~/lib/fetcher";
+import { useLoader } from "../providers/loader-context";
 import { useDayNight } from "../providers/useDayNight";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
@@ -65,9 +66,10 @@ const Events = ({
   searchParams,
 }: {
   session: Session | null;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; id?: string }>;
 }) => {
   const { isNight } = useDayNight();
+  const { loaderDone } = useLoader();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [registration, setRegistration] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -79,12 +81,14 @@ const Events = ({
 
   const router = useRouter();
   const error = use(searchParams).error;
+  const eventIdFromParams = use(searchParams).id;
 
   const selectedEvent = Array.isArray(events)
     ? (events.find((e) => e.id === selectedEventId) ?? null)
     : null;
 
   const fetchEvents = useCallback(async () => {
+    setLoading(true);
     try {
       const response = await apiFetch<{
         events: Event[];
@@ -112,6 +116,21 @@ const Events = ({
       }, 2000);
     }
   }, [error, router]);
+
+  useEffect(() => {
+    if (!loading && loaderDone && eventIdFromParams) {
+      router.replace("/events");
+
+      setTimeout(() => {
+        const card = document.getElementById(`event-card-${eventIdFromParams}`);
+        card?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => {
+          setSelectedEventId(eventIdFromParams);
+          setDrawerOpen(true);
+        }, 700);
+      }, 100);
+    }
+  }, [loading, loaderDone, eventIdFromParams, router]);
 
   useEffect(() => {
     const checkMobile = () => {

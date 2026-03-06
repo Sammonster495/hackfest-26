@@ -1,11 +1,12 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Mail, Phone, User } from "lucide-react";
+import { Copy, Mail, Phone, User } from "lucide-react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
+import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer";
 import type { Event, EventOrganizer } from "./layout";
@@ -42,7 +43,7 @@ export default function EventDrawer({
           <VisuallyHidden>Event Details</VisuallyHidden>
         </DrawerTitle>
         <div
-          className={`flex flex-col gap-6 px-4 pb-8 overflow-y-auto flex-1 no-scrollbar ${
+          className={`flex flex-col gap-6 px-4 pb-4 overflow-y-auto flex-1 no-scrollbar ${
             drawerDirection === "bottom" ? "pt-2" : "pt-6"
           }`}
         >
@@ -68,7 +69,7 @@ export default function EventDrawer({
               {event?.description}
             </ReactMarkdown>
           </div>
-          <div className="w-full mt-2">
+          <div className="w-full">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4 text-md lg:text-lg justify-center items-center">
               {[
                 {
@@ -137,7 +138,7 @@ export default function EventDrawer({
             </div>
           </div>
           {event?.organizers && event.organizers.length > 0 && (
-            <div className="mt-2">
+            <div>
               <h3 className="lg:text-2xl md:text-xl text-[#f4d35e] lg:mb-2 mb-1">
                 Organizers
               </h3>
@@ -188,7 +189,7 @@ export default function EventDrawer({
               </div>
             </div>
           )}
-          <div className="w-full flex flex-col gap-4">
+          <div className="w-full flex flex-col gap-2">
             {registrationOpen &&
               (session ? (
                 <RegisterButton
@@ -199,7 +200,7 @@ export default function EventDrawer({
                 />
               ) : (
                 <>
-                  <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-300 text-amber-900 text-xs sm:text-sm">
+                  <div className="p-3 rounded-md bg-amber-50 border border-amber-300 text-amber-900 text-xs sm:text-sm">
                     <p className="font-bold">Note for Hackfest Participants:</p>
                     <p>
                       If you previously registered for Hackfest, please log in
@@ -212,25 +213,36 @@ export default function EventDrawer({
                     onClick={() => redirect("/api/auth/event/signin")}
                     className="w-full py-6 text-xl text-[#0b2545] cursor-pointer capitalize shrink-0 flex gap-2 items-center justify-center bg-linear-to-r from-[#cfb536] to-[#c2a341] hover:brightness-110 transition-all duration-300"
                   >
-                    Log in to Register
+                    {`Log in ${event.status === "Published" && new Date(event.deadline) > new Date() ? "to Register" : "for More Info"}`}
                   </Button>
                 </>
               ))}
             {registrationOpen &&
               (event.status === "Published" &&
               new Date(event.deadline) < new Date() ? (
-                <div className="p-4 rounded-md bg-red-900 border border-red-500 text-xl font-semibold text-red-50 text-center">
+                <div className="p-3 rounded-md bg-red-900 border border-red-500 text-xl font-semibold text-red-50 text-center">
                   Registrations for this event have closed
                 </div>
               ) : event.status === "Ongoing" ? (
-                <div className="p-4 rounded-md bg-green-900 border border-green-500 text-xl font-semibold text-green-50 text-center">
+                <div className="p-3 rounded-md bg-green-900 border border-green-500 text-xl font-semibold text-green-50 text-center">
                   Event is currently ongoing
                 </div>
               ) : event.status === "Completed" ? (
-                <div className="p-4 rounded-md bg-gray-800 border border-gray-500 text-xl font-semibold text-gray-50 text-center">
+                <div className="p-3 rounded-md bg-gray-800 border border-gray-500 text-xl font-semibold text-gray-50 text-center">
                   Event has concluded
                 </div>
               ) : null)}
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  `${window.location.origin}/events?id=${event.id}`,
+                );
+                toast.success("Event link copied to clipboard!");
+              }}
+              className="w-full py-6 text-xl text-[#0b2545] cursor-pointer capitalize shrink-0 flex gap-2 items-center justify-center bg-linear-to-r from-[#cfb536] to-[#c2a341] hover:brightness-110 transition-all duration-300"
+            >
+              Copy Link <Copy size={15} />
+            </Button>
           </div>
         </div>
       </DrawerContent>
