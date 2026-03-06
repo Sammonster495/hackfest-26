@@ -1,11 +1,11 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useEffect } from "react";
+import { signInWithGitHub } from "~/lib/auth/userLogin";
 
 export default function LoginPage() {
   useEffect(() => {
-    signIn("github", { callbackUrl: "/teams" });
+    signInWithGitHub();
   }, []);
 
   return (

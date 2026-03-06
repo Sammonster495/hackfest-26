@@ -7,7 +7,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search } from "lucide-react";
+import { Check, Copy, Search } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -39,6 +39,30 @@ type CollegesData = {
 };
 
 const columnHelper = createColumnHelper<College>();
+
+function CopyIdButton({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        void navigator.clipboard.writeText(id).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+      title="Copy ID"
+      className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {copied ? (
+        <Check className="h-3 w-3 text-green-500" />
+      ) : (
+        <Copy className="h-3 w-3" />
+      )}
+    </button>
+  );
+}
 
 function buildUrl(search: string, cursor?: string): string {
   const params = new URLSearchParams();
@@ -141,9 +165,12 @@ export function CollegesTable() {
       columnHelper.accessor("name", {
         header: "College Name",
         cell: (info) => (
-          <span className="font-medium">
-            {info.getValue() || "Unnamed College"}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium">
+              {info.getValue() || "Unnamed College"}
+            </span>
+            <CopyIdButton id={info.row.original.id} />
+          </div>
         ),
       }),
       columnHelper.accessor("state", {

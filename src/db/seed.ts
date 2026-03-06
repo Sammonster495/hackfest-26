@@ -427,9 +427,7 @@ async function seed() {
               Math.floor(Math.random() * eventAudienceEnum.enumValues.length)
             ],
           category: Math.random() > 0.5 ? "Technical" : "Non-Technical",
-          hfAmount: 100 + i * 100,
-          collegeAmount: 200 + i * 100,
-          nonCollegeAmount: 300 + i * 100,
+          amount: 100 + i * 100,
           maxTeams: 10 + i,
           minTeamSize: Math.floor(Math.random() * 3) + 1,
           maxTeamSize: Math.floor(Math.random() * 3) + 2,

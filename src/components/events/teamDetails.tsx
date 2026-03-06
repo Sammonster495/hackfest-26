@@ -8,25 +8,36 @@ import {
   UserMinus,
   Users,
 } from "lucide-react";
+import type { Session } from "next-auth";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "~/components/ui/dialog";
 import { apiFetch } from "~/lib/fetcher";
-import type { EventMember, EventTeam } from "./layout";
+import PaymentButton from "../razorpay/PaymentButton";
+import type { Event, EventMember, EventTeam } from "./layout";
 
 export function TeamDetailsDialog({
   team,
+  event,
+  amount,
+  session,
   members,
   isLeader,
   open,
   onOpenChange,
+  setDrawerOpen,
   fetchEvents,
 }: {
+  event: Event;
   team: EventTeam;
+  amount: number;
+  session: Session | null;
   members: EventMember[];
   isLeader: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  setDrawerOpen: (open: boolean) => void;
   fetchEvents: () => Promise<void>;
 }) {
   const [kickingId, setKickingId] = useState<string | null>(null);
@@ -36,6 +47,8 @@ export function TeamDetailsDialog({
 
   const [copied, setCopied] = useState(false);
   const isConfirmed = team.isComplete;
+  const isAvailable =
+    event.status === "Published" && new Date(event.deadline) > new Date();
 
   const maskedId = (() => {
     const id = team.id;
@@ -128,6 +141,12 @@ export function TeamDetailsDialog({
     ...members.filter((m) => !m.isLeader),
   ];
 
+  const user: { id: string; name: string; email: string } = {
+    id: session?.eventUser?.id ?? "",
+    name: session?.eventUser?.name ?? "",
+    email: session?.eventUser?.email ?? "",
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -146,10 +165,15 @@ export function TeamDetailsDialog({
               Team Details
             </span>
           </div>
-          {isConfirmed && (
+          {isConfirmed ? (
             <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 rounded-full px-2.5 py-0.5">
               <Shield size={11} />
               Confirmed
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-yellow-400 bg-yellow-400/10 border border-yellow-400/25 rounded-full px-2.5 py-0.5">
+              <Shield size={11} />
+              Not Confirmed
             </span>
           )}
         </div>
@@ -235,27 +259,29 @@ export function TeamDetailsDialog({
                 </div>
 
                 {/* Kick button — only for non-leaders, only if leader viewing, only if not confirmed */}
-                {isLeader && !member.isLeader && !isConfirmed && (
-                  <button
-                    type="button"
-                    onClick={() => handleKick(member.id ?? "")}
-                    disabled={kickingId === member.id}
-                    className="shrink-0 p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 border border-transparent hover:border-red-400/20 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Remove from team"
-                  >
-                    {kickingId === member.id ? (
-                      <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                      <UserMinus size={15} />
-                    )}
-                  </button>
-                )}
+                {isLeader &&
+                  !member.isLeader &&
+                  !isConfirmed &&
+                  isAvailable && (
+                    <Button
+                      onClick={() => handleKick(member.id ?? "")}
+                      disabled={kickingId === member.id}
+                      className="shrink-0 p-2 rounded-lg text-white/30 hover:text-red-400 bg-transparent hover:bg-red-400/10 border border-transparent hover:border-red-400/20 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Remove from team"
+                    >
+                      {kickingId === member.id ? (
+                        <Loader2 size={15} className="animate-spin" />
+                      ) : (
+                        <UserMinus size={15} />
+                      )}
+                    </Button>
+                  )}
               </div>
             ))}
           </div>
 
           {/* Leave team — only for non-leaders when not confirmed */}
-          {!isLeader && !isConfirmed && (
+          {!isLeader && !isConfirmed && isAvailable && (
             <Button
               onClick={handleLeave}
               disabled={leaving}
@@ -274,7 +300,7 @@ export function TeamDetailsDialog({
           )}
 
           {/* Action buttons — only for leader */}
-          {isLeader && (
+          {isLeader && isAvailable && (
             <div className="flex gap-3 pt-1">
               {!isConfirmed && (
                 <Button
@@ -294,22 +320,60 @@ export function TeamDetailsDialog({
                 </Button>
               )}
 
-              {!isConfirmed && (
-                <Button
-                  onClick={handleConfirm}
-                  disabled={confirming || deleting}
-                  className="flex-1 bg-[#f4d35e] text-[#0b2545] font-bold hover:brightness-110 transition-all duration-200 cursor-pointer"
-                >
-                  {confirming ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
-                      Confirming...
-                    </span>
-                  ) : (
-                    "Confirm Team"
-                  )}
-                </Button>
-              )}
+              {!isConfirmed &&
+                (amount === 0 ? (
+                  <Button
+                    onClick={handleConfirm}
+                    disabled={
+                      confirming ||
+                      deleting ||
+                      members.length < event.minTeamSize ||
+                      members.length > event.maxTeamSize
+                    }
+                    className="flex-1 bg-[#f4d35e] text-[#0b2545] font-bold hover:brightness-110 transition-all duration-200 cursor-pointer"
+                  >
+                    {confirming ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />
+                        Confirming...
+                      </span>
+                    ) : (
+                      "Confirm Team"
+                    )}
+                  </Button>
+                ) : (
+                  <PaymentButton
+                    user={user}
+                    teamId={team.id}
+                    eventId={team.eventId}
+                    amountInINR={amount}
+                    paymentType="EVENT"
+                    description="Event Participation Fee"
+                    className="flex-1 bg-[#f4d35e] text-[#0b2545] font-bold hover:brightness-110 transition-all duration-200 cursor-pointer"
+                    onStart={() => {
+                      onOpenChange(false);
+                      setDrawerOpen(false);
+                    }}
+                    onEnd={async () => {
+                      await fetchEvents();
+                      setDrawerOpen(true);
+                    }}
+                    onSuccess={() =>
+                      toast.success(
+                        "Payment successful! Your team has been confirmed.",
+                      )
+                    }
+                    onFailure={(error) => toast.error(error)}
+                    disabled={
+                      confirming ||
+                      deleting ||
+                      members.length < event.minTeamSize ||
+                      members.length > event.maxTeamSize
+                    }
+                  >
+                    Pay to Confirm
+                  </PaymentButton>
+                ))}
             </div>
           )}
         </div>

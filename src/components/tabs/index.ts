@@ -2,6 +2,7 @@ export { AllocationsTab } from "./Allocations";
 export { AttendanceTab } from "./Attendance";
 export { DashboardUsersTab } from "./dashboard-users/DashboardUsersTab";
 export { MealsTab } from "./Meals";
+export { ParticipantsTab } from "./ParticipantsTab";
 export { PaymentsTab } from "./PaymentsTab";
 export { ResultsTab } from "./Results";
 export { RolesTab } from "./Roles";

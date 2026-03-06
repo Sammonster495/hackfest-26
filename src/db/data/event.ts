@@ -1,6 +1,5 @@
-import { asc, eq, not } from "drizzle-orm";
+import type { EventOrganizer } from "~/components/events/layout";
 import db from "..";
-import { dashboardUsers, eventOrganizers, events } from "../schema";
 import { query } from ".";
 
 export async function eventRegistrationOpen() {
@@ -15,18 +14,27 @@ export async function findByEventId(id: string) {
 }
 
 export async function findAllPublishedEvents() {
-  return await db
-    .select({
-      event: events,
-      organizerId: eventOrganizers.id,
-      organizerUser: dashboardUsers,
-    })
-    .from(events)
-    .leftJoin(eventOrganizers, eq(events.id, eventOrganizers.eventId))
-    .leftJoin(
-      dashboardUsers,
-      eq(eventOrganizers.organizerId, dashboardUsers.id),
-    )
-    .where(not(eq(events.status, "Draft")))
-    .orderBy(asc(events.priority));
+  const events = await db.query.events.findMany({
+    where: (e, { not, eq }) => not(eq(e.status, "Draft")),
+    orderBy: (e, { asc }) => asc(e.priority),
+    with: {
+      organizers: {
+        with: {
+          user: true,
+        },
+      },
+    },
+  });
+
+  return events.map((event) => ({
+    ...event,
+    organizers: event.organizers.map((org) => {
+      return {
+        id: org.id,
+        name: org.user.name,
+        email: org.user.email,
+        phone: org.user.phone,
+      } as EventOrganizer;
+    }) as EventOrganizer[],
+  }));
 }

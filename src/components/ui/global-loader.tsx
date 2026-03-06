@@ -4,9 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useLoader } from "../providers/loader-context";
 
 export function GlobalLoader() {
   const pathname = usePathname();
+  const { setLoaderDone } = useLoader();
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
@@ -23,7 +25,10 @@ export function GlobalLoader() {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(() => setLoading(false), 200);
+          setTimeout(() => {
+            setLoading(false);
+            setTimeout(() => setLoaderDone(true), 1200);
+          }, 200);
           return 100;
         }
         return prev + 2;
@@ -31,7 +36,7 @@ export function GlobalLoader() {
     }, 30);
 
     return () => clearInterval(interval);
-  }, [pathname]);
+  }, [pathname, setLoaderDone]);
 
   return (
     <AnimatePresence>

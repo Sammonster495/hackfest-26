@@ -1,7 +1,11 @@
 import type { NextRequest } from "next/server";
 import { registrationRequiredRoute } from "~/auth/route-handlers";
 import * as userData from "~/db/data/participant";
+import { getSiteSettings } from "~/db/data/siteSettings";
 import * as teamData from "~/db/data/teams";
+import { getIdeaSubmission } from "~/db/services/idea-services";
+import { findCollegeByUserId } from "~/db/services/participant-services";
+import { getFormStatus } from "~/db/services/team-services";
 import { AppError } from "~/lib/errors/app-error";
 import { successResponse } from "~/lib/response/success";
 
@@ -26,8 +30,28 @@ export const GET = registrationRequiredRoute(
       });
     }
 
-    const members = await teamData.listMembers(id);
+    const [members, siteSettingsData, teamStatus, submission, collegeName] =
+      await Promise.all([
+        teamData.listMembers(id),
+        getSiteSettings(),
+        getFormStatus(id),
+        getIdeaSubmission(id),
+        findCollegeByUserId(user.id),
+      ]);
 
-    return successResponse({ team, members });
+    return successResponse({
+      team,
+      members,
+      siteSettings: siteSettingsData,
+      teamStatus,
+      submission,
+      user: {
+        id: dbUser.id,
+        name: dbUser.name ?? "",
+        email: dbUser.email ?? "",
+        teamId: dbUser.teamId,
+      },
+      collegeName,
+    });
   },
 );

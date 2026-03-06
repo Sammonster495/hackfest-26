@@ -166,9 +166,15 @@ export const dashboardUserRoleRelations = relations(
 
 export const eventOrganizerRelations = relations(
   eventOrganizers,
-  ({ many }) => ({
-    user: many(dashboardUsers),
-    event: many(events),
+  ({ one }) => ({
+    user: one(dashboardUsers, {
+      fields: [eventOrganizers.organizerId],
+      references: [dashboardUsers.id],
+    }),
+    event: one(events, {
+      fields: [eventOrganizers.eventId],
+      references: [events.id],
+    }),
   }),
 );
 

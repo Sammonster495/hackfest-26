@@ -3,21 +3,29 @@ import { permissionProtected } from "~/auth/routes-wrapper";
 import {
   getCollegeRankingsBySelections,
   getDashboardStats,
-  getStatesStats,
+  getStatesConfirmedStats,
+  getStatesTotalStats,
 } from "~/db/services/dashboard-stats";
 
 export const GET = permissionProtected(["dashboard:access"], async () => {
   try {
-    const [quickStats, statesStats, collegeRankings] = await Promise.all([
+    const [
+      quickStats,
+      statesConfirmedStats,
+      statesTotalStats,
+      collegeRankings,
+    ] = await Promise.all([
       getDashboardStats(),
-      getStatesStats(),
+      getStatesConfirmedStats(),
+      getStatesTotalStats(),
       getCollegeRankingsBySelections(),
     ]);
 
     return NextResponse.json(
       {
         quickStats,
-        statesStats,
+        statesConfirmedStats,
+        statesTotalStats,
         collegeRankings,
       },
       {

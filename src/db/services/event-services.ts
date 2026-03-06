@@ -4,8 +4,8 @@ import {
   findByEvent,
   findById,
   findLeaderByTeam,
-  findParticipantsByTeamIds,
   findUserParticipations,
+  type UserParticipation,
   updateById,
 } from "~/db/data/event-users";
 import { eventParticipants, eventTeams } from "~/db/schema";
@@ -21,182 +21,69 @@ import {
   findAllPublishedEvents,
   findByEventId,
 } from "../data/event";
-import {
-  findByIdandEvent,
-  findTeamsByIds,
-  memberCount,
-  teamCount,
-} from "../data/event-teams";
-
-type Team = {
-  id: string;
-  eventId: string;
-  name: string;
-  isComplete: boolean;
-};
-
-type Organizer = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-};
-
-type Participant = {
-  id: string;
-  userId: string;
-  isLeader: boolean;
-  name: string;
-  email: string;
-};
-
-type Event = {
-  id: string;
-  title: string;
-  date: Date;
-  image: string;
-  priority: number;
-  venue: string;
-  description: string;
-  type: string;
-  status: string;
-  audience: string;
-  category: string;
-  deadline: Date;
-  minTeamSize: number;
-  maxTeamSize: number;
-  maxTeams: number;
-  organizers: Organizer[];
-  team: Team | null;
-  isLeader: boolean;
-  teamMembers: Participant[];
-};
+import { findByIdandEvent, memberCount, teamCount } from "../data/event-teams";
 
 export async function getAllEvents(userId?: string) {
   const registrationsOpen = await eventRegistrationOpen();
-  const rows = await findAllPublishedEvents();
+  const events = await findAllPublishedEvents();
 
-  const eventMap = new Map<string, Event>();
+  let participations: Record<string, UserParticipation> = {};
 
-  for (const row of rows) {
-    const e = row.event;
+  if (userId) {
+    participations = await findUserParticipations(userId);
+  }
 
-    if (!eventMap.has(e.id)) {
-      eventMap.set(e.id, {
-        id: e.id,
-        title: e.title,
-        date: e.date,
-        image: e.image,
-        priority: e.priority,
-        venue: e.venue,
-        description: e.description,
-        type: e.type,
-        status: e.status,
-        audience: e.audience,
-        category: e.category,
-        deadline: e.deadline,
-        minTeamSize: e.minTeamSize,
-        maxTeamSize: e.maxTeamSize,
-        maxTeams: e.maxTeams,
-        organizers: [],
-        team: null,
-        isLeader: false,
-        teamMembers: [],
-      });
+  const formattedEvents = events.map((e) => {
+    const participation = userId ? (participations[e.id] ?? null) : null;
+
+    let userStatus:
+      | "registered"
+      | "not_confirmed"
+      | "not_registered"
+      | undefined;
+
+    if (userId) {
+      userStatus = participation?.team
+        ? participation.team.isComplete
+          ? "registered"
+          : "not_confirmed"
+        : "not_registered";
     }
 
-    if (row.organizerId && row.organizerUser) {
-      const event = eventMap.get(e.id);
-
-      const alreadyExists = event?.organizers.some(
-        (o: Organizer) => o.id === row.organizerId,
-      );
-
-      if (!alreadyExists) {
-        event?.organizers.push({
-          id: row.organizerId,
-          name: row.organizerUser.name,
-          email: row.organizerUser.email ?? "",
-          phone: row.organizerUser.phone ?? "",
-        });
-      }
-    }
-  }
-
-  if (!userId)
-    return successResponse(
-      {
-        events: Array.from(eventMap.values()),
-        registrationsOpen,
-      },
-      {
-        toast: false,
-        title: "Events fetched",
-        description: "All published events have been fetched successfully.",
-      },
-    );
-
-  const participations = await findUserParticipations(userId);
-
-  if (!participations.length) {
-    return successResponse(
-      {
-        events: Array.from(eventMap.values()),
-        registrationsOpen,
-      },
-      {
-        toast: false,
-        title: "Events fetched",
-        description: "All published events have been fetched successfully.",
-      },
-    );
-  }
-
-  const teamIds = [...new Set(participations.map((p) => p.teamId))];
-
-  const teams = await findTeamsByIds(teamIds);
-  const teamMap = new Map(teams.map((t) => [t.id, t]));
-
-  const teamParticipants = await findParticipantsByTeamIds(teamIds);
-
-  const participantsGrouped = new Map<string, Participant[]>();
-
-  for (const row of teamParticipants) {
-    const teamId = row.participant.teamId;
-
-    if (!participantsGrouped.has(teamId)) {
-      participantsGrouped.set(teamId, []);
-    }
-
-    participantsGrouped.get(teamId)?.push({
-      id: row.participant.id,
-      userId: row.participant.userId,
-      isLeader: row.participant.isLeader,
-      name: row.user?.name ?? "Unknown User",
-      email: row.user?.email ?? "Unknown Email",
-    });
-  }
-
-  for (const p of participations) {
-    const event = eventMap.get(p.eventId);
-    if (!event) continue;
-
-    const team = teamMap.get(p.teamId);
-
-    event.team = team ?? null;
-    event.isLeader = p.isLeader;
-    event.teamMembers = participantsGrouped.get(p.teamId) ?? [];
-  }
+    return {
+      id: e.id,
+      title: e.title,
+      date: e.date.toISOString(),
+      image: e.image,
+      venue: e.venue,
+      description: e.description,
+      type: e.type as "Solo" | "Team",
+      status: e.status as "Draft" | "Published" | "Ongoing" | "Completed",
+      audience: e.audience as "Participants" | "Non-Participants" | "Both",
+      category: e.category,
+      deadline: e.deadline.toISOString(),
+      minTeamSize: e.minTeamSize,
+      maxTeamSize: e.maxTeamSize,
+      maxTeams: e.maxTeams,
+      amount: e.amount,
+      organizers: e.organizers,
+      ...(userId && {
+        userStatus,
+        team: participation?.team ?? null,
+        isLeader: participation?.isLeader ?? false,
+        teamMembers: participation?.teamMembers ?? [],
+      }),
+    };
+  });
 
   return successResponse(
     {
-      events: Array.from(eventMap.values()),
+      events: formattedEvents,
       registrationsOpen,
     },
     {
       toast: false,
       title: "Events fetched",
-      description: "All published events have been fetched successfully.",
     },
   );
 }
@@ -239,7 +126,131 @@ export async function updateUserDetails(
   );
 }
 
-export async function eventRegistrationChecker(
+export async function soloRegistrationChecker(
+  eventId: string,
+  userId: string,
+  action: string,
+) {
+  const eventUser = await findByEvent(eventId, userId);
+  const team = eventUser
+    ? await findByIdandEvent(eventId, eventUser.teamId)
+    : null;
+  switch (action) {
+    case "register":
+      if (eventUser) {
+        if (team?.isComplete)
+          return new AppError("ALREADY_REGISTERED_CONFIRMED", 400, {
+            title: "Already registered",
+            description: "You are already registered for this event.",
+          });
+        return new AppError("REGISTERATION_INITIATED", 400, {
+          title: "Registration initiated",
+          description:
+            "You have already initiated registration for this event.",
+        });
+      }
+      break;
+    case "cancel":
+      if (!eventUser) {
+        return new AppError("NOT_REGISTERED", 400, {
+          title: "Not registered",
+          description: "You are not registered for this event.",
+        });
+      }
+      break;
+    default:
+      return new AppError("Unknown action", 400, {
+        title: "Unknown Action",
+        description: "The specified action is not recognized.",
+      });
+  }
+
+  return eventUser;
+}
+
+export async function registerSoloEvent(
+  eventId: string,
+  userId: string,
+  teamName: string,
+) {
+  const event = await findByEventId(eventId);
+  const teams = await teamCount(eventId);
+
+  if (event && teams >= event.maxTeams)
+    return errorResponse(
+      new AppError("MAX_REGISTRATIONS_REACHED", 400, {
+        title: "Max registrations reached",
+        description:
+          "The maximum number of registrations for this event has been reached.",
+      }),
+    );
+
+  const eventTeam = await db.transaction(async (tx) => {
+    const [team] = await tx
+      .insert(eventTeams)
+      .values({
+        eventId: eventId,
+        name: teamName,
+        isComplete: event?.amount === 0,
+      })
+      .returning();
+
+    await tx.insert(eventParticipants).values({
+      eventId: eventId,
+      teamId: team.id,
+      userId: userId,
+      isLeader: true,
+    });
+
+    return team;
+  });
+
+  if (!eventTeam) {
+    return errorResponse(
+      new AppError("REGISTRATION_FAILED", 500, {
+        title: "Registration failed",
+        description:
+          "An error occurred while registering for the event. Please try again.",
+      }),
+    );
+  }
+
+  return successResponse(
+    { team: eventTeam },
+    {
+      title: event?.amount === 0 ? "Registered" : "Registration Initiated",
+      description: `You have ${event?.amount === 0 ? "registered" : "initiated registration"} for the event successfully.`,
+    },
+  );
+}
+
+export async function cancelSoloEvent(teamId: string) {
+  const deletedTeam = await db.transaction(async (tx) => {
+    return await tx
+      .delete(eventTeams)
+      .where(eq(eventTeams.id, teamId))
+      .returning();
+  });
+
+  if (!deletedTeam)
+    return errorResponse(
+      new AppError("REGISTRATION_CANCELLATION_FAILED", 500, {
+        title: "Registration cancellation failed",
+        description:
+          "An error occurred while cancelling your registration. Please try again.",
+      }),
+    );
+
+  return successResponse(
+    { team: deletedTeam[0] },
+    {
+      title: "Registration Cancelled",
+      description: "Your registration has been cancelled successfully.",
+    },
+  );
+}
+
+export async function teamRegistrationChecker(
   eventId: string,
   userId: string,
   action: string,
@@ -280,10 +291,8 @@ export async function createEventTeam(
   eventId: string,
   userId: string,
   teamName: string,
-  confirm = false,
 ) {
   const event = await findByEventId(eventId);
-
   const teams = await teamCount(eventId);
 
   if (event && teams >= event.maxTeams)
@@ -301,7 +310,7 @@ export async function createEventTeam(
       .values({
         eventId: eventId,
         name: teamName,
-        isComplete: confirm,
+        isComplete: false,
       })
       .returning();
 

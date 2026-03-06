@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { auth as participantAuth } from "~/auth/config";
 import { auth } from "~/auth/event-config";
 import Events from "~/components/events/layout";
+import Footer from "~/components/landing/Footer";
 import { Navbar } from "~/components/landing/Navbar";
 
 export const metadata: Metadata = {
@@ -18,13 +20,15 @@ export default async function EventsPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const session = await auth();
+  const participantSession = await participantAuth();
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="fixed top-0 left-0 w-full z-50">
-        <Navbar isUnderwater={true} session={session} />
+        <Navbar isUnderwater={true} session={participantSession} />
       </div>
       <Events session={session} searchParams={searchParams} />
+      <Footer />
     </Suspense>
   );
 }
