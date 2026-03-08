@@ -65,17 +65,17 @@ export const dashboardFeatureTabs: FeatureTabConfig[] = [
   {
     id: "roles",
     label: "Roles",
-    permissions: ["roles:manage"],
+    permissions: ["admin:access"],
   },
   {
     id: "users",
     label: "Users",
-    permissions: ["roles:manage"],
+    permissions: ["admin:access"],
   },
   {
     id: "settings",
     label: "Settings",
-    permissions: ["settings:manage"],
+    permissions: ["admin:access"],
   },
   {
     id: "events",

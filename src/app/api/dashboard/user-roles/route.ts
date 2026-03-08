@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { adminProtected } from "~/auth/routes-wrapper";
 import * as dashboardUserRoleData from "~/db/data/dashboard-user-roles";
 
 const assignRoleSchema = z.object({
@@ -7,7 +8,7 @@ const assignRoleSchema = z.object({
   roleId: z.string().min(1, "Role ID is required"),
 });
 
-export async function POST(req: Request) {
+export const POST = adminProtected(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const result = assignRoleSchema.safeParse(body);
@@ -48,9 +49,9 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function DELETE(req: Request) {
+export const DELETE = adminProtected(async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
     const dashboardUserId = searchParams.get("userId");
@@ -89,4 +90,4 @@ export async function DELETE(req: Request) {
       { status: 500 },
     );
   }
-}
+});

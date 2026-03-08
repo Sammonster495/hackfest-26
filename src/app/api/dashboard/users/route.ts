@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { adminProtected } from "~/auth/routes-wrapper";
 import * as dashboardUserRoleData from "~/db/data/dashboard-user-roles";
 import * as dashboardUserData from "~/db/data/dashboard-users";
 
-export async function GET() {
+export const GET = adminProtected(async () => {
   try {
     const users = await dashboardUserData.listDashboardUsers();
 
@@ -26,4 +27,4 @@ export async function GET() {
       { status: 500 },
     );
   }
-}
+});

@@ -3,6 +3,60 @@ import { NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const userAgent = request.headers.get("user-agent")?.toLowerCase() || "";
+  if (userAgent.includes("postman") || userAgent.includes("curl")) {
+    return new NextResponse(
+      JSON.stringify({ error: "Access Denied: Unsupported Client" }),
+      {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  const origin = request.headers.get("origin");
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "";
+
+  if (!pathname.includes("razorpay")) {
+    if (origin) {
+      try {
+        const originHost = new URL(origin).host;
+        if (originHost !== host) {
+        return new NextResponse(
+            JSON.stringify({
+              error: "Access Denied: Cross-Origin Requests Not Allowed",
+            }),
+            {
+              status: 403,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
+        }
+      } catch {
+        return new NextResponse(
+          JSON.stringify({ error: "Access Denied: Invalid Origin" }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+    } else if (
+      pathname.startsWith("/api") &&
+      ["POST", "PUT", "DELETE", "PATCH"].includes(request.method.toUpperCase())
+    ) {
+      return new NextResponse(
+        JSON.stringify({ error: "Access Denied: Missing Origin" }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+  }
 
   const normalizedPath = pathname.replace(/\/$/, "");
 
@@ -30,5 +84,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|public/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

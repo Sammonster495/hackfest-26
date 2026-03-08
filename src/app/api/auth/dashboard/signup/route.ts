@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       email,
       passwordHash,
       name,
-      isActive: true,
+      isActive: false,
     });
 
     return NextResponse.json(

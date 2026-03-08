@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { adminProtected } from "~/auth/routes-wrapper";
 import * as rolesData from "~/db/data/roles";
 
 const createRoleSchema = z.object({
@@ -10,7 +11,7 @@ const createRoleSchema = z.object({
   permissionIds: z.array(z.string()).optional(),
 });
 
-export async function GET() {
+export const GET = adminProtected(async (_req: NextRequest) => {
   try {
     const roles = await rolesData.listRoles();
 
@@ -32,9 +33,9 @@ export async function GET() {
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(req: Request) {
+export const POST = adminProtected(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const result = createRoleSchema.safeParse(body);
@@ -74,4 +75,4 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
-}
+});

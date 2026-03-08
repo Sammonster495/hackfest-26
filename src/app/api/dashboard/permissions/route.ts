@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { adminProtected } from "~/auth/routes-wrapper";
 import * as permissionsData from "~/db/data/permissions";
 
-export async function GET() {
+export const GET = adminProtected(async () => {
   try {
     const permissions = await permissionsData.listPermissions();
     return NextResponse.json(permissions);
@@ -12,4 +13,4 @@ export async function GET() {
       { status: 500 },
     );
   }
-}
+});
