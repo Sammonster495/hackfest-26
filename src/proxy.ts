@@ -4,7 +4,10 @@ import { NextResponse } from "next/server";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const userAgent = request.headers.get("user-agent")?.toLowerCase() || "";
-  if (userAgent.includes("postman") || userAgent.includes("curl")) {
+  if (
+    (userAgent.includes("postman") || userAgent.includes("curl")) &&
+    request.method !== "GET"
+  ) {
     return new NextResponse(
       JSON.stringify({ error: "Access Denied: Unsupported Client" }),
       {
@@ -25,7 +28,7 @@ export async function proxy(request: NextRequest) {
       try {
         const originHost = new URL(origin).host;
         if (originHost !== host) {
-        return new NextResponse(
+          return new NextResponse(
             JSON.stringify({
               error: "Access Denied: Cross-Origin Requests Not Allowed",
             }),

@@ -1,6 +1,7 @@
-import type { NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { registrationRequiredRoute } from "~/auth/route-handlers";
-import { submitIdea } from "~/db/services/idea-services";
+import { permissionProtected } from "~/auth/routes-wrapper";
+import { fetchIdeas, submitIdea } from "~/db/services/idea-services";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
 import { successResponse } from "~/lib/response/success";
@@ -27,5 +28,29 @@ export const POST = registrationRequiredRoute(
         }),
       );
     }
+  },
+);
+
+export const GET = permissionProtected(
+  ["submission:view"],
+  async (req: NextRequest, _ctx, user) => {
+    const { searchParams } = new URL(req.url);
+    const cursor = searchParams.get("cursor") || undefined;
+    const limit = Number(searchParams.get("limit")) || 50;
+    const search = searchParams.get("search") || undefined;
+    const trackId = searchParams.get("trackId") || "all";
+
+    const { ideas, nextCursor, totalCount } = await fetchIdeas({
+      cursor,
+      limit,
+      search,
+      trackId: trackId === "all" ? undefined : trackId,
+    });
+
+    return NextResponse.json({
+      ideas,
+      nextCursor,
+      totalCount,
+    });
   },
 );
