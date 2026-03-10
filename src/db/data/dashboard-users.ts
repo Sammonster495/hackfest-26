@@ -48,6 +48,10 @@ export async function updateLastLogin(id: string) {
     .returning();
 }
 
+export async function updateDashboardUserStatus(id: string, isActive: boolean) {
+  return query.dashboardUsers.update(id, { isActive });
+}
+
 export async function deactivateDashboardUser(id: string) {
   return query.dashboardUsers.update(id, { isActive: false });
 }

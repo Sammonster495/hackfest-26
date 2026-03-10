@@ -154,16 +154,51 @@ export function UsersTable() {
                     </p>
                   </TableCell>
                   <TableCell>
-                    {user.isActive ? (
-                      <Badge
-                        variant="success"
-                        className="bg-green-500 hover:bg-green-600"
-                      >
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge variant="destructive">Inactive</Badge>
-                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          {user.isActive ? "Active" : "Inactive"}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            fetch("/api/dashboard/status", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                dashboardUserId: user.id,
+                                isActive: !user.isActive,
+                              }),
+                            }).then((res) => {
+                              if (res.ok) {
+                                toast.success(
+                                  `User ${
+                                    !user.isActive ? "activated" : "deactivated"
+                                  } successfully`,
+                                );
+                                fetchData();
+                              } else {
+                                toast.error("Failed to update user status");
+                              }
+                            })
+                          }
+                          className="cursor-pointer"
+                        >
+                          {user.isActive ? (
+                            <>
+                              <ShieldMinus className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <ShieldPlus className="mr-2 h-4 w-4" />
+                              Activate
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                   <TableCell className="max-w-[400px]">
                     <div className="flex flex-wrap gap-1">

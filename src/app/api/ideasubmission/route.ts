@@ -33,7 +33,7 @@ export const POST = registrationRequiredRoute(
 
 export const GET = permissionProtected(
   ["submission:view"],
-  async (req: NextRequest, _ctx, user) => {
+  async (req: NextRequest, _ctx, _user) => {
     const { searchParams } = new URL(req.url);
     const cursor = searchParams.get("cursor") || undefined;
     const limit = Number(searchParams.get("limit")) || 50;

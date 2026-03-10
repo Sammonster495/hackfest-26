@@ -117,12 +117,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      const userId = user?.id;
+      const userId = user?.id || (token.id as string | undefined);
       if (userId) {
-        token.id = userId;
         const dbUser = await dashboardUserData.findById(userId);
 
-        if (dbUser) {
+        if (dbUser?.isActive) {
+          token.id = userId;
           const userRoles =
             (await dashboardUserRoleData.findActiveRolesByDashboardUserId(
               userId,
@@ -148,7 +148,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           token.dashboardUser = dashboardUser;
 
-          if (process.env.NODE_ENV === "production") {
+          if (user && process.env.NODE_ENV === "production") {
             try {
               mixpanel.people.set(dashboardUser.id, {
                 $name: dashboardUser.name,
@@ -166,6 +166,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               console.error("Mixpanel tracking error:", e);
             }
           }
+        } else {
+          delete token.id;
+          delete token.dashboardUser;
         }
       }
       return token;
