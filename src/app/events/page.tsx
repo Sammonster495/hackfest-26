@@ -25,7 +25,7 @@ export default async function EventsPage({
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="fixed top-0 left-0 w-full z-50">
-        <Navbar isUnderwater={true} session={participantSession} />
+        <Navbar isUnderwater={true} session={session} authType="event" />
       </div>
       <Events session={session} searchParams={searchParams} />
       <Footer />

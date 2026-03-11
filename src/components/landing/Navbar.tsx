@@ -26,9 +26,11 @@ const NAV_LINKS = [
 export function Navbar({
   isUnderwater,
   session,
+  authType = "hackathon",
 }: {
   isUnderwater: boolean;
   session: Session | null;
+  authType?: "hackathon" | "event";
 }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -158,7 +160,11 @@ export function Navbar({
 
         {/* DESKTOP SIGN IN (Hidden on Mobile) */}
         <div className="hidden md:flex items-center gap-4">
-          <AuthButton session={session} isUnderwater={isUnderwater} />
+          <AuthButton
+            session={session}
+            authType={authType}
+            isUnderwater={isUnderwater}
+          />
         </div>
 
         {/* MOBILE MENU TOGGLE (Visible on Mobile) */}
@@ -230,6 +236,7 @@ export function Navbar({
               <div className="mt-2 flex flex-col items-center gap-4">
                 <AuthButton
                   session={session}
+                  authType={authType}
                   isUnderwater={isUnderwater}
                   onNavigate={() => setIsMobileMenuOpen(false)}
                 />
@@ -245,25 +252,42 @@ export function Navbar({
 // Helper to keep code clean - uses your exact button styling
 function AuthButton({
   session,
+  authType,
   isUnderwater,
   onNavigate,
 }: {
   session: Session | null;
+  authType: "hackathon" | "event";
   isUnderwater: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const isLoggedIn = !!session?.user && !session?.eventUser;
-  const href = isLoggedIn
-    ? session.user.isRegistrationComplete
-      ? "/teams"
-      : "/register"
-    : "/register";
-  const label = isLoggedIn
-    ? session.user.isRegistrationComplete
-      ? "Your Team"
-      : "Register Now"
-    : "Register Now";
+
+  const isEventMode = authType === "event";
+  const isLoggedIn = isEventMode
+    ? !!session?.eventUser
+    : !!session?.user && !session?.eventUser;
+
+  let href = "/";
+  let label = "";
+
+  if (isEventMode) {
+    href = isLoggedIn ? "/events" : "/events/login";
+    label = isLoggedIn
+      ? session?.eventUser?.name?.split(" ")[0] || "Profile"
+      : "Event Login";
+  } else {
+    href = isLoggedIn
+      ? session?.user?.isRegistrationComplete
+        ? "/teams"
+        : "/register"
+      : "/register";
+    label = isLoggedIn
+      ? session?.user?.isRegistrationComplete
+        ? "Your Team"
+        : "Register Now"
+      : "Register Now";
+  }
 
   // Base button styles
   const buttonClass = cn(
@@ -306,7 +330,14 @@ function AuthButton({
       {isLoggedIn && (
         <button
           type="button"
-          onClick={() => signOutOfGitHub(pathname)}
+          onClick={async () => {
+            if (isEventMode) {
+              const { signOutOfGoogle } = await import("~/lib/auth/userLogin");
+              signOutOfGoogle(pathname);
+            } else {
+              signOutOfGitHub(pathname);
+            }
+          }}
           className={cn(
             "p-2 rounded-md transition-colors duration-300",
             isUnderwater

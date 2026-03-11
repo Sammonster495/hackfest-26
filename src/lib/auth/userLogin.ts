@@ -14,3 +14,8 @@ export async function signInWithGoogle() {
 export async function signOutOfGitHub(redirectTo?: string) {
   await signOut({ redirect: false, redirectTo: redirectTo ?? "/" });
 }
+
+export async function signOutOfGoogle(redirectTo?: string) {
+  const { signOut: googleSignOut } = await import("~/auth/event-config");
+  await googleSignOut({ redirect: false, redirectTo: redirectTo ?? "/events" });
+}
