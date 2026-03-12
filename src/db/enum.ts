@@ -146,3 +146,9 @@ export const roundStatus = pgEnum("round_status", [
   "Active",
   "Completed",
 ]);
+
+export const teamStage = pgEnum("team_stage", [
+  "NOT_SELECTED",
+  "SEMI_SELECTED",
+  "SELECTED",
+]);

@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { paymentStatusEnum, teamStatusEnum } from "~/db/enum";
+import { paymentStatusEnum, teamStage } from "~/db/enum";
 
 export const teamSchema = z.object({
   id: z.string(),
   name: z.string().min(1),
   teamNumber: z.number().int().positive().nullable(),
-  teamStatus: z.enum(teamStatusEnum.enumValues).nullable(),
+  teamStage: z.enum(teamStage.enumValues),
   leaderId: z.string(),
   paymentStatus: z.enum(paymentStatusEnum.enumValues).nullable(),
   attended: z.boolean().default(false),

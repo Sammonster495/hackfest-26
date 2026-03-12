@@ -12,9 +12,7 @@ export const payment = pgTable("payment", {
   paymentType: text("payment_type").notNull().default("Hackfest"),
   amount: text("amount").notNull(),
   paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
-  razorpayOrderId: text("razorpay_order_id").notNull(),
-  razorpayPaymentId: text("razorpay_payment_id"),
-  razorpaySignature: text("razorpay_signature"),
+  paymentScreenshotUrl: text("payment_screenshot_url"),
 
   userId: text("user_id").references(() => participants.id),
   teamId: text("team_id").references(() => teams.id),

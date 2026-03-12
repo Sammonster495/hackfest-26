@@ -333,6 +333,7 @@ export async function fetchTeams({
       paymentStatus: teams.paymentStatus,
       leaderId: teams.leaderId,
       attended: teams.attended,
+      teamStage: teams.teamStage,
       isCompleted: teams.isCompleted,
       createdAt: teams.createdAt,
       updatedAt: teams.updatedAt,

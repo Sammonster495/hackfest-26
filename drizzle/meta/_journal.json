@@ -218,6 +218,13 @@
       "when": 1773234324826,
       "tag": "0030_long_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1773243355821,
+      "tag": "0031_hot_polaris",
+      "breakpoints": true
     }
   ]
 }
