@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { permissionProtected } from "~/auth/routes-wrapper";
 import db from "~/db";
@@ -7,7 +7,6 @@ import {
   judgeCriterias,
   judgeRoundAssignments,
   judgeRounds,
-  judges,
   judgeScores,
   teams,
   tracks,
@@ -40,7 +39,10 @@ export const GET = permissionProtected(
         })
         .from(judgeRoundAssignments)
         .innerJoin(teams, eq(teams.id, judgeRoundAssignments.teamId))
-        .innerJoin(judgeRounds, eq(judgeRounds.id, judgeRoundAssignments.judgeRoundId))
+        .innerJoin(
+          judgeRounds,
+          eq(judgeRounds.id, judgeRoundAssignments.judgeRoundId),
+        )
         .leftJoin(ideaSubmission, eq(ideaSubmission.teamId, teams.id))
         .leftJoin(tracks, eq(tracks.id, ideaSubmission.trackId))
         .where(eq(judgeRoundAssignments.judgeId, judge.id));
@@ -56,9 +58,10 @@ export const GET = permissionProtected(
         .select({
           roundId: judgeCriterias.judgeRoundId,
           totalCriteria: sql<number>`count(*)`.mapWith(Number),
-          totalMaxScore: sql<number>`coalesce(sum(${judgeCriterias.maxScore}), 0)`.mapWith(
-            Number,
-          ),
+          totalMaxScore:
+            sql<number>`coalesce(sum(${judgeCriterias.maxScore}), 0)`.mapWith(
+              Number,
+            ),
         })
         .from(judgeCriterias)
         .where(inArray(judgeCriterias.judgeRoundId, roundIds))
@@ -68,9 +71,10 @@ export const GET = permissionProtected(
         .select({
           assignmentId: judgeScores.roundAssignmentId,
           scoredCriteria: sql<number>`count(*)`.mapWith(Number),
-          totalRawScore: sql<number>`coalesce(sum(${judgeScores.rawScore}), 0)`.mapWith(
-            Number,
-          ),
+          totalRawScore:
+            sql<number>`coalesce(sum(${judgeScores.rawScore}), 0)`.mapWith(
+              Number,
+            ),
         })
         .from(judgeScores)
         .where(inArray(judgeScores.roundAssignmentId, assignmentIds))

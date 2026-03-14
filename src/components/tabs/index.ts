@@ -3,6 +3,7 @@ export { AttendanceTab } from "./Attendance";
 export { DashboardUsersTab } from "./dashboard-users/DashboardUsersTab";
 export { JudgeSetupTab } from "./JudgeSetupTab";
 export { MealsTab } from "./Meals";
+export { MentorSetupTab } from "./MentorSetupTab";
 export { ParticipantsTab } from "./ParticipantsTab";
 export { PaymentsTab } from "./PaymentsTab";
 export { ResultsTab } from "./Results";

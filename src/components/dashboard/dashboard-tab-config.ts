@@ -87,4 +87,9 @@ export const dashboardFeatureTabs: FeatureTabConfig[] = [
     label: "Judge Setup",
     permissions: ["roles:manage"],
   },
+  {
+    id: "mentor-setup",
+    label: "Mentor Setup",
+    permissions: ["roles:manage"],
+  },
 ];

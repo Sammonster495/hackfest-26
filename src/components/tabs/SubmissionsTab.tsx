@@ -217,7 +217,8 @@ export function SubmissionsTab() {
         };
       })
       .sort((a, b) => {
-        const byStatus = statusPriority[a.roundStatus] - statusPriority[b.roundStatus];
+        const byStatus =
+          statusPriority[a.roundStatus] - statusPriority[b.roundStatus];
         if (byStatus !== 0) return byStatus;
         return a.roundName.localeCompare(b.roundName);
       });
@@ -267,7 +268,9 @@ export function SubmissionsTab() {
                   <TableBody>
                     {group.items.map((item) => (
                       <TableRow key={item.assignmentId}>
-                        <TableCell className="font-medium">{item.teamName}</TableCell>
+                        <TableCell className="font-medium">
+                          {item.teamName}
+                        </TableCell>
                         <TableCell>{item.trackName ?? "-"}</TableCell>
                         <TableCell>{formatEnumLabel(item.teamStage)}</TableCell>
                         <TableCell>
@@ -281,7 +284,9 @@ export function SubmissionsTab() {
                               View PPT
                             </a>
                           ) : (
-                            <span className="text-muted-foreground">Not submitted</span>
+                            <span className="text-muted-foreground">
+                              Not submitted
+                            </span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -297,7 +302,9 @@ export function SubmissionsTab() {
                             onClick={() => openScoreDialog(item)}
                             disabled={item.roundStatus === "Completed"}
                           >
-                            {item.scoredCriteria > 0 ? "Edit Score" : "Enter Score"}
+                            {item.scoredCriteria > 0
+                              ? "Edit Score"
+                              : "Enter Score"}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -338,7 +345,9 @@ export function SubmissionsTab() {
               Loading criteria...
             </div>
           ) : !scoreDialogPayload ? (
-            <p className="text-sm text-muted-foreground">No score data available.</p>
+            <p className="text-sm text-muted-foreground">
+              No score data available.
+            </p>
           ) : (
             <div className="space-y-4">
               {scoreDialogPayload.roundStatus === "Completed" ? (
@@ -359,7 +368,9 @@ export function SubmissionsTab() {
                       className="grid grid-cols-1 gap-2 rounded-md border p-3 sm:grid-cols-5"
                     >
                       <div className="sm:col-span-3">
-                        <p className="text-sm font-medium">{criterion.criteriaName}</p>
+                        <p className="text-sm font-medium">
+                          {criterion.criteriaName}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           Max score: {criterion.maxScore}
                         </p>
@@ -374,7 +385,9 @@ export function SubmissionsTab() {
                           onChange={(e) =>
                             updateCriterionScore(criterion.id, e.target.value)
                           }
-                          disabled={scoreDialogPayload.roundStatus === "Completed"}
+                          disabled={
+                            scoreDialogPayload.roundStatus === "Completed"
+                          }
                         />
                       </div>
                     </div>

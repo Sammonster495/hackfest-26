@@ -6,8 +6,6 @@ import db from "~/db";
 import {
   judgeCriterias,
   judgeRoundAssignments,
-  judgeRounds,
-  judges,
   judgeScores,
 } from "~/db/schema";
 

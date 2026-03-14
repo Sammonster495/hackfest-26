@@ -6,9 +6,8 @@ import {
   dashboardUsers,
   judgeCriterias,
   judgeRoundAssignments,
-  judgeRounds,
-  judges,
   judgeScores,
+  judges,
 } from "~/db/schema";
 
 export const GET = adminProtected(async (req: NextRequest) => {
@@ -76,7 +75,9 @@ export const GET = adminProtected(async (req: NextRequest) => {
       .from(judgeCriterias)
       .where(eq(judgeCriterias.judgeRoundId, judgeRoundId));
 
-    const assignmentIds = assignments.map((assignment) => assignment.assignmentId);
+    const assignmentIds = assignments.map(
+      (assignment) => assignment.assignmentId,
+    );
 
     const scoreRows = await db
       .select({

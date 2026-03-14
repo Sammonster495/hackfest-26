@@ -1,11 +1,10 @@
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { adminProtected } from "~/auth/routes-wrapper";
 import db from "~/db";
 import {
   judgeCriterias,
   judgeRoundAssignments,
-  judgeRounds,
   judgeScores,
   teams,
 } from "~/db/schema";
@@ -34,9 +33,10 @@ export const GET = adminProtected(async (req: NextRequest) => {
     const criteriaTotals = await db
       .select({
         judgeRoundId: judgeCriterias.judgeRoundId,
-        totalMaxScore: sql<number>`coalesce(sum(${judgeCriterias.maxScore}), 0)`.mapWith(
-          Number,
-        ),
+        totalMaxScore:
+          sql<number>`coalesce(sum(${judgeCriterias.maxScore}), 0)`.mapWith(
+            Number,
+          ),
       })
       .from(judgeCriterias)
       .groupBy(judgeCriterias.judgeRoundId);
@@ -62,7 +62,9 @@ export const GET = adminProtected(async (req: NextRequest) => {
           : eq(judgeRoundAssignments.judgeRoundId, judgeRoundId),
       );
 
-    const assignmentIds = assignments.map((assignment) => assignment.assignmentId);
+    const assignmentIds = assignments.map(
+      (assignment) => assignment.assignmentId,
+    );
 
     const scoreRows =
       assignmentIds.length === 0
@@ -107,21 +109,22 @@ export const GET = adminProtected(async (req: NextRequest) => {
     >();
 
     for (const assignment of assignments) {
-      const existing =
-        aggregateByTeamId.get(assignment.teamId) ??
-        {
-          teamId: assignment.teamId,
-          teamName: assignment.teamName,
-          totalRawScore: 0,
-          maxPossibleScore: 0,
-          judgeIds: new Set<string>(),
-          scoreEntries: 0,
-        };
+      const existing = aggregateByTeamId.get(assignment.teamId) ?? {
+        teamId: assignment.teamId,
+        teamName: assignment.teamName,
+        totalRawScore: 0,
+        maxPossibleScore: 0,
+        judgeIds: new Set<string>(),
+        scoreEntries: 0,
+      };
 
-      existing.totalRawScore += scoreSumByAssignmentId.get(assignment.assignmentId) ?? 0;
-      existing.maxPossibleScore += maxScoreByRoundId.get(assignment.roundId) ?? 0;
+      existing.totalRawScore +=
+        scoreSumByAssignmentId.get(assignment.assignmentId) ?? 0;
+      existing.maxPossibleScore +=
+        maxScoreByRoundId.get(assignment.roundId) ?? 0;
       existing.judgeIds.add(assignment.judgeId);
-      existing.scoreEntries += scoreEntriesByAssignmentId.get(assignment.assignmentId) ?? 0;
+      existing.scoreEntries +=
+        scoreEntriesByAssignmentId.get(assignment.assignmentId) ?? 0;
 
       aggregateByTeamId.set(assignment.teamId, existing);
     }
@@ -131,7 +134,9 @@ export const GET = adminProtected(async (req: NextRequest) => {
         const judgeCount = row.judgeIds.size;
         const percentage =
           row.maxPossibleScore > 0
-            ? Number(((row.totalRawScore / row.maxPossibleScore) * 100).toFixed(2))
+            ? Number(
+                ((row.totalRawScore / row.maxPossibleScore) * 100).toFixed(2),
+              )
             : 0;
 
         return {

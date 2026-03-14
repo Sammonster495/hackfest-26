@@ -26,8 +26,8 @@ export default function NotFound() {
         className="hidden md:block absolute inset-0 w-full h-full object-cover object-center opacity-90 transition-opacity duration-700"
       />
       {/* Desktop gradient: heavy on the right so right-side text is readable */}
-      <div className="hidden md:block absolute inset-0 bg-gradient-to-l from-black/90 via-black/50 to-black/10 pointer-events-none" />
-      <div className="hidden md:block absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+      <div className="hidden md:block absolute inset-0 bg-linear-to-l from-black/90 via-black/50 to-black/10 pointer-events-none" />
+      <div className="hidden md:block absolute bottom-0 left-0 right-0 h-1/3 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
 
       {/* ── MOBILE background (below md) ── */}
       {/* biome-ignore lint/performance/noImgElement: static 404 page */}
@@ -38,8 +38,8 @@ export default function NotFound() {
         className="block md:hidden absolute inset-0 w-full h-full object-cover object-bottom opacity-90 transition-opacity duration-700"
       />
       {/* Mobile gradient: heavy at the top so top-text is readable, fades out toward the submarine */}
-      <div className="block md:hidden absolute inset-0 bg-gradient-to-b from-black/90 via-black/50 to-black/10 pointer-events-none" />
-      <div className="block md:hidden absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+      <div className="block md:hidden absolute inset-0 bg-linear-to-b from-black/90 via-black/50 to-black/10 pointer-events-none" />
+      <div className="block md:hidden absolute bottom-0 left-0 right-0 h-1/4 bg-linear-to-t from-black/40 to-transparent pointer-events-none" />
 
       {/* ── DESKTOP content — right-aligned, vertically centered ── */}
       <div className="hidden md:flex relative z-10 min-h-screen items-center justify-end px-8 md:px-20">
@@ -51,7 +51,7 @@ export default function NotFound() {
           <h1 className="text-6xl md:text-8xl font-pirate font-black tracking-wider text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] leading-tight">
             Lost at
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-cyan-500">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-300 to-cyan-500">
               Sea
             </span>
           </h1>
@@ -83,7 +83,7 @@ export default function NotFound() {
           <h1 className="text-6xl font-pirate font-black tracking-wider text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] leading-tight">
             Lost at
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-cyan-500">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-300 to-cyan-500">
               Sea
             </span>
           </h1>

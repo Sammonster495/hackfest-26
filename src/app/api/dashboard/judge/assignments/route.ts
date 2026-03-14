@@ -7,7 +7,6 @@ import {
   dashboardUserRoles,
   dashboardUsers,
   judgeRoundAssignments,
-  judgeRounds,
   judges,
   roles,
   teams,
@@ -147,7 +146,10 @@ export const POST = adminProtected(async (req: NextRequest) => {
     }
 
     const existingAssignments = await db
-      .select({ id: judgeRoundAssignments.id, teamId: judgeRoundAssignments.teamId })
+      .select({
+        id: judgeRoundAssignments.id,
+        teamId: judgeRoundAssignments.teamId,
+      })
       .from(judgeRoundAssignments)
       .where(
         and(

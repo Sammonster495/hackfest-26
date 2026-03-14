@@ -11,6 +11,7 @@ import {
   DashboardUsersTab,
   JudgeSetupTab,
   MealsTab,
+  MentorSetupTab,
   ParticipantsTab,
   PaymentsTab,
   ResultsTab,
@@ -50,6 +51,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
     { id: "settings", content: <SettingsTab /> },
     { id: "events", content: <ManageEventsTab session={session} /> },
     { id: "judge-setup", content: <JudgeSetupTab /> },
+    { id: "mentor-setup", content: <MentorSetupTab /> },
   ];
 
   const checkTabAccess = (config: (typeof dashboardFeatureTabs)[0]) => {

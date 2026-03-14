@@ -5,7 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
   Dialog,
@@ -22,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -30,7 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { Switch } from "~/components/ui/switch";
 
 type JudgeRound = {
   id: string;
@@ -103,7 +108,9 @@ export function JudgeSetupTab() {
   const [leaderboardRows, setLeaderboardRows] = useState<LeaderboardRow[]>([]);
   const [selectedLeaderboardTeam, setSelectedLeaderboardTeam] =
     useState<LeaderboardRow | null>(null);
-  const [judgeScoreDetails, setJudgeScoreDetails] = useState<JudgeScoreDetail[]>([]);
+  const [judgeScoreDetails, setJudgeScoreDetails] = useState<
+    JudgeScoreDetail[]
+  >([]);
   const [maxPerJudge, setMaxPerJudge] = useState(0);
   const [selectedRoundId, setSelectedRoundId] = useState("");
   const [showCumulativeLeaderboard, setShowCumulativeLeaderboard] =
@@ -161,7 +168,9 @@ export function JudgeSetupTab() {
     }
 
     setIsLoadingAssignments(true);
-    const res = await fetch(`/api/dashboard/judge/assignments?${params.toString()}`);
+    const res = await fetch(
+      `/api/dashboard/judge/assignments?${params.toString()}`,
+    );
     setIsLoadingAssignments(false);
 
     if (!res.ok) throw new Error("Failed to load judge assignments");
@@ -193,7 +202,9 @@ export function JudgeSetupTab() {
       judgeRoundId: roundId,
       cumulative: cumulative ? "true" : "false",
     });
-    const res = await fetch(`/api/dashboard/judge/leaderboard?${params.toString()}`);
+    const res = await fetch(
+      `/api/dashboard/judge/leaderboard?${params.toString()}`,
+    );
     setIsLoadingLeaderboard(false);
 
     if (!res.ok) {
@@ -258,7 +269,10 @@ export function JudgeSetupTab() {
   useEffect(() => {
     const run = async () => {
       try {
-        await fetchAssignments(selectedRoundId, selectedJudgeUserId || undefined);
+        await fetchAssignments(
+          selectedRoundId,
+          selectedJudgeUserId || undefined,
+        );
       } catch (error) {
         toast.error(
           error instanceof Error
@@ -290,7 +304,9 @@ export function JudgeSetupTab() {
       }
 
       const created = (await res.json()) as JudgeRound;
-      setRounds((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setRounds((prev) =>
+        [...prev, created].sort((a, b) => a.name.localeCompare(b.name)),
+      );
       setSelectedRoundId(created.id);
       setNewRoundName("");
       toast.success("Judge round created");
@@ -354,7 +370,9 @@ export function JudgeSetupTab() {
     }
   };
 
-  const handleSetRoundStatus = async (status: "Draft" | "Active" | "Completed") => {
+  const handleSetRoundStatus = async (
+    status: "Draft" | "Active" | "Completed",
+  ) => {
     if (!selectedRound) {
       toast.error("Select a judge round first");
       return;
@@ -380,7 +398,9 @@ export function JudgeSetupTab() {
       toast.success(`Round status changed to ${updated.status}`);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update round status",
+        error instanceof Error
+          ? error.message
+          : "Failed to update round status",
       );
     } finally {
       setIsUpdatingRoundStatus(false);
@@ -507,7 +527,9 @@ export function JudgeSetupTab() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Available rounds</p>
+                <p className="text-sm text-muted-foreground">
+                  Available rounds
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {rounds.length === 0 ? (
                     <span className="text-sm text-muted-foreground">
@@ -536,7 +558,10 @@ export function JudgeSetupTab() {
 
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Judge round</p>
-                <Select value={selectedRoundId} onValueChange={setSelectedRoundId}>
+                <Select
+                  value={selectedRoundId}
+                  onValueChange={setSelectedRoundId}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a round" />
                   </SelectTrigger>
@@ -566,7 +591,10 @@ export function JudgeSetupTab() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleSetRoundStatus("Draft")}
-                      disabled={isUpdatingRoundStatus || selectedRound.status === "Draft"}
+                      disabled={
+                        isUpdatingRoundStatus ||
+                        selectedRound.status === "Draft"
+                      }
                     >
                       Draft
                     </Button>
@@ -574,7 +602,10 @@ export function JudgeSetupTab() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleSetRoundStatus("Active")}
-                      disabled={isUpdatingRoundStatus || selectedRound.status === "Active"}
+                      disabled={
+                        isUpdatingRoundStatus ||
+                        selectedRound.status === "Active"
+                      }
                     >
                       Active
                     </Button>
@@ -583,7 +614,8 @@ export function JudgeSetupTab() {
                       variant="outline"
                       onClick={() => handleSetRoundStatus("Completed")}
                       disabled={
-                        isUpdatingRoundStatus || selectedRound.status === "Completed"
+                        isUpdatingRoundStatus ||
+                        selectedRound.status === "Completed"
                       }
                     >
                       Completed
@@ -614,14 +646,19 @@ export function JudgeSetupTab() {
 
               <Button
                 onClick={handleCreateCriteria}
-                disabled={isCreatingCriteria || !selectedRoundId || !canEditSelectedRound}
+                disabled={
+                  isCreatingCriteria ||
+                  !selectedRoundId ||
+                  !canEditSelectedRound
+                }
               >
                 {isCreatingCriteria ? "Saving..." : "Add Criteria"}
               </Button>
 
               {!canEditSelectedRound && selectedRound ? (
                 <p className="text-xs text-amber-600">
-                  Round is locked. Switch it back to Draft to add or edit criteria.
+                  Round is locked. Switch it back to Draft to add or edit
+                  criteria.
                 </p>
               ) : null}
 
@@ -640,7 +677,9 @@ export function JudgeSetupTab() {
                         key={item.id}
                         className="flex items-center justify-between border-b px-3 py-2 last:border-b-0"
                       >
-                        <span className="text-sm font-medium">{item.criteriaName}</span>
+                        <span className="text-sm font-medium">
+                          {item.criteriaName}
+                        </span>
                         <Badge variant="outline">Max: {item.maxScore}</Badge>
                       </div>
                     ))}
@@ -661,7 +700,10 @@ export function JudgeSetupTab() {
 
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Judge user</p>
-                <Select value={selectedJudgeUserId} onValueChange={setSelectedJudgeUserId}>
+                <Select
+                  value={selectedJudgeUserId}
+                  onValueChange={setSelectedJudgeUserId}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select judge user" />
                   </SelectTrigger>
@@ -683,15 +725,17 @@ export function JudgeSetupTab() {
               ) : (
                 <div className="max-h-56 overflow-y-auto rounded-md border p-3">
                   {allTeams.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No teams available.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No teams available.
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {allTeams.map((team) => {
                         const checked = selectedTeamIds.includes(team.id);
                         return (
-                          <label
+                          <div
                             key={team.id}
-                            className="flex cursor-pointer items-center gap-2 text-sm"
+                            className="flex items-center gap-2 text-sm"
                           >
                             <Checkbox
                               checked={checked}
@@ -701,7 +745,7 @@ export function JudgeSetupTab() {
                               disabled={!canManageAssignments}
                             />
                             <span>{team.name}</span>
-                          </label>
+                          </div>
                         );
                       })}
                     </div>
@@ -756,7 +800,9 @@ export function JudgeSetupTab() {
                 </div>
                 <div className="flex items-center gap-2">
                   {isLoadingLeaderboard ? (
-                    <span className="text-xs text-muted-foreground">Updating...</span>
+                    <span className="text-xs text-muted-foreground">
+                      Updating...
+                    </span>
                   ) : null}
                   <Switch
                     checked={showCumulativeLeaderboard}
@@ -800,7 +846,9 @@ export function JudgeSetupTab() {
                       {leaderboardRows.map((row) => (
                         <TableRow key={row.teamId}>
                           <TableCell>{row.rank}</TableCell>
-                          <TableCell className="font-medium">{row.teamName}</TableCell>
+                          <TableCell className="font-medium">
+                            {row.teamName}
+                          </TableCell>
                           <TableCell>{row.totalRawScore}</TableCell>
                           <TableCell>{row.maxPossibleScore}</TableCell>
                           <TableCell>{row.percentage}%</TableCell>
@@ -832,10 +880,13 @@ export function JudgeSetupTab() {
           <DialogHeader>
             <DialogTitle>
               Judge Score Breakdown
-              {selectedLeaderboardTeam ? ` - ${selectedLeaderboardTeam.teamName}` : ""}
+              {selectedLeaderboardTeam
+                ? ` - ${selectedLeaderboardTeam.teamName}`
+                : ""}
             </DialogTitle>
             <DialogDescription>
-              Detailed criteria-wise score given by each judge for the selected team.
+              Detailed criteria-wise score given by each judge for the selected
+              team.
             </DialogDescription>
           </DialogHeader>
 
@@ -851,10 +902,15 @@ export function JudgeSetupTab() {
           ) : (
             <div className="space-y-4">
               {judgeScoreDetails.map((judgeDetail) => (
-                <div key={judgeDetail.assignmentId} className="rounded-md border">
+                <div
+                  key={judgeDetail.assignmentId}
+                  className="rounded-md border"
+                >
                   <div className="flex items-center justify-between border-b px-4 py-3">
                     <div>
-                      <p className="text-sm font-semibold">{judgeDetail.judgeName}</p>
+                      <p className="text-sm font-semibold">
+                        {judgeDetail.judgeName}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         @{judgeDetail.judgeUsername}
                       </p>
@@ -875,7 +931,9 @@ export function JudgeSetupTab() {
                       </TableHeader>
                       <TableBody>
                         {judgeDetail.criteriaScores.map((criterion) => (
-                          <TableRow key={`${judgeDetail.assignmentId}-${criterion.criteriaId}`}>
+                          <TableRow
+                            key={`${judgeDetail.assignmentId}-${criterion.criteriaId}`}
+                          >
                             <TableCell>{criterion.criteriaName}</TableCell>
                             <TableCell className="text-right">
                               {criterion.rawScore}

@@ -1,9 +1,9 @@
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { adminProtected } from "~/auth/routes-wrapper";
 import db from "~/db";
-import { judgeCriterias, judgeRounds } from "~/db/schema";
+import { judgeCriterias } from "~/db/schema";
 
 const createJudgeCriteriaSchema = z.object({
   judgeRoundId: z.string().min(1, "Judge round is required"),
