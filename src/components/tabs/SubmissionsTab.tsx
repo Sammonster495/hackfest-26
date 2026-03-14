@@ -15,9 +15,13 @@ import type { PdfWindow, SubmissionItem } from "./submissions/types";
 export function SubmissionsTab() {
   const permissions = useDashboardPermissions();
   const dashboardUser = useDashboardUser();
-
   const isEvaluator = useMemo(
-    () => dashboardUser.roles.some((role) => role.name === "EVALUATOR"),
+    () =>
+      dashboardUser.roles.some((role) =>
+        role.permissions.some(
+          (permission) => permission.key === "submission:score",
+        ),
+      ),
     [dashboardUser.roles],
   );
 

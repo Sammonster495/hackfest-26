@@ -29,5 +29,13 @@ export const GET = adminProtected(async (request: Request) => {
   //   type,
   // });
 
-  return NextResponse.json("");
+  return NextResponse.json({
+    payments: [],
+    pagination: {
+      page: 1,
+      limit: 1,
+      total: 0,
+      totalPages: Math.ceil(0 / 1),
+    },
+  });
 });

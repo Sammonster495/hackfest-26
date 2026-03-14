@@ -22,7 +22,6 @@ export const POST = permissionProtected(
         teamId: parsed.teamId,
         score: parsed.score,
         round: parsed.round,
-        isEvaluator: user.roles.some((role) => role.name === "EVALUATOR"),
       });
 
       return NextResponse.json(result);

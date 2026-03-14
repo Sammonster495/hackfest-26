@@ -15,13 +15,21 @@ import {
   ideaRounds,
   ideaTeamEvaluations,
 } from "~/db/schema/evaluator";
-import { dashboardUsers, ideaSubmission, teams, tracks } from "~/db/schema";
+import {
+  ideaSubmission,
+  permissions,
+  rolePermissions,
+  roles,
+  teams,
+  tracks,
+} from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
 
 export type SubmissionRound = "ROUND_1" | "ROUND_2";
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
+const EVALUATOR_ACCESS_PERMISSION_KEY = "submission:score";
 
 function parseOffsetCursor(cursor?: string) {
   if (!cursor) return 0;
@@ -227,51 +235,111 @@ export async function listLeaderboard({
   };
 }
 
-export async function listEvaluatorRoleCandidates() {
-  const evaluatorRole = await db.query.roles.findFirst({
-    where: (table, { eq }) => eq(table.name, "EVALUATOR"),
-    columns: { id: true },
+export async function listEvaluatorAccessRoles() {
+  const evaluatorPermission = await db.query.permissions.findFirst({
+    where: (table, { eq }) => eq(table.key, EVALUATOR_ACCESS_PERMISSION_KEY),
+    columns: { id: true, key: true },
   });
 
-  if (!evaluatorRole) {
-    throw new AppError("EVALUATOR role does not exist", 400, {
-      title: "Evaluator role missing",
+  if (!evaluatorPermission) {
+    throw new AppError("submission:score permission does not exist", 400, {
+      title: "Evaluator permission missing",
       description:
-        "Create the EVALUATOR role first in role management before assigning evaluators.",
+        "Create the submission:score permission before configuring evaluator access.",
     });
   }
 
-  const users = await db
+  const roleRows = await db
     .select({
-      id: dashboardUsers.id,
-      name: dashboardUsers.name,
-      username: dashboardUsers.username,
-      email: dashboardUsers.email,
-      isActive: dashboardUsers.isActive,
-      hasEvaluatorRole:
-        sql<boolean>`EXISTS (SELECT 1 FROM dashboard_user_role dur WHERE dur.dashboard_user_id = ${dashboardUsers.id} AND dur.role_id = ${evaluatorRole.id} AND dur.is_active = true)`.mapWith(
+      id: roles.id,
+      name: roles.name,
+      description: roles.description,
+      isActive: roles.isActive,
+      hasEvaluatorAccess:
+        sql<boolean>`EXISTS (SELECT 1 FROM role_permission rp WHERE rp.role_id = ${roles.id} AND rp.permission_id = ${evaluatorPermission.id})`.mapWith(
           Boolean,
         ),
     })
-    .from(dashboardUsers)
-    .orderBy(asc(dashboardUsers.name));
+    .from(roles)
+    .orderBy(asc(roles.name));
 
   return {
-    evaluatorRoleId: evaluatorRole.id,
-    users,
+    evaluatorPermissionKey: evaluatorPermission.key,
+    roles: roleRows,
   };
 }
 
-export async function ensureRoundForEvaluation(round: SubmissionRound) {
+export async function setRoleEvaluatorAccess({
+  roleId,
+  enabled,
+}: {
+  roleId: string;
+  enabled: boolean;
+}) {
+  const evaluatorPermission = await db.query.permissions.findFirst({
+    where: (table, { eq }) => eq(table.key, EVALUATOR_ACCESS_PERMISSION_KEY),
+    columns: { id: true },
+  });
+
+  if (!evaluatorPermission) {
+    throw new AppError("submission:score permission does not exist", 400, {
+      title: "Evaluator permission missing",
+      description:
+        "Create the submission:score permission before configuring evaluator access.",
+    });
+  }
+
   const role = await db.query.roles.findFirst({
-    where: (table, { eq }) => eq(table.name, "EVALUATOR"),
+    where: (table, { eq }) => eq(table.id, roleId),
     columns: { id: true },
   });
 
   if (!role) {
-    throw new AppError("EVALUATOR role does not exist", 400, {
-      title: "Evaluator role missing",
-      description: "Create EVALUATOR role before scoring submissions.",
+    throw new AppError("Role not found", 404, {
+      title: "Role missing",
+      description: "The selected role no longer exists.",
+    });
+  }
+
+  if (enabled) {
+    await db
+      .insert(rolePermissions)
+      .values({ roleId, permissionId: evaluatorPermission.id })
+      .onConflictDoNothing();
+  } else {
+    await db
+      .delete(rolePermissions)
+      .where(
+        and(
+          eq(rolePermissions.roleId, roleId),
+          eq(rolePermissions.permissionId, evaluatorPermission.id),
+        ),
+      );
+  }
+
+  return { roleId, enabled };
+}
+
+export async function ensureRoundForEvaluation(round: SubmissionRound) {
+  const [roleWithEvaluatorAccess] = await db
+    .select({ id: roles.id })
+    .from(roles)
+    .innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
+    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+    .where(
+      and(
+        eq(permissions.key, EVALUATOR_ACCESS_PERMISSION_KEY),
+        eq(roles.isActive, true),
+      ),
+    )
+    .orderBy(asc(roles.name))
+    .limit(1);
+
+  if (!roleWithEvaluatorAccess) {
+    throw new AppError("No evaluator-enabled role configured", 400, {
+      title: "Evaluator access missing",
+      description:
+        "Enable evaluator access for at least one role in Submissions settings.",
     });
   }
 
@@ -291,7 +359,7 @@ export async function ensureRoundForEvaluation(round: SubmissionRound) {
     .insert(ideaRounds)
     .values({
       name: roundName,
-      roleId: role.id,
+      roleId: roleWithEvaluatorAccess.id,
       targetStage: round === "ROUND_2" ? "SEMI_SELECTED" : "NOT_SELECTED",
       status: "Active",
     })

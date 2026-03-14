@@ -1,29 +1,58 @@
 import { and, eq } from "drizzle-orm";
 import db from "~/db";
 import { ideaRounds, ideaTeamEvaluations } from "~/db/schema/evaluator";
+import {
+  dashboardUserRoles,
+  permissions,
+  rolePermissions,
+  roles,
+} from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
 import {
   ensureRoundForEvaluation,
   type SubmissionRound,
 } from "./submission-services";
 
+const EVALUATOR_ACCESS_PERMISSION_KEY = "submission:score";
+
+async function hasEvaluatorAccessPermission(userId: string) {
+  const [match] = await db
+    .select({ permissionId: permissions.id })
+    .from(dashboardUserRoles)
+    .innerJoin(roles, eq(dashboardUserRoles.roleId, roles.id))
+    .innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
+    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+    .where(
+      and(
+        eq(dashboardUserRoles.dashboardUserId, userId),
+        eq(dashboardUserRoles.isActive, true),
+        eq(roles.isActive, true),
+        eq(permissions.key, EVALUATOR_ACCESS_PERMISSION_KEY),
+      ),
+    )
+    .limit(1);
+
+  return Boolean(match);
+}
+
 export async function submitEvaluationScore({
   evaluatorId,
   teamId,
   score,
   round,
-  isEvaluator,
 }: {
   evaluatorId: string;
   teamId: string;
   score: number;
   round: SubmissionRound;
-  isEvaluator: boolean;
 }) {
-  if (!isEvaluator) {
-    throw new AppError("Only EVALUATOR users can submit scores", 403, {
+  const canScore = await hasEvaluatorAccessPermission(evaluatorId);
+
+  if (!canScore) {
+    throw new AppError("You do not have evaluator access", 403, {
       title: "Access denied",
-      description: "This action requires the EVALUATOR role.",
+      description:
+        "Your current roles do not include evaluator access for submissions.",
     });
   }
 
