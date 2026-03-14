@@ -15,6 +15,7 @@ import {
 
 const EVALUATOR_ACCESS_PERMISSION_KEY = "submission:score";
 
+//this can be removed since permissions are checked using middleware
 async function hasEvaluatorAccessPermission(userId: string) {
   const [match] = await db
     .select({ permissionId: permissions.id })
@@ -108,7 +109,7 @@ export async function submitEvaluationScore({
     mode = "created";
   }
 
-  // Recompute Z-score normalized scores for the entire round so rankings stay fair
+  //Z-score normalized scores for the entire round so rankings stay fair
   await recomputeNormalizedScores(roundRecord.id);
 
   return { mode };
@@ -149,14 +150,11 @@ export async function getEvaluatorScore({
   return evaluation[0]?.score ?? null;
 }
 
-// ---------------------------------------------------------------------------
-// Z-score normalization
-// ---------------------------------------------------------------------------
-
+//z-score computation
 function computeZScores(
   evaluations: { id: string; evaluatorId: string; rawTotalScore: number }[],
 ): { id: string; normalizedTotalScore: number }[] {
-  // Group raw scores by evaluator
+  //group raw scores by evaluator
   const byEvaluator = new Map<string, number[]>();
   for (const e of evaluations) {
     const list = byEvaluator.get(e.evaluatorId) ?? [];
