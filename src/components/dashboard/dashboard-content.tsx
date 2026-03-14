@@ -9,6 +9,7 @@ import {
   AllocationsTab,
   AttendanceTab,
   DashboardUsersTab,
+  JudgeSetupTab,
   MealsTab,
   ParticipantsTab,
   PaymentsTab,
@@ -48,6 +49,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
     { id: "users", content: <DashboardUsersTab /> },
     { id: "settings", content: <SettingsTab /> },
     { id: "events", content: <ManageEventsTab session={session} /> },
+    { id: "judge-setup", content: <JudgeSetupTab /> },
   ];
 
   const checkTabAccess = (config: (typeof dashboardFeatureTabs)[0]) => {

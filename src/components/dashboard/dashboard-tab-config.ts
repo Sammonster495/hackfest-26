@@ -33,7 +33,7 @@ export const dashboardFeatureTabs: FeatureTabConfig[] = [
   },
   {
     id: "submissions",
-    label: "Submissions",
+    label: "Submission",
     permissions: ["submission:score"],
   },
   {
@@ -81,5 +81,10 @@ export const dashboardFeatureTabs: FeatureTabConfig[] = [
     id: "events",
     label: "Events",
     permissions: ["event:manage"],
+  },
+  {
+    id: "judge-setup",
+    label: "Judge Setup",
+    permissions: ["roles:manage"],
   },
 ];
