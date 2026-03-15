@@ -85,12 +85,14 @@ export async function listSubmissionsForRound({
       pdfUrl: ideaSubmission.pptUrl,
       createdAt: ideaSubmission.createdAt,
       teamName: teams.name,
+      state: participants.state,
       teamStage: teams.teamStage,
       trackId: tracks.id,
       trackName: tracks.name,
     })
     .from(ideaSubmission)
     .innerJoin(teams, eq(ideaSubmission.teamId, teams.id))
+    .leftJoin(participants, eq(teams.leaderId, participants.id))
     .innerJoin(tracks, eq(ideaSubmission.trackId, tracks.id))
     .where(whereClause)
     .orderBy(

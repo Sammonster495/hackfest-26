@@ -270,10 +270,11 @@ export function RoundSubmissionsPanel({
           <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[34%]">Team</TableHead>
-                <TableHead className="w-[24%]">Track</TableHead>
-                <TableHead className="w-[14%] text-center">PDF</TableHead>
-                <TableHead className="w-[28%]">Score</TableHead>
+                <TableHead className="w-[30%]">Team</TableHead>
+                <TableHead className="w-[20%]">Track</TableHead>
+                <TableHead className="w-[16%]">State</TableHead>
+                <TableHead className="w-[12%] text-center">PDF</TableHead>
+                <TableHead className="w-[22%]">Score</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -284,6 +285,9 @@ export function RoundSubmissionsPanel({
                   </TableCell>
                   <TableCell className="py-4 text-muted-foreground">
                     {submission.trackName}
+                  </TableCell>
+                  <TableCell className="py-4 text-muted-foreground">
+                    {submission.state ?? "-"}
                   </TableCell>
                   <TableCell className="py-4 text-center">
                     <Button

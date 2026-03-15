@@ -4,6 +4,7 @@ export type SubmissionItem = {
   id: string;
   teamId: string;
   teamName: string;
+  state: string | null;
   trackId: string;
   trackName: string;
   pdfUrl: string;
