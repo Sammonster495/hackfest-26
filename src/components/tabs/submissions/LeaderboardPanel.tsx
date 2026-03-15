@@ -3,7 +3,9 @@
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useDashboardPermissions } from "~/components/dashboard/permissions-context";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
 import {
   Select,
@@ -56,6 +58,7 @@ function buildLeaderboardUrl({
 }
 
 export function LeaderboardPanel() {
+  const permissions = useDashboardPermissions();
   const [tracks, setTracks] = useState<TrackItem[]>([]);
   const [rows, setRows] = useState<LeaderboardItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -67,6 +70,9 @@ export function LeaderboardPanel() {
     "average",
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [isMovingTeams, setIsMovingTeams] = useState(false);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,6 +108,12 @@ export function LeaderboardPanel() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setSelectedTeamIds((prev) =>
+      prev.filter((teamId) => rows.some((row) => row.teamId === teamId)),
+    );
+  }, [rows]);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,7 +156,64 @@ export function LeaderboardPanel() {
     return () => {
       cancelled = true;
     };
-  }, [offset, search, trackId, round, scoreType]);
+  }, [offset, search, trackId, round, scoreType, refreshKey]);
+
+  const allVisibleSelected =
+    rows.length > 0 &&
+    rows.every((row) => selectedTeamIds.includes(row.teamId));
+
+  const toggleRowSelection = (teamId: string, checked: boolean) => {
+    setSelectedTeamIds((prev) => {
+      if (checked) {
+        return prev.includes(teamId) ? prev : [...prev, teamId];
+      }
+      return prev.filter((id) => id !== teamId);
+    });
+  };
+
+  const toggleSelectAllVisible = (checked: boolean) => {
+    if (!checked) {
+      setSelectedTeamIds([]);
+      return;
+    }
+    setSelectedTeamIds(rows.map((row) => row.teamId));
+  };
+
+  const handleMoveToRound2 = async () => {
+    if (selectedTeamIds.length === 0) return;
+
+    setIsMovingTeams(true);
+    try {
+      const res = await fetch("/api/dashboard/leaderboard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ teamIds: selectedTeamIds }),
+      });
+
+      const data = (await res.json()) as {
+        movedCount?: number;
+        message?: string;
+      };
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to move teams to Round 2");
+      }
+
+      toast.success(`Moved ${data.movedCount ?? 0} team(s) to Round 2`);
+      setSelectedTeamIds([]);
+      setRefreshKey((prev) => prev + 1);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to move teams to Round 2",
+      );
+    } finally {
+      setIsMovingTeams(false);
+    }
+  };
 
   const page = Math.floor(offset / PAGE_SIZE) + 1;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -221,14 +290,37 @@ export function LeaderboardPanel() {
             </SelectItem>
           </SelectContent>
         </Select>
+
+        {permissions.isAdmin && (
+          <Button
+            onClick={handleMoveToRound2}
+            disabled={
+              selectedTeamIds.length === 0 || isMovingTeams || isLoading
+            }
+          >
+            {isMovingTeams ? "Moving..." : "Move Selected To Round 2"}
+          </Button>
+        )}
       </div>
 
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              {permissions.isAdmin && (
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allVisibleSelected}
+                    onCheckedChange={(checked) =>
+                      toggleSelectAllVisible(checked === true)
+                    }
+                    aria-label="Select all teams"
+                  />
+                </TableHead>
+              )}
               <TableHead>Rank</TableHead>
               <TableHead>Team</TableHead>
+              <TableHead>College/University</TableHead>
               <TableHead>Track</TableHead>
               <TableHead>Score</TableHead>
             </TableRow>
@@ -236,8 +328,20 @@ export function LeaderboardPanel() {
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.teamId}>
+                {permissions.isAdmin && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedTeamIds.includes(row.teamId)}
+                      onCheckedChange={(checked) =>
+                        toggleRowSelection(row.teamId, checked === true)
+                      }
+                      aria-label={`Select ${row.teamName}`}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>{row.rank}</TableCell>
                 <TableCell>{row.teamName}</TableCell>
+                <TableCell>{row.collegeName ?? "-"}</TableCell>
                 <TableCell>{row.trackName}</TableCell>
                 <TableCell>
                   {scoreType === "normalized"
@@ -250,7 +354,7 @@ export function LeaderboardPanel() {
             {!isLoading && rows.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={permissions.isAdmin ? 6 : 5}
                   className="text-center text-muted-foreground py-8"
                 >
                   No leaderboard entries found for the selected filters.

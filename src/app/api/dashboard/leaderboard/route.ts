@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { permissionProtected } from "~/auth/routes-wrapper";
-import { listLeaderboard } from "~/db/services/submission-services";
+import { adminProtected, permissionProtected } from "~/auth/routes-wrapper";
+import {
+  listLeaderboard,
+  moveLeaderboardTeamsToRound2,
+} from "~/db/services/submission-services";
 import { errorResponse } from "~/lib/response/error";
 
 const querySchema = z.object({
@@ -11,6 +14,10 @@ const querySchema = z.object({
   search: z.string().optional(),
   round: z.enum(["ROUND_1", "ROUND_2", "all"]).optional(),
   scoreType: z.enum(["average", "sum", "normalized"]).default("average"),
+});
+
+const moveTeamsSchema = z.object({
+  teamIds: z.array(z.string().min(1)).min(1),
 });
 
 export const GET = permissionProtected(
@@ -34,3 +41,18 @@ export const GET = permissionProtected(
     }
   },
 );
+
+export const POST = adminProtected(async (request) => {
+  try {
+    const body = await request.json();
+    const parsed = moveTeamsSchema.parse(body);
+    const result = await moveLeaderboardTeamsToRound2(parsed.teamIds);
+
+    return NextResponse.json({
+      message: "Teams moved to Round 2",
+      movedCount: result.movedCount,
+    });
+  } catch (error) {
+    return errorResponse(error);
+  }
+});

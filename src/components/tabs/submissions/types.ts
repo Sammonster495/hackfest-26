@@ -22,6 +22,7 @@ export type LeaderboardItem = {
   rank: number;
   teamId: string;
   teamName: string;
+  collegeName: string | null;
   trackId: string;
   trackName: string;
   score: number;

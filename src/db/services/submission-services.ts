@@ -11,7 +11,9 @@ import {
 } from "drizzle-orm";
 import db from "~/db";
 import {
+  colleges,
   ideaSubmission,
+  participants,
   permissions,
   rolePermissions,
   roles,
@@ -202,16 +204,19 @@ export async function listLeaderboard({
     .select({
       teamId: teams.id,
       teamName: teams.name,
+      collegeName: colleges.name,
       trackId: tracks.id,
       trackName: tracks.name,
       score: scoreExpression,
     })
     .from(ideaSubmission)
     .innerJoin(teams, eq(ideaSubmission.teamId, teams.id))
+    .leftJoin(participants, eq(teams.leaderId, participants.id))
+    .leftJoin(colleges, eq(participants.collegeId, colleges.id))
     .innerJoin(tracks, eq(ideaSubmission.trackId, tracks.id))
     .leftJoin(ideaTeamEvaluations, eq(ideaTeamEvaluations.teamId, teams.id))
     .where(whereClause)
-    .groupBy(teams.id, teams.name, tracks.id, tracks.name)
+    .groupBy(teams.id, teams.name, colleges.name, tracks.id, tracks.name)
     .orderBy(desc(scoreExpression), asc(teams.name))
     .offset(offset)
     .limit(safeLimit + 1);
@@ -235,6 +240,39 @@ export async function listLeaderboard({
     nextCursor,
     totalCount,
   };
+}
+
+export async function moveLeaderboardTeamsToRound2(teamIds: string[]) {
+  const uniqueTeamIds = Array.from(new Set(teamIds.filter(Boolean)));
+
+  if (uniqueTeamIds.length === 0) {
+    return { movedCount: 0 };
+  }
+
+  const eligibleRows = await db
+    .select({ id: teams.id })
+    .from(teams)
+    .innerJoin(ideaSubmission, eq(ideaSubmission.teamId, teams.id))
+    .where(
+      and(
+        inArray(teams.id, uniqueTeamIds),
+        eq(teams.teamStage, "NOT_SELECTED"),
+      ),
+    );
+
+  const eligibleTeamIds = eligibleRows.map((row) => row.id);
+
+  if (eligibleTeamIds.length === 0) {
+    return { movedCount: 0 };
+  }
+
+  const movedRows = await db
+    .update(teams)
+    .set({ teamStage: "SEMI_SELECTED" })
+    .where(inArray(teams.id, eligibleTeamIds))
+    .returning({ id: teams.id });
+
+  return { movedCount: movedRows.length };
 }
 
 export async function listEvaluatorAccessRoles() {
