@@ -82,7 +82,6 @@ export async function listSubmissionsForRound({
     .select({
       id: ideaSubmission.id,
       teamId: ideaSubmission.teamId,
-      ideaTitle: teams.name,
       pdfUrl: ideaSubmission.pptUrl,
       createdAt: ideaSubmission.createdAt,
       teamName: teams.name,

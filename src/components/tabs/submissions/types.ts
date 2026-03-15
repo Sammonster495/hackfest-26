@@ -6,7 +6,6 @@ export type SubmissionItem = {
   teamName: string;
   trackId: string;
   trackName: string;
-  ideaTitle: string;
   pdfUrl: string;
   createdAt: string;
   evaluatorScore: number | null;
