@@ -32,18 +32,21 @@ function buildLeaderboardUrl({
   trackId,
   round,
   scoreType,
+  refreshKey,
 }: {
   offset: number;
   search: string;
   trackId: string;
   round: "all" | "ROUND_1" | "ROUND_2";
   scoreType: "average" | "sum" | "normalized";
+  refreshKey: number;
 }) {
   const params = new URLSearchParams({
     cursor: String(offset),
     limit: String(PAGE_SIZE),
     round,
     scoreType,
+    refresh: String(refreshKey),
   });
 
   if (search.trim()) {
@@ -128,6 +131,7 @@ export function LeaderboardPanel() {
             trackId,
             round,
             scoreType,
+            refreshKey,
           }),
         );
 

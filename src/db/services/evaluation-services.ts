@@ -8,11 +8,11 @@ import {
 } from "~/db/schema";
 import { ideaRounds, ideaTeamEvaluations } from "~/db/schema/evaluator";
 import { AppError } from "~/lib/errors/app-error";
+import { addEvaluationNormalizationJob } from "~/lib/queue/normalization";
 import {
   ensureRoundForEvaluation,
   type SubmissionRound,
 } from "./submission-services";
-import { addEvaluationNormalizationJob } from "~/lib/queue/normalization";
 
 const EVALUATOR_ACCESS_PERMISSION_KEY = "submission:score";
 
