@@ -1,14 +1,14 @@
-import { and, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { permissionProtected } from "~/auth/routes-wrapper";
-import db from "~/db";
 import {
-  mentorFeedback,
-  mentorRoundAssignments,
-  mentorRounds,
-  mentors,
-} from "~/db/schema";
+  createMentorFeedback,
+  deleteMentorFeedbackById,
+  getAssignmentWithRoundStatus,
+  getFeedbackByAssignmentId,
+  isAssignmentOwnedByMentor,
+  updateMentorFeedback,
+} from "~/db/services/mentor-services";
 
 const saveFeedbackSchema = z.object({
   assignmentId: z.string().min(1, "Assignment ID is required"),
@@ -29,21 +29,8 @@ export const GET = permissionProtected(
         );
       }
 
-      const assignment = await db
-        .select({
-          assignmentId: mentorRoundAssignments.id,
-          mentorId: mentorRoundAssignments.mentorId,
-          roundStatus: mentorRounds.status,
-        })
-        .from(mentorRoundAssignments)
-        .innerJoin(
-          mentorRounds,
-          eq(mentorRounds.id, mentorRoundAssignments.mentorRoundId),
-        )
-        .where(eq(mentorRoundAssignments.id, assignmentId))
-        .limit(1);
-
-      const selectedAssignment = assignment[0];
+      const selectedAssignment =
+        await getAssignmentWithRoundStatus(assignmentId);
       if (!selectedAssignment) {
         return NextResponse.json(
           { message: "Mentor assignment not found" },
@@ -51,13 +38,7 @@ export const GET = permissionProtected(
         );
       }
 
-      const existingFeedback = await db
-        .select({
-          id: mentorFeedback.id,
-          feedback: mentorFeedback.feedback,
-        })
-        .from(mentorFeedback)
-        .where(eq(mentorFeedback.roundAssignmentId, assignmentId));
+      const existingFeedback = await getFeedbackByAssignmentId(assignmentId);
 
       const primaryFeedback = existingFeedback[0];
 
@@ -95,21 +76,8 @@ export const POST = permissionProtected(
 
       const { assignmentId, feedback } = parsed.data;
 
-      const assignment = await db
-        .select({
-          assignmentId: mentorRoundAssignments.id,
-          mentorId: mentorRoundAssignments.mentorId,
-          roundStatus: mentorRounds.status,
-        })
-        .from(mentorRoundAssignments)
-        .innerJoin(
-          mentorRounds,
-          eq(mentorRounds.id, mentorRoundAssignments.mentorRoundId),
-        )
-        .where(eq(mentorRoundAssignments.id, assignmentId))
-        .limit(1);
-
-      const selectedAssignment = assignment[0];
+      const selectedAssignment =
+        await getAssignmentWithRoundStatus(assignmentId);
       if (!selectedAssignment) {
         return NextResponse.json(
           { message: "Mentor assignment not found" },
@@ -124,50 +92,30 @@ export const POST = permissionProtected(
         );
       }
 
-      const ownedAssignment = await db
-        .select({ assignmentId: mentorRoundAssignments.id })
-        .from(mentorRoundAssignments)
-        .innerJoin(mentors, eq(mentors.id, mentorRoundAssignments.mentorId))
-        .where(
-          and(
-            eq(mentorRoundAssignments.id, assignmentId),
-            eq(mentors.dashboardUserId, user.id),
-          ),
-        )
-        .limit(1);
+      const isOwnedByMentor = await isAssignmentOwnedByMentor(
+        assignmentId,
+        user.id,
+      );
 
-      if (ownedAssignment.length === 0) {
+      if (!isOwnedByMentor) {
         return NextResponse.json(
           { message: "Only assigned mentor can submit feedback" },
           { status: 403 },
         );
       }
 
-      const existingFeedback = await db
-        .select({
-          id: mentorFeedback.id,
-        })
-        .from(mentorFeedback)
-        .where(eq(mentorFeedback.roundAssignmentId, assignmentId));
+      const existingFeedback = await getFeedbackByAssignmentId(assignmentId);
 
       if (existingFeedback.length === 0) {
-        await db.insert(mentorFeedback).values({
-          roundAssignmentId: assignmentId,
-          feedback,
-        });
+        await createMentorFeedback(assignmentId, feedback);
       } else {
         const [primary, ...duplicates] = existingFeedback;
 
-        await db
-          .update(mentorFeedback)
-          .set({ feedback })
-          .where(eq(mentorFeedback.id, primary.id));
+        await updateMentorFeedback(primary.id, feedback);
 
         if (duplicates.length > 0) {
           await Promise.all(
-            duplicates.map((entry) =>
-              db.delete(mentorFeedback).where(eq(mentorFeedback.id, entry.id)),
-            ),
+            duplicates.map((entry) => deleteMentorFeedbackById(entry.id)),
           );
         }
       }

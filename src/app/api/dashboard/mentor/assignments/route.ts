@@ -1,16 +1,23 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { adminProtected } from "~/auth/routes-wrapper";
-import db from "~/db";
 import {
-  dashboardUserRoles,
-  dashboardUsers,
-  mentorRoundAssignments,
-  mentors,
-  roles,
-  teams,
-} from "~/db/schema";
+  countSelectedTeamsByIds,
+  deleteAssignmentsForMentorRound,
+  deleteMentorAssignmentsByIds,
+  getAssignedTeamIdsForMentorRound,
+  getDashboardUserById,
+  getMentorAssignments,
+  getMentorByDashboardUserId,
+  getMentorRoundById,
+  getMentorUsers,
+  getOrCreateMentorByDashboardUserId,
+  getRoundMentorAssignments,
+  getSelectableMentorTeams,
+  insertMentorAssignmentPairs,
+  insertMentorAssignments,
+  userHasMentorRole,
+} from "~/db/services/mentor-services";
 
 const updateAssignmentsSchema = z.object({
   mentorRoundId: z.string().min(1, "Mentor round is required"),
@@ -30,59 +37,26 @@ export const GET = adminProtected(async (req: NextRequest) => {
     const mentorRoundId = searchParams.get("mentorRoundId");
     const mentorUserId = searchParams.get("mentorUserId");
 
-    const mentorUsers = await db
-      .select({
-        id: dashboardUsers.id,
-        name: dashboardUsers.name,
-        username: dashboardUsers.username,
-      })
-      .from(dashboardUsers)
-      .innerJoin(
-        dashboardUserRoles,
-        and(
-          eq(dashboardUserRoles.dashboardUserId, dashboardUsers.id),
-          eq(dashboardUserRoles.isActive, true),
-        ),
-      )
-      .innerJoin(roles, eq(roles.id, dashboardUserRoles.roleId))
-      .where(eq(roles.name, "MENTOR"))
-      .orderBy(asc(dashboardUsers.name));
-
-    const uniqueMentorUsers = Array.from(
-      new Map(mentorUsers.map((user) => [user.id, user])).values(),
-    );
-
-    const allTeams = await db
-      .select({ id: teams.id, name: teams.name })
-      .from(teams)
-      .where(eq(teams.teamStage, "SELECTED"))
-      .orderBy(asc(teams.name));
+    const [mentorUsers, allTeams] = await Promise.all([
+      getMentorUsers(),
+      getSelectableMentorTeams(),
+    ]);
 
     let assignedTeamIds: string[] = [];
 
     if (mentorRoundId && mentorUserId) {
-      const mentor = await db.query.mentors.findFirst({
-        where: (m, { eq }) => eq(m.dashboardUserId, mentorUserId),
-      });
-
+      const mentor = await getMentorByDashboardUserId(mentorUserId);
       if (mentor) {
-        const assignments = await db
-          .select({ teamId: mentorRoundAssignments.teamId })
-          .from(mentorRoundAssignments)
-          .where(
-            and(
-              eq(mentorRoundAssignments.mentorRoundId, mentorRoundId),
-              eq(mentorRoundAssignments.mentorId, mentor.id),
-            ),
-          );
-
-        assignedTeamIds = assignments.map((assignment) => assignment.teamId);
+        assignedTeamIds = await getAssignedTeamIdsForMentorRound(
+          mentorRoundId,
+          mentor.id,
+        );
       }
     }
 
     return NextResponse.json(
       {
-        mentorUsers: uniqueMentorUsers,
+        mentorUsers,
         teams: allTeams,
         assignedTeamIds,
       },
@@ -112,14 +86,10 @@ export const POST = adminProtected(async (req: NextRequest) => {
     const { mentorRoundId, mentorUserId, teamIds } = result.data;
 
     if (teamIds.length > 0) {
-      const selectedTeams = await db
-        .select({ id: teams.id })
-        .from(teams)
-        .where(
-          and(inArray(teams.id, teamIds), eq(teams.teamStage, "SELECTED")),
-        );
+      const uniqueTeamIdsCount = new Set(teamIds).size;
+      const selectedTeamsCount = await countSelectedTeamsByIds(teamIds);
 
-      if (selectedTeams.length !== new Set(teamIds).size) {
+      if (selectedTeamsCount !== uniqueTeamIdsCount) {
         return NextResponse.json(
           {
             message: "Only teams in SELECTED stage can be assigned to mentors",
@@ -129,9 +99,7 @@ export const POST = adminProtected(async (req: NextRequest) => {
       }
     }
 
-    const existingRound = await db.query.mentorRounds.findFirst({
-      where: (round, { eq }) => eq(round.id, mentorRoundId),
-    });
+    const existingRound = await getMentorRoundById(mentorRoundId);
 
     if (!existingRound) {
       return NextResponse.json(
@@ -147,9 +115,7 @@ export const POST = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const mentorUser = await db.query.dashboardUsers.findFirst({
-      where: (u, { eq }) => eq(u.id, mentorUserId),
-    });
+    const mentorUser = await getDashboardUserById(mentorUserId);
 
     if (!mentorUser) {
       return NextResponse.json(
@@ -158,50 +124,21 @@ export const POST = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const hasMentorRole = await db
-      .select({ id: roles.id })
-      .from(dashboardUserRoles)
-      .innerJoin(roles, eq(roles.id, dashboardUserRoles.roleId))
-      .where(
-        and(
-          eq(dashboardUserRoles.dashboardUserId, mentorUserId),
-          eq(dashboardUserRoles.isActive, true),
-          eq(roles.name, "MENTOR"),
-        ),
-      )
-      .limit(1);
+    const hasMentorRole = await userHasMentorRole(mentorUserId);
 
-    if (hasMentorRole.length === 0) {
+    if (!hasMentorRole) {
       return NextResponse.json(
         { message: "Selected user does not have MENTOR role" },
         { status: 400 },
       );
     }
 
-    let mentor = await db.query.mentors.findFirst({
-      where: (m, { eq }) => eq(m.dashboardUserId, mentorUserId),
-    });
+    const mentor = await getOrCreateMentorByDashboardUserId(mentorUserId);
 
-    if (!mentor) {
-      const [createdMentor] = await db
-        .insert(mentors)
-        .values({ dashboardUserId: mentorUserId })
-        .returning();
-      mentor = createdMentor;
-    }
-
-    const existingAssignments = await db
-      .select({
-        id: mentorRoundAssignments.id,
-        teamId: mentorRoundAssignments.teamId,
-      })
-      .from(mentorRoundAssignments)
-      .where(
-        and(
-          eq(mentorRoundAssignments.mentorRoundId, mentorRoundId),
-          eq(mentorRoundAssignments.mentorId, mentor.id),
-        ),
-      );
+    const existingAssignments = await getMentorAssignments(
+      mentorRoundId,
+      mentor.id,
+    );
 
     const existingTeamIds = new Set(existingAssignments.map((a) => a.teamId));
     const requestedTeamIds = new Set(teamIds);
@@ -213,19 +150,11 @@ export const POST = adminProtected(async (req: NextRequest) => {
     const toAdd = teamIds.filter((teamId) => !existingTeamIds.has(teamId));
 
     if (toRemove.length > 0) {
-      await db
-        .delete(mentorRoundAssignments)
-        .where(inArray(mentorRoundAssignments.id, toRemove));
+      await deleteMentorAssignmentsByIds(toRemove);
     }
 
     if (toAdd.length > 0) {
-      await db.insert(mentorRoundAssignments).values(
-        toAdd.map((teamId) => ({
-          mentorId: mentor.id,
-          teamId,
-          mentorRoundId,
-        })),
-      );
+      await insertMentorAssignments(mentorRoundId, mentor.id, toAdd);
     }
 
     return NextResponse.json(
@@ -266,9 +195,7 @@ export const PATCH = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const targetRound = await db.query.mentorRounds.findFirst({
-      where: (round, { eq }) => eq(round.id, targetMentorRoundId),
-    });
+    const targetRound = await getMentorRoundById(targetMentorRoundId);
 
     if (!targetRound) {
       return NextResponse.json(
@@ -284,9 +211,7 @@ export const PATCH = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const sourceRound = await db.query.mentorRounds.findFirst({
-      where: (round, { eq }) => eq(round.id, sourceMentorRoundId),
-    });
+    const sourceRound = await getMentorRoundById(sourceMentorRoundId);
 
     if (!sourceRound) {
       return NextResponse.json(
@@ -295,19 +220,10 @@ export const PATCH = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const sourceAssignments = await db
-      .select({
-        mentorId: mentorRoundAssignments.mentorId,
-        teamId: mentorRoundAssignments.teamId,
-      })
-      .from(mentorRoundAssignments)
-      .innerJoin(teams, eq(teams.id, mentorRoundAssignments.teamId))
-      .where(
-        and(
-          eq(mentorRoundAssignments.mentorRoundId, sourceMentorRoundId),
-          eq(teams.teamStage, "SELECTED"),
-        ),
-      );
+    const sourceAssignments = await getRoundMentorAssignments(
+      sourceMentorRoundId,
+      true,
+    );
 
     if (sourceAssignments.length === 0) {
       return NextResponse.json(
@@ -317,18 +233,11 @@ export const PATCH = adminProtected(async (req: NextRequest) => {
     }
 
     if (overwriteExisting) {
-      await db
-        .delete(mentorRoundAssignments)
-        .where(eq(mentorRoundAssignments.mentorRoundId, targetMentorRoundId));
+      await deleteAssignmentsForMentorRound(targetMentorRoundId);
     }
 
-    const existingAssignments = await db
-      .select({
-        mentorId: mentorRoundAssignments.mentorId,
-        teamId: mentorRoundAssignments.teamId,
-      })
-      .from(mentorRoundAssignments)
-      .where(eq(mentorRoundAssignments.mentorRoundId, targetMentorRoundId));
+    const existingAssignments =
+      await getRoundMentorAssignments(targetMentorRoundId);
 
     const existingSet = new Set(
       existingAssignments.map(
@@ -344,11 +253,10 @@ export const PATCH = adminProtected(async (req: NextRequest) => {
       .map((assignment) => ({
         mentorId: assignment.mentorId,
         teamId: assignment.teamId,
-        mentorRoundId: targetMentorRoundId,
       }));
 
     if (toInsert.length > 0) {
-      await db.insert(mentorRoundAssignments).values(toInsert);
+      await insertMentorAssignmentPairs(targetMentorRoundId, toInsert);
     }
 
     return NextResponse.json(

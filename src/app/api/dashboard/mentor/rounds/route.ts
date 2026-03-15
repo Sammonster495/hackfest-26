@@ -1,9 +1,12 @@
-import { asc, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { adminProtected } from "~/auth/routes-wrapper";
-import db from "~/db";
-import { mentorRounds } from "~/db/schema";
+import {
+  createMentorRound,
+  deleteMentorRound,
+  listMentorRounds,
+  updateMentorRound,
+} from "~/db/services/mentor-services";
 
 const createMentorRoundSchema = z.object({
   name: z.string().min(1, "Round name is required").max(100),
@@ -21,10 +24,7 @@ const deleteMentorRoundSchema = z.object({
 
 export const GET = adminProtected(async (_req: NextRequest) => {
   try {
-    const rounds = await db
-      .select()
-      .from(mentorRounds)
-      .orderBy(asc(mentorRounds.name));
+    const rounds = await listMentorRounds();
 
     return NextResponse.json(rounds, { status: 200 });
   } catch (error) {
@@ -48,10 +48,7 @@ export const POST = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const [createdRound] = await db
-      .insert(mentorRounds)
-      .values({ name: result.data.name })
-      .returning();
+    const createdRound = await createMentorRound(result.data.name);
 
     return NextResponse.json(createdRound, { status: 201 });
   } catch (error) {
@@ -93,11 +90,7 @@ export const PATCH = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const [updatedRound] = await db
-      .update(mentorRounds)
-      .set(updatePayload)
-      .where(eq(mentorRounds.id, result.data.id))
-      .returning();
+    const updatedRound = await updateMentorRound(result.data.id, updatePayload);
 
     if (!updatedRound) {
       return NextResponse.json(
@@ -130,10 +123,7 @@ export const DELETE = adminProtected(async (req: NextRequest) => {
       );
     }
 
-    const [deletedRound] = await db
-      .delete(mentorRounds)
-      .where(eq(mentorRounds.id, result.data.id))
-      .returning();
+    const deletedRound = await deleteMentorRound(result.data.id);
 
     if (!deletedRound) {
       return NextResponse.json(
