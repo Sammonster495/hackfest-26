@@ -245,3 +245,16 @@
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* Allow interaction with Cloudinary upload widget when inside a Radix Dialog */
+body[style*="pointer-events: none"] .cloudinary_fileupload {
+  pointer-events: auto !important;
+}
+
+body[style*="pointer-events: none"] iframe[src*="cloudinary"] {
+  pointer-events: auto !important;
+}
+
+body[style*="pointer-events: none"] .cloudinary-upload-widget {
+  pointer-events: auto !important;
+}

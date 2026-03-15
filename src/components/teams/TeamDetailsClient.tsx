@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 
-import PaymentButton from "~/components/razorpay/PaymentButton";
+import { PaymentModal } from "~/components/teams/payment-modal";
 import { ConfirmTeamButton } from "~/components/teams/confirm-team-button";
 import { DeleteTeamButton } from "~/components/teams/delete-team-button";
 import { LeaveTeamButton } from "~/components/teams/leave-team-button";
@@ -182,15 +182,10 @@ export function TeamDetailsClient({
                 </p>
                 {team.leaderId === user.id ? (
                   paymentsOpen ? (
-                    <PaymentButton
-                      name="Pay Now"
-                      paymentType="PARTICIPATION"
-                      amountInINR={Number(
-                        calculateTotalAmount(400, members.length, 2),
-                      )}
+                    <PaymentModal
                       teamId={id}
-                      user={userForPayment}
-                      description="Participation Fee"
+                      memberCount={members.length}
+                      onSuccess={refreshData}
                     />
                   ) : (
                     <p className="text-sm text-amber-700/80 italic font-medium">
@@ -532,11 +527,10 @@ export function TeamDetailsClient({
                   Status
                 </span>
                 <span
-                  className={`px-3 py-1 rounded-md text-xs font-bold tracking-wider shadow-sm ${
-                    team.isCompleted
+                  className={`px-3 py-1 rounded-md text-xs font-bold tracking-wider shadow-sm ${team.isCompleted
                       ? "bg-green-100 text-green-700 border border-green-200"
                       : "bg-blue-100 text-blue-700 border border-blue-200"
-                  }`}
+                    }`}
                 >
                   {team.isCompleted ? "Completed" : "Incomplete"}
                 </span>
