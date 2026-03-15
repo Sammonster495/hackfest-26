@@ -267,35 +267,42 @@ export function RoundSubmissionsPanel({
           <div className="px-4 py-2 border-b bg-muted font-medium">
             {trackName}
           </div>
-          <Table>
+          <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead>Team</TableHead>
-                <TableHead>Track</TableHead>
-                <TableHead>Idea</TableHead>
-                <TableHead>PDF</TableHead>
-                <TableHead>Score</TableHead>
+                <TableHead className="w-[30%]">Team</TableHead>
+                <TableHead className="w-[20%]">Track</TableHead>
+                <TableHead className="w-[16%]">State</TableHead>
+                <TableHead className="w-[12%] text-center">PDF</TableHead>
+                <TableHead className="w-[22%]">Score</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {entries.map((submission) => (
                 <TableRow key={submission.id}>
-                  <TableCell>{submission.teamName}</TableCell>
-                  <TableCell>{submission.trackName}</TableCell>
-                  <TableCell>{submission.ideaTitle}</TableCell>
-                  <TableCell>
+                  <TableCell className="py-4 font-medium">
+                    {submission.teamName}
+                  </TableCell>
+                  <TableCell className="py-4 text-muted-foreground">
+                    {submission.trackName}
+                  </TableCell>
+                  <TableCell className="py-4 text-muted-foreground">
+                    {submission.state ?? "-"}
+                  </TableCell>
+                  <TableCell className="py-4 text-center">
                     <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => onOpenPdf(submission)}
                     >
                       View PDF
                     </Button>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-4">
                     {canScore ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Input
-                          className="w-20"
+                          className="h-8 w-20"
                           value={scoreDrafts[submission.teamId] ?? ""}
                           onChange={(e) =>
                             setScoreDrafts((prev) => ({

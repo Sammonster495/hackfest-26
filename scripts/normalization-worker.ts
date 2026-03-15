@@ -1,7 +1,13 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
 import Redis from "ioredis";
+import { recomputeNormalizedScores } from "../src/db/services/evaluation-services";
 import { recalculateNormalizedScores } from "../src/db/services/judge-services";
+import {
+  EVALUATION_NORMALIZE_JOB_NAME,
+  JUDGE_NORMALIZE_JOB_NAME,
+  QUEUE_NAME,
+} from "../src/lib/queue/normalization";
 
 const REDIS_URL = process.env.REDIS_URL;
 if (!REDIS_URL) {
@@ -12,20 +18,40 @@ if (!REDIS_URL) {
 const connection = new Redis(REDIS_URL, { maxRetriesPerRequest: null });
 
 const worker = new Worker(
-  "score-normalization",
+  QUEUE_NAME,
   async (job) => {
-    const { judgeId, judgeRoundId } = job.data as {
-      judgeId: string;
-      judgeRoundId: string;
-    };
+    if (job.name === JUDGE_NORMALIZE_JOB_NAME) {
+      const { judgeId, judgeRoundId } = job.data as {
+        judgeId: string;
+        judgeRoundId: string;
+      };
 
-    console.log(
-      `[normalization] Processing: judge=${judgeId} round=${judgeRoundId}`,
-    );
+      console.log(
+        `[normalization] Processing judge scores: judge=${judgeId} round=${judgeRoundId}`,
+      );
 
-    await recalculateNormalizedScores(judgeId, judgeRoundId);
+      await recalculateNormalizedScores(judgeId, judgeRoundId);
 
-    console.log(`[normalization] Done: judge=${judgeId} round=${judgeRoundId}`);
+      console.log(
+        `[normalization] Done judge scores: judge=${judgeId} round=${judgeRoundId}`,
+      );
+      return;
+    }
+
+    if (job.name === EVALUATION_NORMALIZE_JOB_NAME) {
+      const { roundId } = job.data as { roundId: string };
+
+      console.log(
+        `[normalization] Processing evaluation scores: round=${roundId}`,
+      );
+
+      await recomputeNormalizedScores(roundId);
+
+      console.log(`[normalization] Done evaluation scores: round=${roundId}`);
+      return;
+    }
+
+    throw new Error(`Unknown normalization job: ${job.name}`);
   },
   {
     connection,

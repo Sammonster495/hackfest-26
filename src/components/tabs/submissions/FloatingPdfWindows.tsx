@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { GripHorizontal, GripVertical, X } from "lucide-react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { PdfWindow } from "./types";
 
@@ -50,6 +50,7 @@ export function FloatingPdfWindows({
   const startResize = (
     e: ReactPointerEvent<HTMLDivElement>,
     windowItem: PdfWindow,
+    direction: "right" | "bottom" | "corner" = "corner",
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -59,10 +60,25 @@ export function FloatingPdfWindows({
     const startY = e.clientY;
     const startWidth = windowItem.width;
     const startHeight = windowItem.height;
+    const maxWidth = window.innerWidth - windowItem.x;
+    const maxHeight = window.innerHeight - windowItem.y;
 
     const handleMove = (ev: PointerEvent) => {
-      const width = Math.max(MIN_WIDTH, startWidth + (ev.clientX - startX));
-      const height = Math.max(MIN_HEIGHT, startHeight + (ev.clientY - startY));
+      const proposedWidth = startWidth + (ev.clientX - startX);
+      const proposedHeight = startHeight + (ev.clientY - startY);
+      const width = Math.max(MIN_WIDTH, Math.min(maxWidth, proposedWidth));
+      const height = Math.max(MIN_HEIGHT, Math.min(maxHeight, proposedHeight));
+
+      if (direction === "right") {
+        onResize(windowItem.id, width, startHeight);
+        return;
+      }
+
+      if (direction === "bottom") {
+        onResize(windowItem.id, startWidth, height);
+        return;
+      }
+
       onResize(windowItem.id, width, height);
     };
 
@@ -87,6 +103,8 @@ export function FloatingPdfWindows({
             width: windowItem.width,
             height: windowItem.height,
             zIndex: windowItem.zIndex,
+            minWidth: MIN_WIDTH,
+            minHeight: MIN_HEIGHT,
           }}
           onPointerDown={() => onFocus(windowItem.id)}
         >
@@ -113,8 +131,26 @@ export function FloatingPdfWindows({
           />
 
           <div
-            className="absolute right-0 bottom-0 h-4 w-4 cursor-se-resize"
-            onPointerDown={(e) => startResize(e, windowItem)}
+            className="absolute right-0 top-10 bottom-0 w-2 cursor-e-resize hover:bg-primary/10"
+            onPointerDown={(e) => startResize(e, windowItem, "right")}
+          >
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 pr-0.5 text-muted-foreground/70">
+              <GripVertical className="h-3 w-3" />
+            </div>
+          </div>
+
+          <div
+            className="absolute left-0 right-0 bottom-0 h-2 cursor-s-resize hover:bg-primary/10"
+            onPointerDown={(e) => startResize(e, windowItem, "bottom")}
+          >
+            <div className="absolute left-1/2 bottom-0 -translate-x-1/2 pb-0.5 text-muted-foreground/70">
+              <GripHorizontal className="h-3 w-3" />
+            </div>
+          </div>
+
+          <div
+            className="absolute right-0 bottom-0 h-5 w-5 cursor-se-resize bg-muted/60 border-l border-t"
+            onPointerDown={(e) => startResize(e, windowItem, "corner")}
           />
         </div>
       ))}

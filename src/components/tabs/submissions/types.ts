@@ -4,9 +4,9 @@ export type SubmissionItem = {
   id: string;
   teamId: string;
   teamName: string;
+  state: string | null;
   trackId: string;
   trackName: string;
-  ideaTitle: string;
   pdfUrl: string;
   createdAt: string;
   evaluatorScore: number | null;
@@ -22,6 +22,7 @@ export type LeaderboardItem = {
   rank: number;
   teamId: string;
   teamName: string;
+  collegeName: string | null;
   trackId: string;
   trackName: string;
   score: number;
