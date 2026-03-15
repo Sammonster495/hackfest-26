@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import db from "~/db";
 import {
   dashboardUserRoles,
@@ -150,55 +150,25 @@ export async function getEvaluatorScore({
   return evaluation[0]?.score ?? null;
 }
 
-//z-score computation
-function computeZScores(
-  evaluations: { id: string; evaluatorId: string; rawTotalScore: number }[],
-): { id: string; normalizedTotalScore: number }[] {
-  //group raw scores by evaluator
-  const byEvaluator = new Map<string, number[]>();
-  for (const e of evaluations) {
-    const list = byEvaluator.get(e.evaluatorId) ?? [];
-    list.push(e.rawTotalScore);
-    byEvaluator.set(e.evaluatorId, list);
-  }
-
-  // Compute per-evaluator mean and population standard deviation
-  const evalStats = new Map<string, { mean: number; stddev: number }>();
-  for (const [evaluatorId, scores] of byEvaluator) {
-    const n = scores.length;
-    const mean = scores.reduce((s, v) => s + v, 0) / n;
-    const variance = scores.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
-    evalStats.set(evaluatorId, { mean, stddev: Math.sqrt(variance) });
-  }
-
-  return evaluations.map((e) => {
-    const { mean, stddev } = evalStats.get(e.evaluatorId)!;
-    // If stddev is near zero the evaluator scores everyone the same — z = 0
-    const z = stddev < 1e-9 ? 0 : (e.rawTotalScore - mean) / stddev;
-    return { id: e.id, normalizedTotalScore: z };
-  });
-}
-
 export async function recomputeNormalizedScores(roundId: string) {
-  const evaluations = await db
-    .select({
-      id: ideaTeamEvaluations.id,
-      evaluatorId: ideaTeamEvaluations.evaluatorId,
-      rawTotalScore: ideaTeamEvaluations.rawTotalScore,
-    })
-    .from(ideaTeamEvaluations)
-    .where(eq(ideaTeamEvaluations.roundId, roundId));
-
-  if (evaluations.length === 0) return;
-
-  const normalized = computeZScores(evaluations);
-
-  await Promise.all(
-    normalized.map(({ id, normalizedTotalScore }) =>
-      db
-        .update(ideaTeamEvaluations)
-        .set({ normalizedTotalScore })
-        .where(eq(ideaTeamEvaluations.id, id)),
-    ),
-  );
+  await db.execute(sql`
+    UPDATE idea_team_evaluations AS ite
+    SET normalized_total_score = CASE
+      WHEN stats.stddev = 0 THEN 0
+      ELSE (ite.raw_total_score - stats.mean) / stats.stddev
+    END
+    FROM (
+      SELECT
+        evaluator_id,
+        round_id,
+        AVG(raw_total_score::double precision) AS mean,
+        COALESCE(STDDEV_POP(raw_total_score::double precision), 0) AS stddev
+      FROM idea_team_evaluations
+      WHERE round_id = ${roundId}
+      GROUP BY evaluator_id, round_id
+    ) AS stats
+    WHERE ite.evaluator_id = stats.evaluator_id
+      AND ite.round_id = stats.round_id
+      AND ite.round_id = ${roundId}
+  `);
 }
