@@ -5,6 +5,7 @@ import { getSiteSettings } from "~/db/data/siteSettings";
 import * as teamData from "~/db/data/teams";
 import { getIdeaSubmission } from "~/db/services/idea-services";
 import { findCollegeByUserId } from "~/db/services/participant-services";
+import { hasPendingPayment } from "~/db/services/payment-services";
 import { getFormStatus } from "~/db/services/team-services";
 import { AppError } from "~/lib/errors/app-error";
 import { successResponse } from "~/lib/response/success";
@@ -30,14 +31,21 @@ export const GET = registrationRequiredRoute(
       });
     }
 
-    const [members, siteSettingsData, teamStatus, submission, collegeName] =
-      await Promise.all([
-        teamData.listMembers(id),
-        getSiteSettings(),
-        getFormStatus(id),
-        getIdeaSubmission(id),
-        findCollegeByUserId(user.id),
-      ]);
+    const [
+      members,
+      siteSettingsData,
+      teamStatus,
+      submission,
+      collegeName,
+      isPaymentPending,
+    ] = await Promise.all([
+      teamData.listMembers(id),
+      getSiteSettings(),
+      getFormStatus(id),
+      getIdeaSubmission(id),
+      findCollegeByUserId(user.id),
+      hasPendingPayment(id),
+    ]);
 
     return successResponse({
       team,
@@ -52,6 +60,7 @@ export const GET = registrationRequiredRoute(
         teamId: dbUser.teamId,
       },
       collegeName,
+      hasPendingPayment: isPaymentPending,
     });
   },
 );

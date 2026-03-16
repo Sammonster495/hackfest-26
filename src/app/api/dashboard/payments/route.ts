@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { adminProtected } from "~/auth/routes-wrapper";
+import { getPaymentsForDashboard } from "~/db/services/payment-services";
 // import { getPayments } from "~/db/services/payment-services";
 // TODO: SUMUKHA: Make use of this file for payments
 export const GET = adminProtected(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const _page = Number(searchParams.get("page") ?? "1");
   const _limit = Number(searchParams.get("limit") ?? "20");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _status = searchParams.get("status") as
     | "Pending"
     | "Paid"
@@ -14,6 +16,7 @@ export const GET = adminProtected(async (request: Request) => {
   const _search = searchParams.get("search") ?? undefined;
   const _sortOrder =
     (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _type = searchParams.get("type") as
     | "PARTICIPATION"
     | "EVENT"
@@ -29,13 +32,12 @@ export const GET = adminProtected(async (request: Request) => {
   //   type,
   // });
 
-  return NextResponse.json({
-    payments: [],
-    pagination: {
-      page: 1,
-      limit: 1,
-      total: 0,
-      totalPages: Math.ceil(0 / 1),
-    },
+  const result = await getPaymentsForDashboard({
+    page: _page,
+    limit: _limit,
+    search: _search,
+    sortOrder: _sortOrder,
   });
+
+  return NextResponse.json(result);
 });

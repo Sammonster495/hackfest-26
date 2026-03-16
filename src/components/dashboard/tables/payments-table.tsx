@@ -7,7 +7,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDownUp, Search, X } from "lucide-react";
+import {
+  ArrowDownUp,
+  CheckCircle2,
+  Circle,
+  ExternalLink,
+  Search,
+  X,
+} from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -35,21 +42,16 @@ import {
   TableRow,
 } from "~/components/ui/table";
 
+type PaymentStatus = "Pending" | "Paid" | "Refunded" | null;
+
 type Payment = {
   id: string;
-  paymentName: string;
-  paymentType: string;
-  amount: string;
-  paymentStatus: "Pending" | "Paid" | "Refunded" | null;
-  razorpayOrderId: string;
-  razorpayPaymentId: string | null;
+  paymentStatus: PaymentStatus;
+  paymentScreenshotUrl: string | null;
+  paymentTransactionId: string | null;
   createdAt: string;
   team: { id: string; name: string } | null;
   user: { id: string; name: string | null; email: string | null } | null;
-  eventTeam: { id: string; name: string } | null;
-  eventUser: {
-    user: { id: string; name: string | null; email: string | null } | null;
-  } | null;
 };
 
 type Pagination = {
@@ -65,21 +67,17 @@ type PaymentsData = {
 };
 
 type Filters = {
-  status: string;
   sortOrder: string;
-  type: string;
 };
 
-const columnHelper = createColumnHelper<Payment>();
+const columnHelper = createColumnHelper<Payment & { rowIndex: number }>();
 
 function buildUrl(search: string, filters: Filters, page: number): string {
   const params = new URLSearchParams();
   params.set("page", page.toString());
   params.set("limit", "20");
   if (search.trim()) params.set("search", search.trim());
-  if (filters.status !== "all") params.set("status", filters.status);
   params.set("sortOrder", filters.sortOrder);
-  params.set("type", filters.type);
 
   const qs = params.toString();
   return qs ? `/api/dashboard/payments?${qs}` : "/api/dashboard/payments";
@@ -99,10 +97,10 @@ export function PaymentsTable() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filters, setFilters] = useState<Filters>({
-    status: "all",
     sortOrder: "desc",
-    type: "PARTICIPATION",
   });
+  // Track locally which payments have been toggled for optimistic UI
+  const [verifyingIds, setVerifyingIds] = useState<Set<string>>(new Set());
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -154,48 +152,89 @@ export function PaymentsTable() {
     });
   }, [fetchData]);
 
+  const handleToggleVerify = useCallback(async (paymentId: string) => {
+    setVerifyingIds((prev) => new Set(prev).add(paymentId));
+    try {
+      const res = await fetch(`/api/dashboard/payments/${paymentId}/verify`, {
+        method: "PATCH",
+      });
+      if (!res.ok) return;
+      const json = (await res.json()) as {
+        data: { paymentStatus: PaymentStatus };
+      };
+      const newStatus = json?.data?.paymentStatus;
+      if (newStatus) {
+        setData((prev) =>
+          prev.map((p) =>
+            p.id === paymentId ? { ...p, paymentStatus: newStatus } : p,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("Failed to toggle verification:", err);
+    } finally {
+      setVerifyingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(paymentId);
+        return next;
+      });
+    }
+  }, []);
+
+  const dataWithIndex = useMemo(
+    () => data.map((p, i) => ({ ...p, rowIndex: i + 1 })),
+    [data],
+  );
+
   const columns = useMemo(
     () => [
-      columnHelper.accessor(
-        (row) => row.team?.name ?? row.eventTeam?.name ?? "—",
-        {
-          id: "teamName",
-          header: "Team",
-          cell: (info) => (
-            <span className="font-medium">{info.getValue()}</span>
-          ),
-        },
-      ),
-      columnHelper.accessor(
-        (row) =>
-          row.user?.name ??
-          row.user?.email ??
-          row.eventUser?.user?.name ??
-          row.eventUser?.user?.email ??
-          "—",
-        {
-          id: "payer",
-          header: "Payer",
-          cell: (info) => <span>{info.getValue()}</span>,
-        },
-      ),
-      columnHelper.accessor("paymentType", {
-        header: "Type",
-        cell: (info) => {
-          const type = info.getValue() || "N/A";
-          if (type === "PARTICIPATION")
-            return <Badge variant="secondary">Participation</Badge>;
-          if (type === "EVENT") return <Badge variant="outline">Event</Badge>;
-          return <Badge variant="outline">{type}</Badge>;
-        },
-      }),
-      columnHelper.accessor("amount", {
-        header: "Amount",
+      columnHelper.accessor("rowIndex", {
+        header: "#",
         cell: (info) => (
-          <span className="font-crimson flex items-center gap-1">
-            ₹{info.getValue()}
+          <span className="text-muted-foreground text-sm">
+            {info.getValue()}
           </span>
         ),
+      }),
+      columnHelper.accessor((row) => row.user?.name ?? row.user?.email ?? "—", {
+        id: "userName",
+        header: "User",
+        cell: (info) => <span className="font-medium">{info.getValue()}</span>,
+      }),
+      columnHelper.accessor((row) => row.team?.name ?? "—", {
+        id: "teamName",
+        header: "Team",
+        cell: (info) => <span>{info.getValue()}</span>,
+      }),
+      columnHelper.accessor("paymentTransactionId", {
+        header: "Transaction ID",
+        cell: (info) => {
+          const val = info.getValue();
+          return val ? (
+            <span className="font-mono text-xs">{val}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          );
+        },
+      }),
+      columnHelper.accessor("paymentScreenshotUrl", {
+        header: "Screenshot",
+        cell: (info) => {
+          const url = info.getValue();
+          if (!url)
+            return <span className="text-muted-foreground text-sm">—</span>;
+          return (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 underline underline-offset-2"
+            >
+              View
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          );
+        },
       }),
       columnHelper.accessor("paymentStatus", {
         header: "Status",
@@ -206,16 +245,44 @@ export function PaymentsTable() {
             return <Badge variant="warning">Pending</Badge>;
           if (status === "Refunded")
             return <Badge variant="destructive">Refunded</Badge>;
-          return <Badge variant="outline">{status || "N/A"}</Badge>;
+          return <Badge variant="outline">{status ?? "N/A"}</Badge>;
         },
       }),
-      columnHelper.accessor("razorpayOrderId", {
-        header: "Order ID",
-        cell: (info) => (
-          <span className="font-crimson text-xs text-muted-foreground">
-            {info.getValue()}
-          </span>
-        ),
+      columnHelper.display({
+        id: "verify",
+        header: "Verify",
+        cell: ({ row }) => {
+          const { id, paymentStatus } = row.original;
+          const isPaid = paymentStatus === "Paid";
+          const isProcessing = verifyingIds.has(id);
+          return (
+            <Button
+              size="sm"
+              variant={isPaid ? "default" : "outline"}
+              disabled={isProcessing}
+              onClick={() => void handleToggleVerify(id)}
+              className={
+                isPaid
+                  ? "bg-green-600 text-white hover:bg-destructive gap-1 min-w-[90px] group transition-colors"
+                  : "gap-1 min-w-[90px]"
+              }
+            >
+              {isPaid ? (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5 group-hover:hidden" />
+                  <X className="h-3.5 w-3.5 hidden group-hover:block" />
+                  <span className="group-hover:hidden">Verified</span>
+                  <span className="hidden group-hover:block">Revoke</span>
+                </>
+              ) : (
+                <>
+                  <Circle className="h-3.5 w-3.5" />
+                  <span>Verify</span>
+                </>
+              )}
+            </Button>
+          );
+        },
       }),
       columnHelper.accessor("createdAt", {
         header: "Date",
@@ -224,16 +291,14 @@ export function PaymentsTable() {
             day: "numeric",
             month: "short",
             year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
           }),
       }),
     ],
-    [],
+    [verifyingIds, handleToggleVerify],
   );
 
   const table = useReactTable({
-    data,
+    data: dataWithIndex,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -277,27 +342,12 @@ export function PaymentsTable() {
     return () => observer.disconnect();
   }, [pagination.page, pagination.totalPages, isLoading, loadMore]);
 
-  const handleFilterChange = useCallback(
-    (key: keyof Filters, value: string) => {
-      setFilters((prev) => ({ ...prev, [key]: value }));
-    },
-    [],
-  );
-
   const clearFilters = useCallback(() => {
     setSearch("");
-    setFilters({
-      status: "all",
-      sortOrder: "desc",
-      type: "PARTICIPATION",
-    });
+    setFilters({ sortOrder: "desc" });
   }, []);
 
-  const hasActiveFilters =
-    search.trim() !== "" ||
-    filters.status !== "all" ||
-    filters.sortOrder !== "desc" ||
-    filters.type !== "PARTICIPATION";
+  const hasActiveFilters = search.trim() !== "" || filters.sortOrder !== "desc";
 
   return (
     <div className="space-y-3">
@@ -305,7 +355,7 @@ export function PaymentsTable() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by team, payer, or ID..."
+            placeholder="Search by team or user..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -313,37 +363,10 @@ export function PaymentsTable() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <Select
-            value={filters.type}
-            onValueChange={(v) => handleFilterChange("type", v)}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Entity Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Payments</SelectItem>
-              <SelectItem value="PARTICIPATION">Participation</SelectItem>
-              <SelectItem value="EVENT">Event</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.status}
-            onValueChange={(v) => handleFilterChange("status", v)}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Paid">Paid</SelectItem>
-              <SelectItem value="Refunded">Refunded</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
             value={filters.sortOrder}
-            onValueChange={(v) => handleFilterChange("sortOrder", v)}
+            onValueChange={(v) =>
+              setFilters((prev) => ({ ...prev, sortOrder: v }))
+            }
           >
             <SelectTrigger className="w-[140px]">
               <ArrowDownUp className="size-4 mr-1" />
@@ -400,7 +423,7 @@ export function PaymentsTable() {
           <TableBody>
             {isLoading && data.length === 0 ? (
               Array.from({ length: 8 }).map((_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: it is fine for skeleton rows
+                // biome-ignore lint/suspicious/noArrayIndexKey: skeleton rows are fine
                 <TableRow key={`skeleton-${i}`}>
                   {columns.map((_, j) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: fine for skeletons
@@ -432,7 +455,7 @@ export function PaymentsTable() {
                       key={row.id}
                       ref={rowVirtualizer.measureElement}
                       data-index={virtualRow.index}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      className="hover:bg-muted/50 transition-colors"
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>

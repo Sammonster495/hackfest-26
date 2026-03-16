@@ -16,11 +16,10 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
-
-import PaymentButton from "~/components/razorpay/PaymentButton";
 import { ConfirmTeamButton } from "~/components/teams/confirm-team-button";
 import { DeleteTeamButton } from "~/components/teams/delete-team-button";
 import { LeaveTeamButton } from "~/components/teams/leave-team-button";
+import { PaymentModal } from "~/components/teams/payment-modal";
 import { TeamPageLayout } from "~/components/teams/TeamPageLayout";
 import { TeamIdDisplay } from "~/components/teams/team-id-display";
 import { TeamSubmissionForm } from "~/components/teams/team-submission-form";
@@ -72,6 +71,7 @@ type TeamDetails = {
   } | null;
   user: { id: string; name: string; email: string; teamId: string | null };
   collegeName: string;
+  hasPendingPayment?: boolean;
 };
 
 export function TeamDetailsClient({
@@ -123,13 +123,8 @@ export function TeamDetailsClient({
     submission,
     user,
     collegeName,
+    hasPendingPayment,
   } = data;
-
-  const userForPayment: { id: string; name: string; email: string } = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-  };
 
   const siteSettings = Array.isArray(siteSettingsData)
     ? siteSettingsData[0]
@@ -164,6 +159,28 @@ export function TeamDetailsClient({
           );
 
         case "PAYMENT_PENDING":
+          if (hasPendingPayment) {
+            return (
+              <Card className="border-blue-200 bg-white/90 backdrop-blur-md shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-6 w-6 text-blue-500" />
+                    <CardTitle className="text-blue-700 font-pirate text-2xl tracking-wide">
+                      Payment Under Verification
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm md:text-base text-blue-700/80 font-medium">
+                    Your payment details have been submitted and are currently
+                    being verified by our team. This usually takes up to 24
+                    hours. Hang tight!
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          }
+
           return (
             <Card className="border-amber-200 bg-white/90 backdrop-blur-md shadow-lg">
               <CardHeader>
@@ -182,15 +199,10 @@ export function TeamDetailsClient({
                 </p>
                 {team.leaderId === user.id ? (
                   paymentsOpen ? (
-                    <PaymentButton
-                      name="Pay Now"
-                      paymentType="PARTICIPATION"
-                      amountInINR={Number(
-                        calculateTotalAmount(400, members.length, 2),
-                      )}
+                    <PaymentModal
                       teamId={id}
-                      user={userForPayment}
-                      description="Participation Fee"
+                      memberCount={members.length}
+                      onSuccess={refreshData}
                     />
                   ) : (
                     <p className="text-sm text-amber-700/80 italic font-medium">
@@ -549,8 +561,24 @@ export function TeamDetailsClient({
                     <span className="text-sm font-bold text-[#10569c]/80 uppercase tracking-wider">
                       Payment
                     </span>
-                    <span className="text-[#10569c] font-medium font-crimson text-lg">
-                      {team.paymentStatus}
+                    <span
+                      className={`px-3 py-1 rounded-md text-xs font-bold tracking-wider shadow-sm ${
+                        team.paymentStatus === "Paid"
+                          ? "bg-green-100 text-green-700 border border-green-200"
+                          : team.paymentStatus === "Refunded"
+                            ? "bg-red-100 text-red-700 border border-red-200"
+                            : hasPendingPayment
+                              ? "bg-blue-100 text-blue-700 border border-blue-200"
+                              : "bg-amber-100 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {team.paymentStatus === "Paid"
+                        ? "Paid"
+                        : team.paymentStatus === "Refunded"
+                          ? "Refunded"
+                          : hasPendingPayment
+                            ? "Under Verification"
+                            : "Pending"}
                     </span>
                   </div>
                 )}

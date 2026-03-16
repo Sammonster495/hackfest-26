@@ -410,17 +410,14 @@ export async function getFormStatus(teamId: string) {
       return "NOT_SELECTED";
     }
     if (teamRes.selected) {
-      if (
+      if (teamRes?.paymentStatus === "Paid") {
+        return "PAYMENT_PAID";
+      } else if (
         siteSettingsData.paymentsOpen &&
         (teamRes?.paymentStatus === "Pending" ||
           teamRes?.paymentStatus === "Refunded")
       ) {
         return "PAYMENT_PENDING";
-      } else if (
-        siteSettingsData.paymentsOpen &&
-        teamRes?.paymentStatus === "Paid"
-      ) {
-        return "PAYMENT_PAID";
       } else if (!siteSettingsData.paymentsOpen) {
         return "PAYMENT_NOT_OPEN";
       }
