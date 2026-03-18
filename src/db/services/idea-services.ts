@@ -86,10 +86,10 @@ export async function getIdeaSubmission(teamId: string) {
     });
     const submission = ideaSubmissionData
       ? {
-          pdfUrl: ideaSubmissionData.pptUrl,
-          trackId: ideaSubmissionData.trackId,
-          trackName: ideaSubmissionData.track?.name ?? "Unknown Track",
-        }
+        pdfUrl: ideaSubmissionData.pptUrl,
+        trackId: ideaSubmissionData.trackId,
+        trackName: ideaSubmissionData.track?.name ?? "Unknown Track",
+      }
       : null;
     return submission;
   } catch (error) {
@@ -170,7 +170,7 @@ export async function fetchIdeas({
   }
 }
 
-const MIN_EVALUATORS_PER_TEAM = 4;
+const MIN_EVALUATORS_PER_TEAM = 3;
 const CHUNK_SIZE = 200;
 
 export async function assignIdeaRound(roundId: string) {
@@ -774,17 +774,17 @@ export async function saveIdeaScores(user: DashboardUser, input: any) {
       criteriaIds.length === 0
         ? []
         : await db
-            .select({
-              id: ideaRoundCriteria.id,
-              maxScore: ideaRoundCriteria.maxScore,
-            })
-            .from(ideaRoundCriteria)
-            .where(
-              and(
-                eq(ideaRoundCriteria.roundId, assignment.roundId),
-                inArray(ideaRoundCriteria.id, criteriaIds),
-              ),
-            );
+          .select({
+            id: ideaRoundCriteria.id,
+            maxScore: ideaRoundCriteria.maxScore,
+          })
+          .from(ideaRoundCriteria)
+          .where(
+            and(
+              eq(ideaRoundCriteria.roundId, assignment.roundId),
+              inArray(ideaRoundCriteria.id, criteriaIds),
+            ),
+          );
 
     const criteriaMap = new Map(
       criteriaRows.map((row) => [row.id, row.maxScore]),
