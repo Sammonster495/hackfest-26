@@ -1,7 +1,13 @@
 "use client";
 
-import { CheckCircle2, ChevronRight, FileText, Pencil } from "lucide-react";
-import { useState } from "react";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Pencil,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -62,25 +68,41 @@ export function IdeaRoundPanel({
 
   const [trackFilter, setTrackFilter] = useState<string>("all");
   const [scoreFilter, setScoreFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const uniqueTracks = Array.from(
     new Set(allocations.map((a) => a.trackName).filter(Boolean)),
   ) as string[];
 
-  const filteredAllocations = allocations.filter((alloc) => {
-    if (trackFilter !== "all" && alloc.trackName !== trackFilter) return false;
-    if (
-      scoreFilter === "scored" &&
-      alloc.scoredCriteria !== alloc.totalCriteria
-    )
-      return false;
-    if (
-      scoreFilter === "pending" &&
-      alloc.scoredCriteria === alloc.totalCriteria
-    )
-      return false;
-    return true;
-  });
+  const filteredAllocations = useMemo(() => {
+    const result = allocations.filter((alloc) => {
+      if (trackFilter !== "all" && alloc.trackName !== trackFilter)
+        return false;
+      if (
+        scoreFilter === "scored" &&
+        alloc.scoredCriteria !== alloc.totalCriteria
+      )
+        return false;
+      if (
+        scoreFilter === "pending" &&
+        alloc.scoredCriteria === alloc.totalCriteria
+      )
+        return false;
+      return true;
+    });
+    setCurrentPage(1);
+    return result;
+  }, [allocations, trackFilter, scoreFilter]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAllocations.length / pageSize),
+  );
+  const paginatedAllocations = filteredAllocations.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const activeAllocation = allocations.find(
     (a) => a.assignmentId === scoringAssignmentId,
@@ -219,7 +241,7 @@ export function IdeaRoundPanel({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAllocations.map((alloc) => (
+              paginatedAllocations.map((alloc) => (
                 <TableRow key={alloc.assignmentId}>
                   <TableCell className="font-medium">
                     {alloc.teamName}
@@ -289,6 +311,54 @@ export function IdeaRoundPanel({
           </TableBody>
         </Table>
       </div>
+
+      {filteredAllocations.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>Rows per page</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(v) => {
+                setPageSize(Number(v));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>
+              Page {currentPage} of {totalPages} ({filteredAllocations.length}{" "}
+              rows)
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog
         open={!!scoringAssignmentId}

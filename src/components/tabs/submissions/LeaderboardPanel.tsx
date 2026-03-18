@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDashboardPermissions } from "~/components/dashboard/permissions-context";
@@ -53,6 +53,8 @@ export function LeaderboardPanel() {
   const [isMovingTeams, setIsMovingTeams] = useState(false);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [_refreshKey, setRefreshKey] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: hmm
   useEffect(() => {
@@ -127,6 +129,17 @@ export function LeaderboardPanel() {
       .map((row, index) => ({ ...row, rank: index + 1 }));
   }, [rows, trackId, search, sortBy]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset page on filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [trackId, search, sortBy, selectedRoundId]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const paginatedRows = filteredRows.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
   const allVisibleSelected =
     filteredRows.length > 0 &&
     filteredRows.every((row) => selectedTeamIds.includes(row.teamId));
@@ -149,7 +162,7 @@ export function LeaderboardPanel() {
   const currentRound = rounds.find((r) => r.id === selectedRoundId);
   const targetStage = currentRound?.targetStage;
   const isTerminalStage = targetStage === "SELECTED";
-  
+
   let nextStage: string | null = null;
   if (targetStage === "NOT_SELECTED") {
     nextStage = "SEMI_SELECTED";
@@ -165,10 +178,10 @@ export function LeaderboardPanel() {
       const res = await fetch("/api/dashboard/leaderboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           teamIds: selectedTeamIds,
           currentStage: currentRound.targetStage,
-          nextStage
+          nextStage,
         }),
       });
 
@@ -261,13 +274,16 @@ export function LeaderboardPanel() {
           <Button
             onClick={handleMoveToRound2}
             disabled={
-              isTerminalStage || selectedTeamIds.length === 0 || isMovingTeams || isLoading
+              isTerminalStage ||
+              selectedTeamIds.length === 0 ||
+              isMovingTeams ||
+              isLoading
             }
           >
-            {isMovingTeams 
-              ? "Moving..." 
-              : isTerminalStage 
-                ? "Already in last stage" 
+            {isMovingTeams
+              ? "Moving..."
+              : isTerminalStage
+                ? "Already in last stage"
                 : "Move Selected To Next Round"}
           </Button>
         )}
@@ -299,7 +315,7 @@ export function LeaderboardPanel() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredRows.map((row) => (
+            {paginatedRows.map((row) => (
               <TableRow key={row.teamId}>
                 {permissions.isAdmin && (
                   <TableCell>
@@ -347,6 +363,53 @@ export function LeaderboardPanel() {
           </TableBody>
         </Table>
       </div>
+
+      {filteredRows.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>Rows per page</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(v) => {
+                setPageSize(Number(v));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>
+              Page {currentPage} of {totalPages} ({filteredRows.length} rows)
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

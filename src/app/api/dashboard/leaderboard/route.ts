@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminProtected } from "~/auth/routes-wrapper";
 import { promoteLeaderboardTeams } from "~/db/services/submission-services";
-import { isAdmin } from "~/lib/auth/permissions";
 import { errorResponse } from "~/lib/response/error";
 
 const moveTeamsSchema = z.object({
@@ -11,7 +10,7 @@ const moveTeamsSchema = z.object({
   nextStage: z.enum(["NOT_SELECTED", "SEMI_SELECTED", "SELECTED"]),
 });
 
-export const POST = adminProtected(async (request, ctx, user) => {
+export const POST = adminProtected(async (request, _ctx, user) => {
   try {
     const body = await request.json();
     const parsed = moveTeamsSchema.parse(body);
@@ -19,7 +18,7 @@ export const POST = adminProtected(async (request, ctx, user) => {
       parsed.teamIds,
       parsed.currentStage,
       parsed.nextStage,
-      user
+      user,
     );
 
     return NextResponse.json({

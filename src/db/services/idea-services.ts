@@ -25,6 +25,7 @@ import db from "..";
 import {
   colleges,
   dashboardUserRoles,
+  dashboardUsers,
   ideaRoundAssignments,
   ideaRoundCriteria,
   ideaRounds,
@@ -241,17 +242,22 @@ export async function assignIdeaRound(roundId: string) {
   for (const team of unassignedTeams) {
     let assigned = 0;
     let attempts = 0;
+    const assignedEvaluatorsForTeam = new Set<string>();
 
     while (assigned < MIN_EVALUATORS_PER_TEAM && attempts < evaluators.length) {
       const evaluator = evaluators[evalIdx % evaluators.length]!;
       evalIdx++;
       attempts++;
 
+      if (assignedEvaluatorsForTeam.has(evaluator.id)) continue;
+
       newAssignments.push({
         roundId,
         teamId: team.id,
         evaluatorId: evaluator.id,
       });
+
+      assignedEvaluatorsForTeam.add(evaluator.id);
       assigned++;
     }
 
@@ -861,5 +867,106 @@ export async function saveIdeaScores(user: DashboardUser, input: any) {
     if (error instanceof AppError) throw error;
     console.error("Error saving idea scores:", error);
     throw new AppError("Failed to save idea scores", 500);
+  }
+}
+
+export async function fetchAllAllocations(roundId: string) {
+  try {
+    const round = await db.query.ideaRounds.findFirst({
+      where: (r, { eq }) => eq(r.id, roundId),
+    });
+
+    if (!round) {
+      throw new AppError("Round not found", 404);
+    }
+
+    // Get criteria for this round
+    const criteriaRows = await db
+      .select({
+        id: ideaRoundCriteria.id,
+        name: ideaRoundCriteria.name,
+        maxScore: ideaRoundCriteria.maxScore,
+      })
+      .from(ideaRoundCriteria)
+      .where(eq(ideaRoundCriteria.roundId, roundId))
+      .orderBy(asc(ideaRoundCriteria.name));
+
+    // Get all assignments with evaluator + team + track info
+    const assignments = await db
+      .select({
+        assignmentId: ideaRoundAssignments.id,
+        evaluatorId: ideaRoundAssignments.evaluatorId,
+        evaluatorName: dashboardUsers.name,
+        teamId: teams.id,
+        teamName: teams.name,
+        trackName: tracks.name,
+      })
+      .from(ideaRoundAssignments)
+      .innerJoin(
+        dashboardUsers,
+        eq(dashboardUsers.id, ideaRoundAssignments.evaluatorId),
+      )
+      .innerJoin(teams, eq(teams.id, ideaRoundAssignments.teamId))
+      .leftJoin(ideaSubmission, eq(ideaSubmission.teamId, teams.id))
+      .leftJoin(tracks, eq(tracks.id, ideaSubmission.trackId))
+      .where(eq(ideaRoundAssignments.roundId, roundId))
+      .orderBy(asc(dashboardUsers.name), asc(teams.name));
+
+    if (assignments.length === 0) {
+      return { criteria: criteriaRows, allocations: [] };
+    }
+
+    // Get all scores in one query
+    const allScores = await db
+      .select({
+        evaluatorId: ideaScores.evaluatorId,
+        teamId: ideaScores.teamId,
+        criteriaId: ideaScores.criteriaId,
+        rawScore: ideaScores.rawScore,
+      })
+      .from(ideaScores)
+      .where(eq(ideaScores.roundId, roundId));
+
+    // Build lookup: "evaluatorId|teamId|criteriaId" -> rawScore
+    const scoreMap = new Map<string, number>();
+    for (const s of allScores) {
+      scoreMap.set(`${s.evaluatorId}|${s.teamId}|${s.criteriaId}`, s.rawScore);
+    }
+
+    const allocations = assignments.map((a) => {
+      const scores = criteriaRows.map((c) => ({
+        criteriaId: c.id,
+        criteriaName: c.name,
+        maxScore: c.maxScore,
+        rawScore: scoreMap.get(`${a.evaluatorId}|${a.teamId}|${c.id}`) ?? null,
+      }));
+
+      const totalRawScore = scores.reduce(
+        (sum, s) => sum + (s.rawScore ?? 0),
+        0,
+      );
+      const totalMaxScore = criteriaRows.reduce(
+        (sum, c) => sum + c.maxScore,
+        0,
+      );
+
+      return {
+        assignmentId: a.assignmentId,
+        evaluatorId: a.evaluatorId,
+        evaluatorName: a.evaluatorName,
+        teamId: a.teamId,
+        teamName: a.teamName,
+        trackName: a.trackName,
+        scores,
+        totalRawScore,
+        totalMaxScore,
+      };
+    });
+
+    return { criteria: criteriaRows, allocations };
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error("Error fetching all allocations:", error);
+    throw new AppError("Failed to fetch allocations", 500);
   }
 }

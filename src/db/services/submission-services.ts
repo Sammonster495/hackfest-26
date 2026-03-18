@@ -1,7 +1,14 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
-import { DashboardUser } from "~/auth/routes-wrapper";
+import type { DashboardUser } from "~/auth/routes-wrapper";
 import db from "~/db";
-import { ideaSubmission, roles, teams } from "~/db/schema";
+import {
+  ideaSubmission,
+  notSelected,
+  roles,
+  selected,
+  semiSelected,
+  teams,
+} from "~/db/schema";
 import { isAdmin } from "~/lib/auth/permissions";
 import { AppError } from "~/lib/errors/app-error";
 
@@ -13,7 +20,7 @@ export async function promoteLeaderboardTeams(
   teamIds: string[],
   currentStage: string,
   nextStage: string,
-  user: DashboardUser
+  user: DashboardUser,
 ) {
   const isAdminUser = isAdmin(user);
   if (!isAdminUser) {
@@ -45,11 +52,33 @@ export async function promoteLeaderboardTeams(
     return { movedCount: 0 };
   }
 
-  const movedRows = await db
-    .update(teams)
-    .set({ teamStage: nextStage as any })
-    .where(inArray(teams.id, eligibleTeamIds))
-    .returning({ id: teams.id });
+  let movedRows: { id: string }[] = [];
+  await db.transaction(async (tx) => {
+    if (nextStage === "SEMI_SELECTED") {
+      await tx
+        .delete(notSelected)
+        .where(inArray(notSelected.teamId, eligibleTeamIds));
+      await tx.insert(semiSelected).values(
+        eligibleTeamIds.map((id) => ({
+          teamId: id,
+        })),
+      );
+    } else if (nextStage === "SELECTED") {
+      await tx
+        .delete(semiSelected)
+        .where(inArray(semiSelected.teamId, eligibleTeamIds));
+      await tx.insert(selected).values(
+        eligibleTeamIds.map((id) => ({
+          teamId: id,
+        })),
+      );
+    }
+    movedRows = await tx
+      .update(teams)
+      .set({ teamStage: nextStage as any })
+      .where(inArray(teams.id, eligibleTeamIds))
+      .returning({ id: teams.id });
+  });
 
   return { movedCount: movedRows.length };
 }

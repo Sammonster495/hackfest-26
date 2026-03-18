@@ -128,7 +128,7 @@ export function UsersTable() {
       toast.error(
         error instanceof Error ? error.message : "Failed to remove role",
       );
-      fetchData(); 
+      fetchData();
     }
   };
 
@@ -160,7 +160,7 @@ export function UsersTable() {
       toast.error(
         error instanceof Error ? error.message : "Failed to update user status",
       );
-      fetchData(); 
+      fetchData();
     }
   };
 
