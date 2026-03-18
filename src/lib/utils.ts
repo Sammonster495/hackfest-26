@@ -5,12 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function calculateTotalAmount(
-  amount: number,
-  membersCount: number,
-  gstPercentage: number,
-) {
+export function calculateTotalAmount(amount: number, membersCount: number) {
   const baseAmount = amount * membersCount;
-  const gstAmount = baseAmount * (gstPercentage / 100);
-  return baseAmount + gstAmount;
+  return baseAmount;
 }

@@ -194,8 +194,8 @@ export function TeamDetailsClient({
                 <p className="text-sm md:text-base text-amber-700/80 font-medium">
                   Congratulations! Your team has been selected! Please complete
                   the payment of{" "}
-                  <b>{calculateTotalAmount(400, members.length, 2)}rs</b>{" "}
-                  (including GST) to confirm your participation.
+                  <b>{calculateTotalAmount(400, members.length)}rs</b> to
+                  confirm your participation.
                 </p>
                 {team.leaderId === user.id ? (
                   paymentsOpen ? (

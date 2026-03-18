@@ -1,7 +1,8 @@
 "use client";
 
-import { Loader2, QrCode } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import QRCode from "react-qr-code";
 import { CloudinaryUpload } from "~/components/cloudinary-upload";
 import { Button } from "~/components/ui/button";
 import {
@@ -36,7 +37,7 @@ export function PaymentModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const amount = calculateTotalAmount(400, memberCount, 2);
+  const amount = calculateTotalAmount(400, memberCount);
 
   const handleSubmit = async () => {
     if (!paymentScreenshotUrl) {
@@ -127,9 +128,14 @@ export function PaymentModal({
 
           {/* QR code placeholder */}
           <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center w-48 h-48 bg-[#10569c]/5 border-2 border-dashed border-[#10569c]/20 rounded-xl">
+            <div className="flex items-center justify-center w-48 h-48">
               <div className="flex flex-col items-center gap-2 text-[#10569c]/40">
-                <QrCode className="h-16 w-16" />
+                <QRCode
+                  value={`upi://pay?pa=puneeth.reval3131@ybl&pn=PUNEETH%20R%20P&mc=0000&mode=02&purpose=00&tn=${teamId}`}
+                  size={256}
+                  viewBox={`0 0 256 256`}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                />
                 <p className="text-xs font-medium text-center">
                   QR code will appear here
                 </p>
@@ -161,9 +167,12 @@ export function PaymentModal({
           <div className="space-y-2">
             <label
               htmlFor="paymentScreenshot"
-              className="text-sm font-bold text-[#10569c]/80 uppercase tracking-wider"
+              className="text-sm font-bold text-[#10569c]/80 tracking-wider"
             >
-              Payment Screenshot
+              <span className="uppercase">Payment Screenshot</span>{" "}
+              <span className="text-xs font-normal text-[#10569c]/60">
+                (UPI Transaction ID should be visible in the screenshot)
+              </span>
             </label>
 
             <CloudinaryUpload
