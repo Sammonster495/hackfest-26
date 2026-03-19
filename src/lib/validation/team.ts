@@ -25,7 +25,7 @@ export const createTeamSchema = teamSchema
     attended: true,
     isCompleted: true,
     teamNumber: true,
-    teamStatus: true,
+    teamStage: true,
     paymentStatus: true,
   });
 
