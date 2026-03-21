@@ -15,11 +15,24 @@ import EventDetails from "./details";
 import EventDrawer from "./drawer";
 import { UserDetailsForm } from "./userDetails";
 
+export type Payment = {
+  id: string;
+  paymentName: string;
+  amount: string;
+  paymentType: "HACKFEST" | "EVENT";
+  paymentStatus: "Pending" | "Paid" | "Refunded" | null;
+  paymentScreenshotUrl: string | null;
+  paymentTransactionId: string | null;
+  userId: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
 export type EventTeam = {
   id: string;
   name: string;
   eventId: string;
   isComplete: boolean;
+  payment: Payment | null;
 };
 
 export type EventOrganizer = {
@@ -164,9 +177,7 @@ const Events = ({
         />
       </div>
 
-      {session?.eventUser && !session.eventUser.collegeId && (
-        <UserDetailsForm />
-      )}
+      {session?.user && !session.user.collegeId && <UserDetailsForm />}
 
       <EventDrawer
         session={session}

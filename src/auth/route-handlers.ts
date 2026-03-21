@@ -8,7 +8,7 @@ import { errorResponse } from "~/lib/response/error";
 import { getCurrentEventUser, getCurrentUser } from "./get-current-user";
 
 type User = NonNullable<Session["user"]>;
-type EventUser = NonNullable<Session["eventUser"]>;
+type EventUser = NonNullable<Session["user"]>;
 
 type RouteHandler = (
   request: NextRequest,

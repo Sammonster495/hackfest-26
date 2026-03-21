@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "~/components/ui/dialog";
 import { apiFetch } from "~/lib/fetcher";
-import PaymentButton from "../razorpay/PaymentButton";
+import { EventPaymentModal } from "./EventPaymentModal";
 import type { Event, EventMember, EventTeam } from "./layout";
 
 export function TeamDetailsDialog({
@@ -26,7 +26,6 @@ export function TeamDetailsDialog({
   isLeader,
   open,
   onOpenChange,
-  setDrawerOpen,
   fetchEvents,
 }: {
   event: Event;
@@ -141,10 +140,10 @@ export function TeamDetailsDialog({
     ...members.filter((m) => !m.isLeader),
   ];
 
-  const user: { id: string; name: string; email: string } = {
-    id: session?.eventUser?.id ?? "",
-    name: session?.eventUser?.name ?? "",
-    email: session?.eventUser?.email ?? "",
+  const _user: { id: string; name: string; email: string } = {
+    id: session?.user?.id ?? "",
+    name: session?.user?.name ?? "",
+    email: session?.user?.email ?? "",
   };
 
   return (
@@ -262,6 +261,7 @@ export function TeamDetailsDialog({
                 {isLeader &&
                   !member.isLeader &&
                   !isConfirmed &&
+                  !team.payment &&
                   isAvailable && (
                     <Button
                       onClick={() => handleKick(member.id ?? "")}
@@ -281,7 +281,7 @@ export function TeamDetailsDialog({
           </div>
 
           {/* Leave team — only for non-leaders when not confirmed */}
-          {!isLeader && !isConfirmed && isAvailable && (
+          {!isLeader && !isConfirmed && !team.payment && isAvailable && (
             <Button
               onClick={handleLeave}
               disabled={leaving}
@@ -302,7 +302,7 @@ export function TeamDetailsDialog({
           {/* Action buttons — only for leader */}
           {isLeader && isAvailable && (
             <div className="flex gap-3 pt-1">
-              {!isConfirmed && (
+              {!isConfirmed && !team.payment && (
                 <Button
                   onClick={handleDelete}
                   disabled={deleting || confirming}
@@ -341,38 +341,32 @@ export function TeamDetailsDialog({
                       "Confirm Team"
                     )}
                   </Button>
+                ) : team.payment ? (
+                  <Button
+                    disabled
+                    className="flex-1 bg-[#f4d35e] opacity-50 text-[#0b2545] font-bold"
+                  >
+                    Payment Under Review
+                  </Button>
                 ) : (
-                  <PaymentButton
-                    user={user}
+                  <EventPaymentModal
                     teamId={team.id}
                     eventId={team.eventId}
-                    amountInINR={amount}
-                    paymentType="EVENT"
-                    description="Event Participation Fee"
-                    className="flex-1 bg-[#f4d35e] text-[#0b2545] font-bold hover:brightness-110 transition-all duration-200 cursor-pointer"
-                    onStart={() => {
-                      onOpenChange(false);
-                      setDrawerOpen(false);
-                    }}
-                    onEnd={async () => {
-                      await fetchEvents();
-                      setDrawerOpen(true);
-                    }}
-                    onSuccess={() =>
-                      toast.success(
-                        "Payment successful! Your team has been confirmed.",
-                      )
-                    }
-                    onFailure={(error) => toast.error(error)}
+                    amount={amount}
                     disabled={
                       confirming ||
                       deleting ||
                       members.length < event.minTeamSize ||
                       members.length > event.maxTeamSize
                     }
-                  >
-                    Pay to Confirm
-                  </PaymentButton>
+                    onSuccess={async () => {
+                      toast.success(
+                        "Payment proof submitted! Your registration is under verification.",
+                      );
+                      await fetchEvents();
+                      onOpenChange(false);
+                    }}
+                  />
                 ))}
             </div>
           )}

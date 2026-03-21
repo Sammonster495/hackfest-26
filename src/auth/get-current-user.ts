@@ -8,5 +8,5 @@ export async function getCurrentUser() {
 
 export async function getCurrentEventUser() {
   const session = await eventAuth();
-  return session?.eventUser ?? null;
+  return session?.user ?? null;
 }

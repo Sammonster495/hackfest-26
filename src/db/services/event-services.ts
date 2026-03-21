@@ -8,7 +8,7 @@ import {
   type UserParticipation,
   updateById,
 } from "~/db/data/event-users";
-import { eventParticipants, eventTeams } from "~/db/schema";
+import { eventParticipants, eventTeams, payment } from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
 import { successResponse } from "~/lib/response/success";
@@ -72,6 +72,7 @@ export async function getAllEvents(userId?: string) {
         team: participation?.team ?? null,
         isLeader: participation?.isLeader ?? false,
         teamMembers: participation?.teamMembers ?? [],
+        payment: participation?.team.payment ?? null,
       }),
     };
   });
@@ -269,6 +270,7 @@ export async function teamRegistrationChecker(
     case "leave":
     case "kick":
     case "confirm":
+    case "payment":
     case "delete":
       if (!eventUser) {
         return new AppError("NOT_REGISTERED", 400, {
@@ -652,6 +654,84 @@ export async function deleteEventTeam(teamId: string, userId: string) {
     {
       title: "Team Deleted",
       description: "Your team has been deleted successfully.",
+    },
+  );
+}
+
+export async function submitEventPayment(
+  eventId: string,
+  teamId: string,
+  userId: string,
+  paymentScreenshotUrl: string,
+  transactionId: string | undefined,
+  amount: number,
+) {
+  if (!teamId)
+    return errorResponse(
+      new AppError("TEAM_NOT_FOUND", 404, {
+        title: "Team not found",
+        description: "The team you are trying to pay for does not exist.",
+      }),
+    );
+
+  const team = await findByIdandEvent(eventId, teamId);
+
+  if (!team) {
+    return errorResponse(
+      new AppError("TEAM_NOT_FOUND", 404, {
+        title: "Team not found",
+        description: "The team you are trying to pay for does not exist.",
+      }),
+    );
+  }
+
+  const leader = await findLeaderByTeam(teamId);
+
+  if (leader?.userId !== userId)
+    return errorResponse(
+      new AppError("NOT_TEAM_LEADER", 403, {
+        title: "Not team leader",
+        description: "Only the team leader can submit the team payment.",
+      }),
+    );
+
+  if (team.paymentStatus === "Paid") {
+    return errorResponse(
+      new AppError("ALREADY_PAID_OR_PENDING", 400, {
+        title: "Payment already submitted",
+        description: "This team has already submitted a payment.",
+      }),
+    );
+  }
+
+  const [insertedPayment] = await db.transaction(async (tx) => {
+    const [newPayment] = await tx
+      .insert(payment)
+      .values({
+        paymentName: `Event Fee - ${team.name}`,
+        paymentType: "EVENT",
+        amount: amount.toString(),
+        paymentStatus: "Pending",
+        paymentScreenshotUrl: paymentScreenshotUrl,
+        paymentTransactionId: transactionId,
+        userId: userId,
+      })
+      .returning();
+
+    await tx
+      .update(eventTeams)
+      .set({ paymentStatus: "Pending", paymentId: newPayment.id })
+      .where(eq(eventTeams.id, teamId));
+
+    return [newPayment];
+  });
+
+  return successResponse(
+    { payment: insertedPayment },
+    {
+      title: "Payment Proof Submitted",
+      description:
+        "Your payment screenshot has been uploaded and is pending verification.",
     },
   );
 }

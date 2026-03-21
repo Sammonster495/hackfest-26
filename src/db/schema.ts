@@ -4,7 +4,7 @@ export * from "./schema/college_request";
 export * from "./schema/dashboard-auth";
 export * from "./schema/evaluator";
 export * from "./schema/event";
-export * from "./schema/event-auth";
+
 export * from "./schema/ideaSubmission";
 export * from "./schema/judge";
 export * from "./schema/mentor";

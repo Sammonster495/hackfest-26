@@ -152,3 +152,5 @@ export const teamStage = pgEnum("team_stage", [
   "SEMI_SELECTED",
   "SELECTED",
 ]);
+
+export const paymentType = pgEnum("payment_type", ["HACKFEST", "EVENT"]);

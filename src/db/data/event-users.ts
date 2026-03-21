@@ -5,7 +5,7 @@ import {
   updateEventUserSchema,
 } from "~/lib/validation/event";
 import db from "..";
-import { eventParticipants, eventUsers } from "../schema";
+import { eventParticipants, participants } from "../schema";
 import { query } from ".";
 
 export type UserParticipation = {
@@ -19,14 +19,14 @@ export type UserParticipation = {
 };
 
 export async function findById(id: string) {
-  return query.eventUsers.findOne({
+  return query.participants.findOne({
     where: (u, { eq }) => eq(u.id, id),
   });
 }
 
 export async function updateById(id: string, data: UpdateEventUserInput) {
   const payload = updateEventUserSchema.parse(data);
-  return query.eventUsers.update(id, payload);
+  return query.participants.update(id, payload);
 }
 
 export async function findByEvent(eventId: string, userId: string) {
@@ -56,51 +56,58 @@ export async function findParticipantsByTeam(eventId: string, teamId: string) {
 }
 
 export async function findUserParticipations(userId: string) {
-  const participations = await db.query.eventParticipants.findMany({
-    where: (p, { eq }) => eq(p.userId, userId),
-    with: {
-      user: true,
-      team: {
-        with: {
-          members: {
-            with: {
-              user: true,
+  console.log("deqsx");
+  try {
+    const participations = await db.query.eventParticipants.findMany({
+      where: (p, { eq }) => eq(p.userId, userId),
+      with: {
+        user: true,
+        team: {
+          with: {
+            payment: true,
+            members: {
+              with: {
+                user: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+    const participationMap: Record<string, UserParticipation> = {};
 
-  const participationMap: Record<string, UserParticipation> = {};
-
-  for (const participation of participations) {
-    const eventId = participation.eventId;
-    if (!participationMap[eventId]) {
-      participationMap[eventId] = {
-        userId: participation.userId,
-        eventId: participation.eventId,
-        teamId: participation.teamId,
-        isLeader: participation.isLeader,
-        collegeId: participation.user?.collegeId ?? "",
-        team: {
-          id: participation.team?.id ?? "",
-          name: participation.team?.name ?? "",
-          eventId: participation.team?.eventId ?? "",
-          isComplete: participation.team?.isComplete ?? false,
-        },
-        teamMembers:
-          participation.team?.members.map((member) => ({
-            id: member.id,
-            name: member.user.name ?? "",
-            email: member.user.email ?? "",
-            isLeader: member.isLeader,
-          })) ?? [],
-      };
+    for (const participation of participations) {
+      const eventId = participation.eventId;
+      if (!participationMap[eventId]) {
+        participationMap[eventId] = {
+          userId: participation.userId,
+          eventId: participation.eventId,
+          teamId: participation.teamId,
+          isLeader: participation.isLeader,
+          collegeId: participation.user?.collegeId ?? "",
+          team: {
+            id: participation.team?.id ?? "",
+            name: participation.team?.name ?? "",
+            eventId: participation.team?.eventId ?? "",
+            isComplete: participation.team?.isComplete ?? false,
+            payment: participation.team?.payment ?? null,
+          },
+          teamMembers:
+            participation.team?.members.map((member) => ({
+              id: member.id,
+              name: member.user.name ?? "",
+              email: member.user.email ?? "",
+              isLeader: member.isLeader,
+            })) ?? [],
+        };
+      }
     }
-  }
 
-  return participationMap;
+    return participationMap;
+  } catch (e) {
+    console.log(e);
+    return {};
+  }
 }
 
 export async function findParticipantsByTeamIds(teamIds: string[]) {
@@ -109,9 +116,9 @@ export async function findParticipantsByTeamIds(teamIds: string[]) {
   return db
     .select({
       participant: eventParticipants,
-      user: eventUsers,
+      user: participants,
     })
     .from(eventParticipants)
-    .leftJoin(eventUsers, eq(eventParticipants.userId, eventUsers.id))
+    .leftJoin(participants, eq(eventParticipants.userId, participants.id))
     .where(inArray(eventParticipants.teamId, teamIds));
 }

@@ -14,7 +14,8 @@ import {
   eventTypeEnum,
   paymentStatusEnum,
 } from "../enum";
-import { eventUsers } from "./event-auth";
+import { participants } from "./participant";
+import { payment } from "./payment";
 import { dashboardUsers } from "./rbac";
 
 export const events = pgTable(
@@ -61,7 +62,7 @@ export const eventParticipants = pgTable(
       .references(() => events.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
-      .references((): PgColumn => eventUsers.id, { onDelete: "cascade" }),
+      .references((): PgColumn => participants.id, { onDelete: "cascade" }),
     teamId: text("team_id")
       .notNull()
       .references(() => eventTeams.id, { onDelete: "cascade" }),
@@ -80,6 +81,9 @@ export const eventTeams = pgTable("event_teams", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
+  paymentId: text("payment_id").references(() => payment.id, {
+    onDelete: "cascade",
+  }),
   paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
   eventId: text("event_id")
     .notNull()

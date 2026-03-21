@@ -353,6 +353,7 @@ export async function fetchTeams({
     .select({
       id: teams.id,
       name: teams.name,
+      paymentId: teams.paymentId,
       paymentStatus: teams.paymentStatus,
       leaderId: teams.leaderId,
       attended: teams.attended,

@@ -264,9 +264,7 @@ function AuthButton({
   const pathname = usePathname();
 
   const isEventMode = authType === "event";
-  const isLoggedIn = isEventMode
-    ? !!session?.eventUser
-    : !!session?.user && !session?.eventUser;
+  const isLoggedIn = !!session?.user;
 
   let href = "/";
   let label = "";
@@ -274,7 +272,7 @@ function AuthButton({
   if (isEventMode) {
     href = isLoggedIn ? "/events" : "/events/login";
     label = isLoggedIn
-      ? session?.eventUser?.name?.split(" ")[0] || "Profile"
+      ? session?.user?.name?.split(" ")[0] || "Profile"
       : "Event Login";
   } else {
     href = isLoggedIn

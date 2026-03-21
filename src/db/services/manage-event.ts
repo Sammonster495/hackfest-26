@@ -200,9 +200,7 @@ export async function getTeamDetails(
             },
           },
         },
-        payments: {
-          orderBy: (payments, { desc }) => desc(payments.createdAt),
-        },
+        payment: true,
       },
     });
 

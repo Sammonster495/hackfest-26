@@ -1,25 +1,19 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import { paymentStatusEnum } from "../enum";
-import { eventParticipants, eventTeams } from "./event";
+import { type PgColumn, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { paymentStatusEnum, paymentType } from "../enum";
 import { participants } from "./participant";
-import { teams } from "./team";
 
 export const payment = pgTable("payment", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   paymentName: text("payment_name").notNull(),
-  paymentType: text("payment_type").notNull().default("Hackfest"),
+  paymentType: paymentType("payment_type").notNull().default("HACKFEST"),
   amount: text("amount").notNull(),
   paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
   paymentScreenshotUrl: text("payment_screenshot_url"),
   paymentTransactionId: text("payment_transaction_id"),
 
-  userId: text("user_id").references(() => participants.id),
-  teamId: text("team_id").references(() => teams.id),
-
-  eventUserId: text("event_user_id").references(() => eventParticipants.id),
-  eventTeamId: text("event_team_id").references(() => eventTeams.id),
+  userId: text("user_id").references((): PgColumn => participants.id),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")

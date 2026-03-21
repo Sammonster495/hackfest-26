@@ -6,8 +6,8 @@ import { getAllEvents } from "~/db/services/event-services";
 export const GET = publicRoute(async (_req: NextRequest) => {
   const session = await auth();
 
-  if (session?.eventUser?.id) {
-    return await getAllEvents(session.eventUser.id);
+  if (session?.user?.id) {
+    return await getAllEvents(session.user.id);
   }
 
   return await getAllEvents();

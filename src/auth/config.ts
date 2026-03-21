@@ -7,6 +7,7 @@ import {
   accounts,
   participants,
   sessions,
+  teams,
   verificationTokens,
 } from "~/db/schema";
 import { env } from "~/env";
@@ -16,11 +17,11 @@ declare module "next-auth" {
     user: {
       id: string;
       isRegistrationComplete: boolean;
-    } & DefaultSession["user"];
-    eventUser?: DefaultSession["user"] & {
-      id: string;
+      isGoogle: boolean;
+      isGithub: boolean;
+      isHackathonSelected: boolean;
       collegeId: string | null;
-    };
+    } & DefaultSession["user"];
   }
 }
 
@@ -118,6 +119,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       )[0];
       session.user.isRegistrationComplete =
         dbUser?.isRegistrationComplete ?? false;
+      session.user.collegeId = dbUser?.collegeId ?? null;
+
+      const userAccounts = await db
+        .select({ provider: accounts.provider })
+        .from(accounts)
+        .where(eq(accounts.userId, user.id));
+
+      session.user.isGoogle = userAccounts.some((a) => a.provider === "google");
+      session.user.isGithub = userAccounts.some((a) => a.provider === "github");
+
+      session.user.isHackathonSelected = false;
+      if (dbUser?.teamId) {
+        const team = (
+          await db
+            .select()
+            .from(teams)
+            .where(eq(teams.id, dbUser.teamId))
+            .limit(1)
+        )[0];
+        if (team?.teamStage === "SELECTED") {
+          session.user.isHackathonSelected = true;
+        }
+      }
 
       return session;
     },

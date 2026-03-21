@@ -81,31 +81,39 @@ export default function RegisterButton({
         ) : event.userStatus === "not_confirmed" ? (
           isAvailable && (
             <div className="flex flex-col gap-2 w-full">
-              <Button onClick={onCancel} className={baseClass}>
-                Cancel Registration
-              </Button>
-              <PaymentButton
-                user={user}
-                amountInINR={event.amount}
-                eventId={event.id}
-                teamId={event.team?.id ?? ""}
-                paymentType="EVENT"
-                description="Event Participation Fee"
-                className={baseClass}
-                onStart={() => setDrawerOpen(false)}
-                onEnd={async () => {
-                  await fetchEvents();
-                  setDrawerOpen(true);
-                }}
-                onSuccess={() =>
-                  toast.success(
-                    "Payment successful! You are now registered for the event.",
-                  )
-                }
-                onFailure={(error) => toast.error(error)}
-              >
-                Pay to Confirm
-              </PaymentButton>
+              {!event.team?.payment && (
+                <Button onClick={onCancel} className={baseClass}>
+                  Cancel Registration
+                </Button>
+              )}
+              {event.team?.payment ? (
+                <Button className={baseClass} disabled>
+                  Payment Under Review
+                </Button>
+              ) : (
+                <PaymentButton
+                  user={user}
+                  amountInINR={event.amount}
+                  eventId={event.id}
+                  teamId={event.team?.id ?? ""}
+                  paymentType="EVENT"
+                  description="Event Participation Fee"
+                  className={baseClass}
+                  onStart={() => setDrawerOpen(false)}
+                  onEnd={async () => {
+                    await fetchEvents();
+                    setDrawerOpen(true);
+                  }}
+                  onSuccess={() =>
+                    toast.success(
+                      "Payment successful! You are now registered for the event.",
+                    )
+                  }
+                  onFailure={(error) => toast.error(error)}
+                >
+                  Pay to Confirm
+                </PaymentButton>
+              )}
             </div>
           )
         ) : (

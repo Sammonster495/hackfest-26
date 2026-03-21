@@ -16,7 +16,7 @@ import {
   eventParticipants,
   events,
   eventTeams,
-  eventUsers,
+  participants,
   permissions,
   rolePermissions,
   roles,
@@ -460,10 +460,10 @@ async function seed() {
     .from(colleges)
     .limit(1)
     .then((res) => res[0]);
-  let eventUsersList = await db.select().from(eventUsers);
+  let eventUsersList = await db.select().from(participants);
   if (eventUsersList.length === 0) {
     eventUsersList = await db
-      .insert(eventUsers)
+      .insert(participants)
       .values(
         Array.from({ length: 10 }, (_, i) => ({
           name: `Participant ${i + 1}`,

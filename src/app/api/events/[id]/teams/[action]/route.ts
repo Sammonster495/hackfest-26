@@ -7,6 +7,7 @@ import {
   joinEventTeam,
   kickMemberFromTeam,
   leaveEventTeam,
+  submitEventPayment,
   teamRegistrationChecker,
 } from "~/db/services/event-services";
 import { AppError } from "~/lib/errors/app-error";
@@ -15,6 +16,7 @@ import { errorResponse } from "~/lib/response/error";
 export const POST = registrationOpenEventRoute(
   async (req: NextRequest, context, user) => {
     const { id: eventId, action } = await context.params;
+    console.log(action);
 
     const eventUser = await teamRegistrationChecker(eventId, user.id, action);
     if (eventUser instanceof AppError) return errorResponse(eventUser);
@@ -55,6 +57,18 @@ export const POST = registrationOpenEventRoute(
             eventId,
             eventUser?.teamId ?? "",
             user.id,
+          );
+        }
+        case "payment": {
+          const { paymentScreenshotUrl, transactionId, amount } =
+            await req.json();
+          return await submitEventPayment(
+            eventId,
+            eventUser?.teamId ?? "",
+            user.id,
+            paymentScreenshotUrl,
+            transactionId,
+            amount,
           );
         }
         default:

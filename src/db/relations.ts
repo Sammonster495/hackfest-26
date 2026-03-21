@@ -6,13 +6,10 @@ import {
   colleges,
   dashboardUserRoles,
   dashboardUsers,
-  eventAccounts,
   eventOrganizers,
   eventParticipants,
-  eventSessions,
   events,
   eventTeams,
-  eventUsers,
   ideaSubmission,
   participants,
   payment,
@@ -44,13 +41,15 @@ export const userRelations = relations(participants, ({ one, many }) => ({
 
 export const collegeRelations = relations(colleges, ({ many }) => ({
   users: many(participants),
-  eventUsers: many(eventUsers),
 }));
 
 export const teamRelations = relations(teams, ({ many, one }) => ({
   users: many(participants),
   submission: one(ideaSubmission),
-  payments: many(payment),
+  payment: one(payment, {
+    fields: [teams.paymentId],
+    references: [payment.id],
+  }),
   leader: one(participants, {
     fields: [teams.leaderId],
     references: [participants.id],
@@ -115,18 +114,9 @@ export const paymentRelations = relations(payment, ({ one }) => ({
     fields: [payment.userId],
     references: [participants.id],
   }),
-  team: one(teams, {
-    fields: [payment.teamId],
-    references: [teams.id],
-  }),
-  eventUser: one(eventParticipants, {
-    fields: [payment.eventUserId],
-    references: [eventParticipants.id],
-  }),
-  eventTeam: one(eventTeams, {
-    fields: [payment.eventTeamId],
-    references: [eventTeams.id],
-  }),
+  team: one(teams),
+  eventUser: one(eventParticipants),
+  eventTeam: one(eventTeams),
 }));
 
 export const dashboardUserRelations = relations(dashboardUsers, ({ many }) => ({
@@ -191,17 +181,10 @@ export const eventTeamRelations = relations(eventTeams, ({ many, one }) => ({
     references: [events.id],
   }),
   members: many(eventParticipants),
-  payments: many(payment),
-}));
-
-export const eventUserRelations = relations(eventUsers, ({ many, one }) => ({
-  college: one(colleges, {
-    fields: [eventUsers.collegeId],
-    references: [colleges.id],
+  payment: one(payment, {
+    fields: [eventTeams.paymentId],
+    references: [payment.id],
   }),
-  participants: many(eventParticipants),
-  accounts: many(eventAccounts),
-  sessions: many(eventSessions),
 }));
 
 export const eventRelations = relations(events, ({ many }) => ({
@@ -212,10 +195,10 @@ export const eventRelations = relations(events, ({ many }) => ({
 
 export const eventParticipantRelations = relations(
   eventParticipants,
-  ({ one, many }) => ({
-    user: one(eventUsers, {
+  ({ one }) => ({
+    user: one(participants, {
       fields: [eventParticipants.userId],
-      references: [eventUsers.id],
+      references: [participants.id],
     }),
     team: one(eventTeams, {
       fields: [eventParticipants.teamId],
@@ -225,7 +208,6 @@ export const eventParticipantRelations = relations(
       fields: [eventParticipants.eventId],
       references: [events.id],
     }),
-    payments: many(payment),
   }),
 );
 

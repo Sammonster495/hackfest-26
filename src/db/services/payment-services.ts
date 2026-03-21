@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 import db from "~/db";
 import { getSiteSettings } from "~/db/data/siteSettings";
 import { payment, selected, teams } from "~/db/schema";
@@ -76,11 +76,7 @@ export async function createParticipationPayment({
   }
 
   // Check for an existing paid payment to avoid duplicates
-  const existingPaidPayment = await db.query.payment.findFirst({
-    where: and(eq(payment.teamId, teamId), eq(payment.paymentStatus, "Paid")),
-  });
-
-  if (existingPaidPayment) {
+  if (team.paymentStatus === "Paid") {
     throw new AppError("PAYMENT_ALREADY_COMPLETED", 400, {
       title: "Payment already completed",
       description: "Your team has already completed payment.",
@@ -93,28 +89,30 @@ export async function createParticipationPayment({
     .insert(payment)
     .values({
       paymentName: "HACKFEST_26 - PARTICIPATION",
-      paymentType: "PARTICIPATION",
+      paymentType: "HACKFEST",
       amount: amount.toString(),
       paymentStatus: "Pending",
       paymentScreenshotUrl,
       paymentTransactionId,
       userId,
-      teamId,
     })
     .returning({ id: payment.id });
+
+  await db
+    .update(teams)
+    .set({ paymentId: inserted.id, paymentStatus: "Pending" })
+    .where(eq(teams.id, teamId));
 
   return inserted;
 }
 
 export async function hasPendingPayment(teamId: string) {
-  const existingPayment = await db.query.payment.findFirst({
-    where: and(
-      eq(payment.teamId, teamId),
-      eq(payment.paymentStatus, "Pending"),
-    ),
+  const existingTeam = await db.query.teams.findFirst({
+    where: eq(teams.id, teamId),
+    columns: { paymentStatus: true },
   });
 
-  return !!existingPayment;
+  return existingTeam?.paymentStatus === "Pending";
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +183,8 @@ export async function getPaymentsForDashboard({
 export async function togglePaymentVerification(paymentId: string) {
   const existing = await db.query.payment.findFirst({
     where: eq(payment.id, paymentId),
-    columns: { id: true, paymentStatus: true, teamId: true },
+    columns: { id: true, paymentStatus: true },
+    with: { team: { columns: { id: true } } },
   });
 
   if (!existing) {
@@ -202,11 +201,11 @@ export async function togglePaymentVerification(paymentId: string) {
     .where(eq(payment.id, paymentId));
 
   // If toggling to Paid, also update team payment status
-  if (existing.teamId) {
+  if (existing.team?.id) {
     await db
       .update(teams)
       .set({ paymentStatus: newStatus })
-      .where(eq(teams.id, existing.teamId));
+      .where(eq(teams.id, existing.team.id));
   }
 
   return { paymentStatus: newStatus };
