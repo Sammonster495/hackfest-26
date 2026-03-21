@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import FuzzySearch from "fuzzy-search";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "~/components/ui/dialog";
@@ -62,11 +63,6 @@ export function UserDetailsForm() {
     },
   });
 
-  const selectedState = form.watch("state");
-
-  useEffect(() => {
-    form.setValue("collegeId", "");
-  }, [form]);
 
   useEffect(() => {
     async function loadColleges() {
@@ -99,17 +95,27 @@ export function UserDetailsForm() {
     }
   }
 
-  const filteredColleges = colleges.filter(
-    (college) => college.state === selectedState,
+  const collegeFuzzyFilter = useCallback(
+    (college: College, query: string) => {
+      if (!query) return true;
+      const searcher = new FuzzySearch([college], ["name"], {
+        caseSensitive: false,
+        sort: true,
+      });
+      return searcher.search(query).length > 0;
+    },
+    [],
   );
 
-  const stateNotSelected = !selectedState;
-
   return (
-    <Dialog open={true}>
+    <>
+      <div className="fixed inset-0 z-40 bg-black/80" />
+      <Dialog open={true} modal={false}>
       <DialogContent
         className="bg-[#0f1823] border border-[#39577c] text-white p-0 overflow-hidden max-w-md w-full rounded-2xl"
         showCloseButton={false}
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
       >
         <VisuallyHidden>
           <DialogTitle>Complete Your Registration Details</DialogTitle>
@@ -186,8 +192,7 @@ export function UserDetailsForm() {
                             <ComboboxItem
                               key={state}
                               value={state}
-                              onSelect={() => field.onChange(state)}
-                              className="text-white focus:bg-[#133c55]"
+                              className="text-white focus:bg-[#133c55] cursor-pointer"
                             >
                               {state}
                             </ComboboxItem>
@@ -210,24 +215,20 @@ export function UserDetailsForm() {
                       College
                     </FormLabel>
                     <Combobox
-                      key={selectedState}
-                      disabled={stateNotSelected}
-                      items={filteredColleges}
+                      items={colleges}
                       itemToStringLabel={(college: College) =>
                         college.name ?? "Unknown College"
                       }
                       onValueChange={(value) => field.onChange(value?.id)}
+                      filter={collegeFuzzyFilter}
                     >
                       <ComboboxInput
-                        disabled={stateNotSelected}
                         placeholder={
                           loadingColleges
                             ? "Loading colleges..."
-                            : stateNotSelected
-                              ? "Select a state first"
-                              : "Select college"
+                            : "Search and select college"
                         }
-                        className="w-full bg-[#133c55]/50 border-[#39577c] text-white placeholder:text-white/30 focus-visible:ring-[#f4d35e]/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-full bg-[#133c55]/50 border-[#39577c] text-white placeholder:text-white/30 focus-visible:ring-[#f4d35e]/40"
                       />
                       <ComboboxContent className="bg-[#0f1823] border-[#39577c]">
                         <ComboboxEmpty className="text-white/40">
@@ -238,8 +239,7 @@ export function UserDetailsForm() {
                             <ComboboxItem
                               key={college.name}
                               value={college}
-                              onSelect={() => field.onChange(college.id)}
-                              className="text-white focus:bg-[#133c55]"
+                              className="text-white focus:bg-[#133c55] cursor-pointer"
                             >
                               {college.name}
                             </ComboboxItem>
@@ -271,5 +271,6 @@ export function UserDetailsForm() {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
