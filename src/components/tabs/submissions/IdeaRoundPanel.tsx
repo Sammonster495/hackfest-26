@@ -67,7 +67,7 @@ export function IdeaRoundPanel({
   const [savingScores, setSavingScores] = useState(false);
 
   const [trackFilter, setTrackFilter] = useState<string>("all");
-  const [scoreFilter, setScoreFilter] = useState<string>("all");
+  const [scoreFilter, setScoreFilter] = useState<string>("pending");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -91,6 +91,16 @@ export function IdeaRoundPanel({
         return false;
       return true;
     });
+
+    result.sort((a, b) => {
+      const trackA = a.trackName || "";
+      const trackB = b.trackName || "";
+      if (trackA !== trackB) {
+        return trackA.localeCompare(trackB);
+      }
+      return a.teamName.localeCompare(b.teamName);
+    });
+
     setCurrentPage(1);
     return result;
   }, [allocations, trackFilter, scoreFilter]);

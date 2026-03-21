@@ -299,7 +299,8 @@ export function EvaluatorAllocationsPanel() {
                     <Select
                       value={filter}
                       onValueChange={(v: any) => {
-                        setFilter(v);``
+                        setFilter(v);
+                        ``;
                         setPage(1);
                       }}
                     >
