@@ -7,6 +7,7 @@ import {
 } from "~/lib/auth/permissions";
 
 export type DashboardPermissions = {
+  beAdmin: boolean;
   isAdmin: boolean;
   canManageSettings: boolean;
   canManageRoles: boolean;
@@ -126,13 +127,5 @@ export function PermissionGate({
     hasAccess = anyOf.some((key) => checkPermission(dashboardUser, key));
   }
 
-  return hasAccess ? (
-    children
-  ) : (
-    <div className="flex items-center justify-center p-8">
-      <p className="text-muted-foreground">
-        You do not have access to this feature.
-      </p>
-    </div>
-  );
+  return hasAccess ? children : null;
 }

@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { hasPermission } from "~/lib/auth/check-access";
+import { hasPermission, isAdmin } from "~/lib/auth/check-access";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -26,7 +26,8 @@ export default async function DashboardPage() {
   const { dashboardUser } = session;
 
   const permissions: DashboardPermissions = {
-    isAdmin: hasPermission(dashboardUser, "dashboard:access"),
+    beAdmin: isAdmin(dashboardUser),
+    isAdmin: hasPermission(dashboardUser, "dashboard:access"), // have to change name
     canManageSettings: hasPermission(dashboardUser, "settings:manage"),
     canManageRoles: hasPermission(dashboardUser, "roles:manage"),
     canViewAllTeams: hasPermission(dashboardUser, "team:view_all"),

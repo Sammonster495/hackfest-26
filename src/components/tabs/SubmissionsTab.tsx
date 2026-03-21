@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  PermissionGate,
   useDashboardPermissions,
   useDashboardUser,
 } from "~/components/dashboard/permissions-context";
@@ -135,10 +136,10 @@ export function SubmissionsTab() {
               {r.name}
             </TabsTrigger>
           ))}
-          <TabsTrigger value="LEADERBOARD">Leaderboard</TabsTrigger>
-          {permissions.isAdmin && (
+          <PermissionGate beAdmin>
+            <TabsTrigger value="LEADERBOARD">Leaderboard</TabsTrigger>
             <TabsTrigger value="SETTINGS">Settings</TabsTrigger>
-          )}
+          </PermissionGate>
         </TabsList>
 
         {uniqueRounds.map((r) => (
@@ -151,11 +152,13 @@ export function SubmissionsTab() {
           </TabsContent>
         ))}
 
-        <TabsContent value="LEADERBOARD">
-          <LeaderboardPanel />
-        </TabsContent>
+        {permissions.beAdmin && (
+          <TabsContent value="LEADERBOARD">
+            <LeaderboardPanel />
+          </TabsContent>
+        )}
 
-        {permissions.isAdmin && (
+        {permissions.beAdmin && (
           <TabsContent value="SETTINGS">
             <IdeaRoundSettingsPanel />
           </TabsContent>
