@@ -38,18 +38,11 @@ import type { IdeaAllocation } from "./types";
 
 interface IdeaRoundPanelProps {
   allocations: IdeaAllocation[];
-  onOpenPdf: (submission: {
-    id: string;
-    teamName: string;
-    trackName: string;
-    pdfUrl: string;
-  }) => void;
   onScoresSaved: () => void;
 }
 
 export function IdeaRoundPanel({
   allocations,
-  onOpenPdf,
   onScoresSaved,
 }: IdeaRoundPanelProps) {
   const [scoringAssignmentId, setScoringAssignmentId] = useState<string | null>(
@@ -290,16 +283,20 @@ export function IdeaRoundPanel({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() =>
-                          alloc.pptUrl
-                            ? onOpenPdf({
-                                id: alloc.teamId,
-                                teamName: alloc.teamName,
-                                trackName: alloc.trackName || "",
-                                pdfUrl: alloc.pptUrl,
-                              })
-                            : toast.error("No PDF submitted")
-                        }
+                        onClick={() => {
+                          if (alloc.pptUrl) {
+                            window.open(
+                              alloc.pptUrl,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                            if (alloc.roundStatus !== "Completed") {
+                              openScoreDialog(alloc.assignmentId);
+                            }
+                          } else {
+                            toast.error("No PDF submitted");
+                          }
+                        }}
                         disabled={!alloc.pptUrl}
                       >
                         <FileText className="w-4 h-4 mr-2" />

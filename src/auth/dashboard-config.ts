@@ -1,4 +1,4 @@
-import NextAuth, { type DefaultSession } from "next-auth";
+import NextAuth, { CredentialsSignin, type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import * as dashboardUserRoleData from "~/db/data/dashboard-user-roles";
 import * as dashboardUserData from "~/db/data/dashboard-users";
@@ -33,6 +33,10 @@ type DashboardUserRoleWithRelations = {
 
 type RoleWithPermissions = NonNullable<DashboardUserRoleWithRelations["role"]>;
 type RolePermission = NonNullable<RoleWithPermissions["permissions"]>[number];
+
+class AccountNotActiveError extends CredentialsSignin {
+  code = "AccountNotActive";
+}
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -84,14 +88,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        console.log("credentials", credentials);
-
         const user = await dashboardUserData.findByUsernameOrEmail(
           credentials.username as string,
         );
 
-        if (!user || !user.isActive) {
+        if (!user) {
           return null;
+        }
+
+        if (!user.isActive) {
+          console.log("AccountNotActive");
+          throw new AccountNotActiveError();
         }
 
         const isValid = await verifyPassword(

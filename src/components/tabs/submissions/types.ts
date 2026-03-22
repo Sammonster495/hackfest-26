@@ -43,17 +43,6 @@ export type TrackItem = {
   name: string;
 };
 
-export type PdfWindow = {
-  id: string;
-  title: string;
-  url: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  zIndex: number;
-};
-
 export type IdeaRound = {
   id: string;
   name: string;

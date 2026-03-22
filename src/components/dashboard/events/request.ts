@@ -71,6 +71,8 @@ export type TeamMemberOption = {
   participantId: string;
   name: string | null;
   email: string | null;
+  phone: string | null;
+  gender: string | null;
   isLeader: boolean;
 };
 

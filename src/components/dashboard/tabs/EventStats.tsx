@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Users } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -21,12 +21,13 @@ import {
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Input } from "~/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -91,10 +92,12 @@ export function EventStatsTab() {
   const [editingName, setEditingName] = useState("");
   const [updatingTeamId, setUpdatingTeamId] = useState<string | null>(null);
   const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null);
-  const [memberActionTeamId, setMemberActionTeamId] = useState<string | null>(
+  const [_memberActionTeamId, setMemberActionTeamId] = useState<string | null>(
     null,
   );
-  const [confirmingTeamId, setConfirmingTeamId] = useState<string | null>(null);
+  const [_confirmingTeamId, setConfirmingTeamId] = useState<string | null>(
+    null,
+  );
   const [addMemberPopoverTeamId, setAddMemberPopoverTeamId] = useState<
     string | null
   >(null);
@@ -103,10 +106,19 @@ export function EventStatsTab() {
   >(null);
   const [addMemberQuery, setAddMemberQuery] = useState("");
   const [leaderQuery, setLeaderQuery] = useState("");
-  const [addMemberOptions, setAddMemberOptions] = useState<ParticipantOption[]>(
+  const [_addMemberOptions, setAddMemberOptions] = useState<
+    ParticipantOption[]
+  >([]);
+  const [_leaderOptions, setLeaderOptions] = useState<TeamMemberOption[]>([]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const [viewTeamId, setViewTeamId] = useState<string | null>(null);
+  const [viewTeamMembers, setViewTeamMembers] = useState<TeamMemberOption[]>(
     [],
   );
-  const [leaderOptions, setLeaderOptions] = useState<TeamMemberOption[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   const activeEventId = selectedEventId || eventStats[0]?.eventId || "";
 
@@ -121,6 +133,16 @@ export function EventStatsTab() {
 
     return teams.filter((team) => team.name.toLowerCase().includes(query));
   }, [teams, teamSearchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, []);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTeams.length / pageSize));
+  const paginatedTeams = filteredTeams.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const loadStats = useCallback(async () => {
     setLoading(true);
@@ -223,6 +245,27 @@ export function EventStatsTab() {
     return () => clearTimeout(timeoutId);
   }, [selectedEventId, setLeaderPopoverTeamId, leaderQuery]);
 
+  async function handleRowClick(team: OrganizerEventTeam) {
+    if (
+      editingTeamId === team.id ||
+      deletingTeamId === team.id ||
+      updatingTeamId === team.id
+    )
+      return;
+    setViewTeamId(team.id);
+    setLoadingMembers(true);
+    setViewTeamMembers([]);
+    if (selectedEventId) {
+      const members = await getOrganizerTeamMembers(
+        selectedEventId,
+        team.id,
+        "",
+      );
+      setViewTeamMembers(members);
+    }
+    setLoadingMembers(false);
+  }
+
   async function handleCreateTeam() {
     if (!activeEventId) return;
     if (!newTeamName.trim()) {
@@ -256,7 +299,7 @@ export function EventStatsTab() {
     await refreshCurrentEvent();
   }
 
-  async function handleDeleteTeam(teamId: string) {
+  async function _handleDeleteTeam(teamId: string) {
     if (!selectedEventId) return;
 
     setDeletingTeamId(teamId);
@@ -268,7 +311,7 @@ export function EventStatsTab() {
     await refreshCurrentEvent();
   }
 
-  async function handleAddMember(
+  async function _handleAddMember(
     team: OrganizerEventTeam,
     participantId: string,
   ) {
@@ -294,7 +337,7 @@ export function EventStatsTab() {
     await refreshCurrentEvent();
   }
 
-  async function handleAssignLeader(
+  async function _handleAssignLeader(
     team: OrganizerEventTeam,
     participantId: string,
   ) {
@@ -320,12 +363,12 @@ export function EventStatsTab() {
     await refreshCurrentEvent();
   }
 
-  function participantLabel(option: ParticipantOption | TeamMemberOption) {
+  function _participantLabel(option: ParticipantOption | TeamMemberOption) {
     if (option.name && option.email) return `${option.name} (${option.email})`;
     return option.name || option.email || "Unknown participant";
   }
 
-  async function handleToggleConfirm(team: OrganizerEventTeam) {
+  async function _handleToggleConfirm(team: OrganizerEventTeam) {
     if (!selectedEventId) return;
 
     setConfirmingTeamId(team.id);
@@ -499,11 +542,17 @@ export function EventStatsTab() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTeams.map((team) => {
+                    {paginatedTeams.map((team) => {
                       const isEditing = editingTeamId === team.id;
 
                       return (
-                        <TableRow key={team.id}>
+                        <TableRow
+                          key={team.id}
+                          onClick={() => void handleRowClick(team)}
+                          className={
+                            isEditing ? "" : "cursor-pointer hover:bg-muted/50"
+                          }
+                        >
                           <TableCell>
                             {isEditing ? (
                               <Input
@@ -525,7 +574,10 @@ export function EventStatsTab() {
                               <Badge variant="secondary">Draft</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
+                          <TableCell
+                            className="text-right space-x-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {isEditing ? (
                               <>
                                 <Button
@@ -564,7 +616,7 @@ export function EventStatsTab() {
                                   Edit
                                 </Button>
 
-                                <Popover
+                                {/* <Popover
                                   open={addMemberPopoverTeamId === team.id}
                                   onOpenChange={(open) => {
                                     if (open) {
@@ -628,9 +680,9 @@ export function EventStatsTab() {
                                       )}
                                     </div>
                                   </PopoverContent>
-                                </Popover>
+                                </Popover> */}
 
-                                <Popover
+                                {/* <Popover
                                   open={setLeaderPopoverTeamId === team.id}
                                   onOpenChange={(open) => {
                                     if (open) {
@@ -692,8 +744,8 @@ export function EventStatsTab() {
                                       )}
                                     </div>
                                   </PopoverContent>
-                                </Popover>
-
+                                </Popover> */}
+                                {/* 
                                 <Button
                                   size="sm"
                                   variant={
@@ -707,8 +759,8 @@ export function EventStatsTab() {
                                     : team.isComplete
                                       ? "Unconfirm"
                                       : "Confirm"}
-                                </Button>
-                                <Button
+                                </Button> */}
+                                {/* <Button
                                   size="sm"
                                   variant="destructive"
                                   onClick={() => void handleDeleteTeam(team.id)}
@@ -717,7 +769,7 @@ export function EventStatsTab() {
                                   {deletingTeamId === team.id
                                     ? "Deleting..."
                                     : "Delete"}
-                                </Button>
+                                </Button> */}
                               </div>
                             )}
                           </TableCell>
@@ -727,10 +779,120 @@ export function EventStatsTab() {
                   </TableBody>
                 </Table>
               )}
+
+              {filteredTeams.length > 0 && (
+                <div className="flex items-center justify-between text-sm text-muted-foreground pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <span>Rows per page</span>
+                    <Select
+                      value={pageSize.toString()}
+                      onValueChange={(v) => {
+                        setPageSize(Number(v));
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[70px] text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Page {currentPage} of {totalPages} ({filteredTeams.length}{" "}
+                      rows)
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </>
       )}
+
+      <Dialog
+        open={!!viewTeamId}
+        onOpenChange={(open) => !open && setViewTeamId(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Team Details</DialogTitle>
+          </DialogHeader>
+
+          {loadingMembers ? (
+            <div className="py-8 text-center text-muted-foreground animate-pulse">
+              Loading members...
+            </div>
+          ) : viewTeamMembers.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              No members found for this team.
+            </div>
+          ) : (
+            <div className="py-2">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Gender</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {viewTeamMembers.map((member) => (
+                    <TableRow key={member.participantId}>
+                      <TableCell>
+                        {member.isLeader ? (
+                          <Badge variant="default" className="text-xs">
+                            Leader
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            Member
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {member.name || "-"}
+                      </TableCell>
+                      <TableCell>{member.email || "-"}</TableCell>
+                      <TableCell>{member.phone || "-"}</TableCell>
+                      <TableCell className="capitalize">
+                        {member.gender?.toLowerCase() || "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

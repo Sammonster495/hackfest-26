@@ -300,6 +300,8 @@ export async function getOrganizerTeamMembers(
         participantId: participants.id,
         name: participants.name,
         email: participants.email,
+        phone: participants.phone,
+        gender: participants.gender,
         isLeader: eventParticipants.isLeader,
       })
       .from(eventParticipants)
