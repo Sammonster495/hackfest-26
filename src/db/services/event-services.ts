@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { sendAdminPaymentEmail } from "~/lib/mail";
 import db from "~/db";
 import {
   findByEvent,
@@ -846,6 +847,22 @@ export async function submitEventPayment(
 
     return [newPayment];
   });
+
+  try {
+    const leaderUser = await db.query.participants.findFirst({
+      where: eq(participants.id, leader?.userId ?? ""),
+    });
+    const leaderName = leaderUser?.name || "Unknown Leader";
+
+    sendAdminPaymentEmail({
+      teamName: team.name,
+      teamId: team.id,
+      leaderName: leaderName,
+      paymentScreenshotUrl: paymentScreenshotUrl,
+    }).catch(console.error);
+  } catch (e) {
+    console.error("Failed to initiate admin payment email", e);
+  }
 
   return successResponse(
     { payment: insertedPayment },

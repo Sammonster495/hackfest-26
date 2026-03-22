@@ -32,8 +32,8 @@ export const POST = publicRoute(async (req: NextRequest) => {
 
     const mailOptions = {
       from: SMTP_USER || '"Hackfest Registration" <noreply@hackfest.dev>',
-      to: "finiteloopclub@nmamit.in",
-      cc: "tech@hackfest.dev, nnm23cs144@nmamit.in",
+      to: "bn2345890@gmail.com",
+      cc: "tech@hackfest.dev",
       subject: `New College Request: ${customCollegeName}`,
       html: `
         <h2>New College Addition Request</h2>
