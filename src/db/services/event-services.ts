@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { sendAdminPaymentEmail } from "~/lib/mail";
 import db from "~/db";
 import {
   findByEvent,
@@ -16,6 +15,7 @@ import {
   payment,
 } from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
+import { sendAdminPaymentEmail } from "~/lib/mail";
 import { errorResponse } from "~/lib/response/error";
 import { successResponse } from "~/lib/response/success";
 import {

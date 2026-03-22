@@ -64,6 +64,9 @@ export function EvaluatorAllocationsPanel() {
   const [filter, setFilter] = useState<"all" | "assigned" | "unassigned">(
     "all",
   );
+  const [sortBy, setSortBy] = useState<
+    "default" | "evaluatorsAsc" | "evaluatorsDesc"
+  >("default");
 
   const fetchData = async () => {
     try {
@@ -169,8 +172,21 @@ export function EvaluatorAllocationsPanel() {
           : "Team deallocated successfully",
       );
 
-      // Refresh allocations
-      void fetchAllocations(selectedRoundId, selectedEvaluatorId);
+      setAllocations((prev) =>
+        prev.map((a) => {
+          if (a.teamId === teamId) {
+            return {
+              ...a,
+              isAssigned: action === "assign",
+              assignedEvaluatorCount:
+                action === "assign"
+                  ? a.assignedEvaluatorCount + 1
+                  : Math.max(0, a.assignedEvaluatorCount - 1),
+            };
+          }
+          return a;
+        }),
+      );
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : `Failed to ${action} team`,
@@ -189,6 +205,13 @@ export function EvaluatorAllocationsPanel() {
     }
 
     return [...result].sort((a, b) => {
+      if (sortBy === "evaluatorsAsc") {
+        return a.assignedEvaluatorCount - b.assignedEvaluatorCount;
+      }
+      if (sortBy === "evaluatorsDesc") {
+        return b.assignedEvaluatorCount - a.assignedEvaluatorCount;
+      }
+
       if (a.normalizedTotalScore !== null && b.normalizedTotalScore !== null) {
         return b.normalizedTotalScore - a.normalizedTotalScore;
       }
@@ -197,7 +220,7 @@ export function EvaluatorAllocationsPanel() {
 
       return (b.isAssigned ? 1 : 0) - (a.isAssigned ? 1 : 0);
     });
-  }, [allocations, filter]);
+  }, [allocations, filter, sortBy]);
 
   const totalPages = Math.max(
     1,
@@ -300,7 +323,6 @@ export function EvaluatorAllocationsPanel() {
                       value={filter}
                       onValueChange={(v: any) => {
                         setFilter(v);
-                        ``;
                         setPage(1);
                       }}
                     >
@@ -313,6 +335,27 @@ export function EvaluatorAllocationsPanel() {
                           Assigned to User
                         </SelectItem>
                         <SelectItem value="unassigned">Not Assigned</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={sortBy}
+                      onValueChange={(v: any) => {
+                        setSortBy(v);
+                        setPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Sort</SelectItem>
+                        <SelectItem value="evaluatorsAsc">
+                          Fewest Evaluators
+                        </SelectItem>
+                        <SelectItem value="evaluatorsDesc">
+                          Most Evaluators
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

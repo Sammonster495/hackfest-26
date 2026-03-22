@@ -54,6 +54,116 @@ type AllocationRow = {
   totalMaxScore: number;
 };
 
+function EvaluatorStatsPanel({
+  allocations,
+}: {
+  allocations: AllocationRow[];
+}) {
+  const statsMap = new Map<
+    string,
+    { evaluatorName: string; total: number; scored: number }
+  >();
+
+  for (const alloc of allocations) {
+    const hasScored = alloc.scores?.some((s) => s.rawScore !== null);
+    const existing = statsMap.get(alloc.evaluatorId);
+    if (existing) {
+      existing.total += 1;
+      if (hasScored) existing.scored += 1;
+    } else {
+      statsMap.set(alloc.evaluatorId, {
+        evaluatorName: alloc.evaluatorName,
+        total: 1,
+        scored: hasScored ? 1 : 0,
+      });
+    }
+  }
+
+  const evaluatorStats = Array.from(statsMap.values()).sort((a, b) => {
+    if (b.scored !== a.scored) return b.scored - a.scored;
+    return b.total - a.total;
+  });
+
+  return (
+    <Card>
+      <CardContent className="space-y-6 pt-6">
+        <div>
+          <CardTitle className="mb-2">Evaluator Statistics</CardTitle>
+          <CardDescription>
+            Visual progress of evaluations by evaluator
+          </CardDescription>
+        </div>
+        {evaluatorStats.length === 0 ? (
+          <div className="text-sm text-muted-foreground p-4 border rounded-md flex items-center justify-center">
+            No active allocations found for this round.
+          </div>
+        ) : (
+          <div className="space-y-6 max-w-4xl">
+            {evaluatorStats.map((stat) => {
+              const left = stat.total - stat.scored;
+              const percentScored = Math.max(
+                0,
+                (stat.scored / stat.total) * 100,
+              );
+              const percentLeft = Math.max(0, (left / stat.total) * 100);
+
+              return (
+                <div key={stat.evaluatorName} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold">{stat.evaluatorName}</span>
+                    <span className="text-muted-foreground font-medium text-xs">
+                      {stat.scored} of {stat.total} scored
+                    </span>
+                  </div>
+                  <div className="flex h-5 w-full rounded-full overflow-hidden bg-muted relative group">
+                    {percentScored > 0 && (
+                      <div
+                        className="bg-emerald-500 h-full transition-all flex items-center justify-center"
+                        style={{ width: `${percentScored}%` }}
+                        title={`Scored: ${stat.scored} PPTs`}
+                      >
+                        {percentScored > 10 && (
+                          <span className="text-[10px] text-white/90 font-bold leading-none">
+                            {stat.scored}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {percentLeft > 0 && (
+                      <div
+                        className="bg-amber-400 h-full transition-all flex items-center justify-center"
+                        style={{ width: `${percentLeft}%` }}
+                        title={`Left to score: ${left} PPTs`}
+                      >
+                        {percentLeft > 10 && (
+                          <span className="text-[10px] text-black/60 font-bold leading-none">
+                            {left}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-4 border-t mt-6">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-emerald-500 block"></span>
+                <span>Scored PPTs</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-amber-400 block"></span>
+                <span>PPTs Left</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function IdeaRoundSettingsPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingRound, setIsCreatingRound] = useState(false);
@@ -356,6 +466,7 @@ export function IdeaRoundSettingsPanel() {
           <TabsList>
             <TabsTrigger value="general">General Settings</TabsTrigger>
             <TabsTrigger value="allocations">Evaluator Allocations</TabsTrigger>
+            <TabsTrigger value="stats">Evaluator Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
@@ -653,6 +764,10 @@ export function IdeaRoundSettingsPanel() {
 
           <TabsContent value="allocations">
             <EvaluatorAllocationsPanel />
+          </TabsContent>
+
+          <TabsContent value="stats">
+            <EvaluatorStatsPanel allocations={allocations} />
           </TabsContent>
         </Tabs>
       )}

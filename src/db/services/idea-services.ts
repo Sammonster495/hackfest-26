@@ -194,7 +194,7 @@ export async function assignIdeaRound(roundId: string) {
   const evaluators = await db
     .select({ id: dashboardUserRoles.dashboardUserId })
     .from(dashboardUserRoles)
-    .where(eq(dashboardUserRoles.roleId, round.roleId));
+    .where(and(eq(dashboardUserRoles.roleId, round.roleId), eq(dashboardUserRoles.isActive, true)));
 
   if (evaluators.length === 0)
     throw new Error(`No evaluators found for role: ${round.roleId}`);
@@ -1236,6 +1236,18 @@ export async function manageEvaluatorAllocation(
     }
 
     if (action === "assign") {
+      const existingAssignment = await db.query.ideaRoundAssignments.findFirst({
+        where: and(
+          eq(ideaRoundAssignments.roundId, roundId),
+          eq(ideaRoundAssignments.evaluatorId, evaluatorId),
+          eq(ideaRoundAssignments.teamId, teamId),
+        ),
+      });
+
+      if (existingAssignment) {
+        throw new AppError("Evaluator is already assigned to this team", 409);
+      }
+
       await db
         .insert(ideaRoundAssignments)
         .values({

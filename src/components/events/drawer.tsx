@@ -1,5 +1,5 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Copy, Mail, Phone, User } from "lucide-react";
+import { Copy } from "lucide-react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
@@ -9,7 +9,7 @@ import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer";
-import type { Event, EventOrganizer } from "./layout";
+import type { Event } from "./layout";
 import RegisterButton from "./registerButton";
 import { getDate, getTeamSize } from "./utils";
 

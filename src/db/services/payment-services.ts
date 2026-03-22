@@ -4,15 +4,15 @@ import db from "~/db";
 import { getSiteSettings } from "~/db/data/siteSettings";
 import {
   eventParticipants,
-  eventTeams,
   events,
+  eventTeams,
   payment,
   selected,
   teams,
 } from "~/db/schema";
-import { sendPaymentVerifiedEmail } from "~/lib/mail";
 import { isAdmin } from "~/lib/auth/permissions";
 import { AppError } from "~/lib/errors/app-error";
+import { sendPaymentVerifiedEmail } from "~/lib/mail";
 
 // ---------------------------------------------------------------------------
 // Create participation payment (screenshot-based, no Razorpay)
@@ -262,7 +262,7 @@ export async function togglePaymentVerification(paymentId: string) {
   try {
     let leaderUser: { name: string | null; email: string | null } | undefined;
     let teamName = "";
-    let eventNameStr: string | undefined = undefined;
+    let eventNameStr: string | undefined;
 
     if (existing.paymentType === "EVENT" && existing.eventTeam?.id) {
       const leader = await db.query.eventParticipants.findFirst({
