@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDashboardPermissions } from "~/components/dashboard/permissions-context";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
+import { Badge } from "~/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,7 @@ type LeaderboardRow = {
   teamId: string;
   teamName: string;
   collegeName: string | null;
+  stateName: string | null;
   trackId: string;
   trackName: string;
   rawTotalScore: number;
@@ -82,9 +85,10 @@ export function LeaderboardPanel() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<LeaderboardRow | null>(null);
-  const [teamEvaluations, setTeamEvaluations] = useState<EvaluatorBreakdown[]>(
-    [],
-  );
+  const [teamEvaluations, setTeamEvaluations] = useState<EvaluatorBreakdown[]>([]);
+
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
+  const [statsModalType, setStatsModalType] = useState<"colleges" | "states" | "tracks">("colleges");
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: hmm
   useEffect(() => {
@@ -171,8 +175,8 @@ export function LeaderboardPanel() {
   );
 
   const allVisibleSelected =
-    filteredRows.length > 0 &&
-    filteredRows.every((row) => selectedTeamIds.includes(row.teamId));
+    paginatedRows.length > 0 &&
+    paginatedRows.every((row) => selectedTeamIds.includes(row.teamId));
 
   const toggleRowSelection = (teamId: string, checked: boolean) => {
     setSelectedTeamIds((prev) => {
@@ -182,11 +186,16 @@ export function LeaderboardPanel() {
   };
 
   const toggleSelectAllVisible = (checked: boolean) => {
+    const paginatedTeamIds = paginatedRows.map((row) => row.teamId);
     if (!checked) {
-      setSelectedTeamIds([]);
+      setSelectedTeamIds((prev) =>
+        prev.filter((id) => !paginatedTeamIds.includes(id)),
+      );
       return;
     }
-    setSelectedTeamIds(filteredRows.map((row) => row.teamId));
+    setSelectedTeamIds((prev) =>
+      Array.from(new Set([...prev, ...paginatedTeamIds])),
+    );
   };
 
   const currentRound = rounds.find((r) => r.id === selectedRoundId);
@@ -199,6 +208,50 @@ export function LeaderboardPanel() {
   } else if (targetStage === "SEMI_SELECTED") {
     nextStage = "SELECTED";
   }
+
+  const selectedTeams = useMemo(() => {
+    return rows.filter((row) => selectedTeamIds.includes(row.teamId));
+  }, [rows, selectedTeamIds]);
+
+  const collegesBreakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const team of selectedTeams) {
+      if (!team.collegeName) continue;
+      counts.set(team.collegeName, (counts.get(team.collegeName) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [selectedTeams]);
+
+  const statesBreakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const team of selectedTeams) {
+      if (!team.stateName) continue;
+      counts.set(team.stateName, (counts.get(team.stateName) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [selectedTeams]);
+
+  const tracksBreakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const team of selectedTeams) {
+      if (!team.trackName) continue;
+      counts.set(team.trackName, (counts.get(team.trackName) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => {
+        const track = tracks.find((t) => t.name === name);
+        return { name, count, id: track?.id };
+      })
+      .sort((a, b) => b.count - a.count);
+  }, [selectedTeams, tracks]);
+
+  const uniqueCollegesCount = collegesBreakdown.length;
+  const uniqueStatesCount = statesBreakdown.length;
+  const uniqueTracksCount = tracksBreakdown.length;
 
   const handleRowClick = async (row: LeaderboardRow) => {
     setSelectedTeam(row);
@@ -250,6 +303,77 @@ export function LeaderboardPanel() {
 
   return (
     <div className="space-y-4">
+      {permissions.isAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Selected Unique Colleges</CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setStatsModalType("colleges");
+                  setStatsModalOpen(true);
+                }}
+              >
+                <Eye className="h-4 w-4 text-muted-foreground pointer-events-none" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{uniqueCollegesCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">Based on teams selected for next round</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Selected Unique States</CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setStatsModalType("states");
+                  setStatsModalOpen(true);
+                }}
+              >
+                <Eye className="h-4 w-4 text-muted-foreground pointer-events-none" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{uniqueStatesCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">Based on teams selected for next round</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Selected Unique Tracks</CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setStatsModalType("tracks");
+                  setStatsModalOpen(true);
+                }}
+              >
+                <Eye className="h-4 w-4 text-muted-foreground pointer-events-none" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{uniqueTracksCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">Based on teams selected for next round</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -336,6 +460,24 @@ export function LeaderboardPanel() {
           </Button>
         )}
       </div>
+
+      {selectedTeamIds.length > 0 && tracksBreakdown.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/40 rounded-lg border">
+          <span className="text-sm font-medium mr-1 text-muted-foreground">Selected per track (click to filter):</span>
+          {tracksBreakdown.map((t) => (
+            <Badge 
+              key={t.name} 
+              variant={trackId === t.id ? "default" : "secondary"} 
+              className="px-2.5 py-0.5 text-xs font-normal cursor-pointer transition-colors"
+              onClick={() => {
+                if (t.id) setTrackId(trackId === t.id ? "all" : t.id);
+              }}
+            >
+              {t.name}: <span className="ml-1 font-bold">{t.count}</span>
+            </Badge>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-lg border overflow-hidden">
         <Table>
@@ -570,6 +712,46 @@ export function LeaderboardPanel() {
               ))}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={statsModalOpen} onOpenChange={setStatsModalOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {statsModalType === "colleges" ? "Selected Colleges Breakdown" : statsModalType === "states" ? "Selected States Breakdown" : "Selected Tracks Breakdown"}
+            </DialogTitle>
+            <DialogDescription>
+              Count of teams selected per {statsModalType === "colleges" ? "college" : statsModalType === "states" ? "state" : "track"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto mt-4 px-1 rounded-md border bg-card">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background shadow-sm border-b z-10">
+                <TableRow>
+                  <TableHead>
+                    {statsModalType === "colleges" ? "College/University" : statsModalType === "states" ? "State" : "Track"}
+                  </TableHead>
+                  <TableHead className="text-right">Teams</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(statsModalType === "colleges" ? collegesBreakdown : statsModalType === "states" ? statesBreakdown : tracksBreakdown).map((item) => (
+                  <TableRow key={item.name}>
+                    <TableCell className="font-medium text-sm">{item.name}</TableCell>
+                    <TableCell className="text-right">{item.count}</TableCell>
+                  </TableRow>
+                ))}
+                {(statsModalType === "colleges" ? collegesBreakdown : statsModalType === "states" ? statesBreakdown : tracksBreakdown).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center text-muted-foreground py-4 text-sm">
+                      No data available based on current selection.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
