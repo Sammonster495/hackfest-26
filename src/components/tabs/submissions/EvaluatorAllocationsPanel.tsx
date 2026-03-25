@@ -44,6 +44,7 @@ type EvaluatorUser = {
   id: string;
   name: string;
   email: string;
+  roles: { id: string; name: string }[];
 };
 
 export function EvaluatorAllocationsPanel() {
@@ -273,14 +274,24 @@ export function EvaluatorAllocationsPanel() {
                     <SelectValue placeholder="Select an evaluator" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name} ({user.email})
-                      </SelectItem>
-                    ))}
-                    {users.length === 0 && (
+                    {users
+                      .filter((user) =>
+                        selectedRound
+                          ? user.roles.some((r) => r.id === selectedRound.roleId)
+                          : true
+                      )
+                      .map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} ({user.email})
+                        </SelectItem>
+                      ))}
+                    {users.filter((user) =>
+                      selectedRound
+                        ? user.roles.some((r) => r.id === selectedRound.roleId)
+                        : true
+                    ).length === 0 && (
                       <SelectItem value="none" disabled>
-                        No evaluators found
+                        No evaluators found for this role
                       </SelectItem>
                     )}
                   </SelectContent>

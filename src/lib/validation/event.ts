@@ -27,6 +27,7 @@ export const updateEventUserSchema = z.object({
     message: "Please select a valid gender",
   }),
   collegeId: z.string().min(1, "College is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number too long"),
 });
 
 export type UpdateEventUserInput = z.infer<typeof updateEventUserSchema>;

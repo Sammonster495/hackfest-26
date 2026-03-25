@@ -11,6 +11,14 @@ import {
   CardDescription,
   CardTitle,
 } from "~/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import {
   Select,
@@ -27,6 +35,13 @@ type RoleCandidate = {
   id: string;
   name: string;
   hasEvaluatorAccess: boolean;
+};
+
+type EvaluatorUser = {
+  id: string;
+  name: string;
+  email: string;
+  roles: { id: string; name: string }[];
 };
 
 type AllocationCriteria = {
@@ -170,9 +185,11 @@ export function IdeaRoundSettingsPanel() {
   const [isCreatingCriteria, setIsCreatingCriteria] = useState(false);
   const [isUpdatingRoundStatus, setIsUpdatingRoundStatus] = useState(false);
   const [isAssigningTeams, setIsAssigningTeams] = useState(false);
+  const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
 
   const [rounds, setRounds] = useState<IdeaRound[]>([]);
   const [roles, setRoles] = useState<RoleCandidate[]>([]);
+  const [users, setUsers] = useState<EvaluatorUser[]>([]);
   const [criteria, setCriteria] = useState<IdeaCriterion[]>([]);
 
   const [selectedRoundId, setSelectedRoundId] = useState("");
@@ -198,23 +215,31 @@ export function IdeaRoundSettingsPanel() {
     [rounds, selectedRoundId],
   );
 
+  const targetEvaluators = useMemo(() => {
+    if (!selectedRound) return [];
+    return users.filter((u) => u.roles.some((r) => r.id === selectedRound.roleId));
+  }, [users, selectedRound]);
+
   const canEditSelectedRound = selectedRound?.status === "Draft";
 
   const fetchData = async () => {
     try {
-      const [roundsRes, rolesRes] = await Promise.all([
+      const [roundsRes, rolesRes, usersRes] = await Promise.all([
         fetch("/api/dashboard/idea-rounds"),
         fetch("/api/dashboard/submissions/settings"),
+        fetch("/api/dashboard/users"),
       ]);
 
-      if (!roundsRes.ok || !rolesRes.ok)
+      if (!roundsRes.ok || !rolesRes.ok || !usersRes.ok)
         throw new Error("Failed to fetch data");
 
       const roundsData = await roundsRes.json();
       const rolesData = await rolesRes.json();
+      const usersData = await usersRes.json();
 
       setRounds(roundsData);
       setRoles(rolesData.roles);
+      setUsers(usersData);
 
       if (roundsData.length > 0 && !selectedRoundId) {
         setSelectedRoundId(roundsData[0].id);
@@ -733,7 +758,7 @@ export function IdeaRoundSettingsPanel() {
                         </span>
                       </div>
                       <Button
-                        onClick={handleAssignTeams}
+                        onClick={() => setIsBulkAssignModalOpen(true)}
                         disabled={
                           !selectedRoundId ||
                           isAssigningTeams ||
@@ -771,6 +796,56 @@ export function IdeaRoundSettingsPanel() {
           </TabsContent>
         </Tabs>
       )}
+
+      <Dialog open={isBulkAssignModalOpen} onOpenChange={setIsBulkAssignModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Bulk Assignment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to distribute the teams equally among the following evaluators?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            <div className="flex justify-between items-center text-sm font-medium">
+              <span>Selected Evaluators</span>
+              <Badge>{targetEvaluators.length}</Badge>
+            </div>
+            <div className="rounded-md border bg-muted/50 p-3 max-h-48 overflow-y-auto">
+              {targetEvaluators.length > 0 ? (
+                <ul className="space-y-1">
+                  {targetEvaluators.map((ev) => (
+                    <li key={ev.id} className="text-sm list-disc list-inside">
+                      {ev.name} <span className="text-xs text-muted-foreground">{
+                        ev.email?.trim().length > 0 ? `(${ev.email})` : ""
+                      }</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                  No evaluators found with the required role.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBulkAssignModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setIsBulkAssignModalOpen(false);
+                handleAssignTeams();
+              }}
+              disabled={isAssigningTeams || targetEvaluators.length === 0}
+            >
+              Confirm Assignment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

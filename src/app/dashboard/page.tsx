@@ -16,6 +16,45 @@ import {
 } from "~/components/ui/card";
 import { hasPermission, isAdmin } from "~/lib/auth/check-access";
 
+const CRITERIA = [
+  {
+    number: "01",
+    title: "Feasibility",
+    description:
+      "Is the project practically possible to build within the given timeframe?",
+    questions: [
+      "Is the project practically achievable?",
+      "Does the team have the necessary resources?",
+      "Are the technical requirements realistic?",
+      "Can it be completed within the time constraint?",
+    ],
+  },
+  {
+    number: "02",
+    title: "Innovation",
+    description:
+      "Does the project bring a novel idea or a unique approach to an existing problem?",
+    questions: [
+      "Is the core idea original?",
+      "Does it solve the problem in a new way?",
+      "What differentiates it from existing solutions?",
+      "Is the approach creative?",
+    ],
+  },
+  {
+    number: "03",
+    title: "Clarity of Concept",
+    description:
+      "Does the team clearly understand what they are trying to build and how it would work?",
+    questions: [
+      "Is the idea well-defined, or is it vague and buzzword-heavy?",
+      "Do they clearly explain how the solution would work (even at a high level)?",
+      "Are their assumptions reasonable for a hackathon-level concept?",
+      "Do they avoid unrealistic or absolute claims (e.g., “100% accurate”)?",
+    ],
+  },
+];
+
 export default async function DashboardPage() {
   const session = await auth();
 
@@ -26,6 +65,9 @@ export default async function DashboardPage() {
   const { dashboardUser } = session;
   const hasOrganizerRole = dashboardUser.roles.some(
     (role) => role.name === "ORGANIZER",
+  );
+  const hasRoundTwoEvaluatorRole = dashboardUser.roles.some(
+    (role) => role.name === "ROUND_ONE_EVALUATOR"
   );
   const canAccessDashboard =
     hasPermission(dashboardUser, "dashboard:access") ||
@@ -184,7 +226,50 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+        {hasRoundTwoEvaluatorRole && (
+          <>
+            <div className="space-y-2 mt-8">
+              <h2 className="text-xl font-semibold tracking-tight text-primary">Evaluation Criteria</h2>
+              <p className="text-sm text-muted-foreground">
+                Use the following criteria when scoring submissions in Round 2.
+              </p>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {CRITERIA.map((c) => (
+                <Card
+                  key={c.number}
+                  className="relative overflow-hidden border-2 border-primary/20 bg-linear-to-br from-card to-primary/5 shadow-md hover:shadow-lg hover:border-primary/40 transition-all duration-300"
+                >
+                  <CardHeader className="pb-3 border-b border-primary/10 bg-primary/5">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base leading-snug font-bold text-primary">{c.title}</CardTitle>
+                      <span className="text-3xl font-extrabold text-primary/10 leading-none select-none">
+                        {c.number}
+                      </span>
+                    </div>
+                    <CardDescription className="text-sm leading-relaxed text-foreground/80 mt-2">
+                      {c.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+                      Ask yourself:
+                    </p>
+                    <ul className="space-y-2">
+                      {c.questions.map((q, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
+                          <span>{q}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
         <DashboardContent session={session} />
       </div>
     </DashboardPermissionsProvider>

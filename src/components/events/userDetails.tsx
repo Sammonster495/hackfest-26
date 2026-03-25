@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Input } from "~/components/ui/input";
 import { genderEnum, stateEnum } from "~/db/enum";
 import { apiFetch } from "~/lib/fetcher";
 import {
@@ -60,6 +61,7 @@ export function UserDetailsForm() {
       state: undefined,
       gender: undefined,
       collegeId: "",
+      phone: "",
     },
   });
 
@@ -246,6 +248,26 @@ export function UserDetailsForm() {
                           </ComboboxList>
                         </ComboboxContent>
                       </Combobox>
+                      <FormMessage className="text-red-400 text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-xs font-semibold uppercase tracking-widest text-[#f4d35e]/60">
+                        Phone Number
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter your phone number"
+                          className="w-full bg-[#133c55]/50 border-[#39577c] text-white placeholder:text-white/30 focus-visible:ring-[#f4d35e]/40 h-10"
+                          {...field}
+                        />
+                      </FormControl>
                       <FormMessage className="text-red-400 text-xs" />
                     </FormItem>
                   )}
