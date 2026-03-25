@@ -15,9 +15,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import {
@@ -217,7 +217,9 @@ export function IdeaRoundSettingsPanel() {
 
   const targetEvaluators = useMemo(() => {
     if (!selectedRound) return [];
-    return users.filter((u) => u.roles.some((r) => r.id === selectedRound.roleId));
+    return users.filter((u) =>
+      u.roles.some((r) => r.id === selectedRound.roleId),
+    );
   }, [users, selectedRound]);
 
   const canEditSelectedRound = selectedRound?.status === "Draft";
@@ -797,12 +799,16 @@ export function IdeaRoundSettingsPanel() {
         </Tabs>
       )}
 
-      <Dialog open={isBulkAssignModalOpen} onOpenChange={setIsBulkAssignModalOpen}>
+      <Dialog
+        open={isBulkAssignModalOpen}
+        onOpenChange={setIsBulkAssignModalOpen}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Bulk Assignment</DialogTitle>
             <DialogDescription>
-              Are you sure you want to distribute the teams equally among the following evaluators?
+              Are you sure you want to distribute the teams equally among the
+              following evaluators?
             </DialogDescription>
           </DialogHeader>
 
@@ -816,9 +822,10 @@ export function IdeaRoundSettingsPanel() {
                 <ul className="space-y-1">
                   {targetEvaluators.map((ev) => (
                     <li key={ev.id} className="text-sm list-disc list-inside">
-                      {ev.name} <span className="text-xs text-muted-foreground">{
-                        ev.email?.trim().length > 0 ? `(${ev.email})` : ""
-                      }</span>
+                      {ev.name}{" "}
+                      <span className="text-xs text-muted-foreground">
+                        {ev.email?.trim().length > 0 ? `(${ev.email})` : ""}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -831,7 +838,10 @@ export function IdeaRoundSettingsPanel() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBulkAssignModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkAssignModalOpen(false)}
+            >
               Cancel
             </Button>
             <Button

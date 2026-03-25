@@ -70,7 +70,8 @@ export function IdeaRoundPanel({
   ) as string[];
 
   const scoredCount = useMemo(() => {
-    return allocations.filter((a) => a.scoredCriteria === a.totalCriteria).length;
+    return allocations.filter((a) => a.scoredCriteria === a.totalCriteria)
+      .length;
   }, [allocations]);
   const pendingCount = allocations.length - scoredCount;
 

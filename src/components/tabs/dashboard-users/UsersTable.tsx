@@ -5,10 +5,10 @@ import {
   ChevronRight,
   Loader2,
   MoreHorizontal,
+  Plus,
   Search,
   ShieldMinus,
   ShieldPlus,
-  Plus,
   Trash,
   Users,
 } from "lucide-react";
@@ -17,12 +17,6 @@ import { toast } from "sonner";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -30,6 +24,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
 import {
   Select,
@@ -256,11 +256,18 @@ export function UsersTable() {
     }
 
     const validUsers = bulkUsers.filter(
-      (u) => Math.min(u.name.trim().length, u.username.trim().length, u.password.trim().length) > 0,
+      (u) =>
+        Math.min(
+          u.name.trim().length,
+          u.username.trim().length,
+          u.password.trim().length,
+        ) > 0,
     );
 
     if (validUsers.length === 0) {
-      toast.error("Please completely fill out at least one user (Name, Username, and Password).");
+      toast.error(
+        "Please completely fill out at least one user (Name, Username, and Password).",
+      );
       return;
     }
 
@@ -273,7 +280,8 @@ export function UsersTable() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || data.error || "Failed to create users");
+      if (!res.ok)
+        throw new Error(data.message || data.error || "Failed to create users");
 
       if (data.errors && data.errors.length > 0) {
         toast.warning(
@@ -289,7 +297,9 @@ export function UsersTable() {
       fetchData();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to execute bulk creation",
+        error instanceof Error
+          ? error.message
+          : "Failed to execute bulk creation",
       );
     } finally {
       setIsBulkSubmitting(false);
@@ -546,7 +556,9 @@ export function UsersTable() {
 
             <div className="col-span-1 md:col-span-2 flex flex-col min-h-0 h-full pl-2">
               <div className="flex-none flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm">Users List ({bulkUsers.length})</h3>
+                <h3 className="font-semibold text-sm">
+                  Users List ({bulkUsers.length})
+                </h3>
                 <Button variant="outline" size="sm" onClick={addBulkUserRow}>
                   <Plus className="h-4 w-4 mr-1" /> Add User Details
                 </Button>
@@ -554,7 +566,7 @@ export function UsersTable() {
               <div className="flex-1 min-h-0 overflow-y-auto pr-4 space-y-4 pb-4">
                 {bulkUsers.map((u, i) => (
                   <div
-                    key={i}
+                    key={u.username}
                     className="border p-4 rounded-lg relative space-y-4 bg-muted/20"
                   >
                     <div className="absolute top-3 right-3">
@@ -573,37 +585,60 @@ export function UsersTable() {
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-xs font-medium">Name</label>
+                        <label htmlFor="name" className="text-xs font-medium">
+                          Name
+                        </label>
                         <Input
+                          id="name"
                           value={u.name}
-                          onChange={(e) => updateBulkUser(i, "name", e.target.value)}
+                          onChange={(e) =>
+                            updateBulkUser(i, "name", e.target.value)
+                          }
                           placeholder="Full Name"
                           className="h-9 text-sm"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-medium">Username</label>
+                        <label
+                          htmlFor="username"
+                          className="text-xs font-medium"
+                        >
+                          Username
+                        </label>
                         <Input
+                          id="username"
                           value={u.username}
-                          onChange={(e) => updateBulkUser(i, "username", e.target.value)}
+                          onChange={(e) =>
+                            updateBulkUser(i, "username", e.target.value)
+                          }
                           placeholder="Unique username"
                           className="h-9 text-sm"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-medium">Email</label>
+                        <label htmlFor="email" className="text-xs font-medium">
+                          Email
+                        </label>
                         <Input
+                          id="email"
                           value={u.email}
-                          onChange={(e) => updateBulkUser(i, "email", e.target.value)}
+                          onChange={(e) =>
+                            updateBulkUser(i, "email", e.target.value)
+                          }
                           placeholder="Optional"
                           className="h-9 text-sm"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-medium">Password</label>
+                        <label htmlFor="pass" className="text-xs font-medium">
+                          Password
+                        </label>
                         <Input
+                          id="pass"
                           value={u.password}
-                          onChange={(e) => updateBulkUser(i, "password", e.target.value)}
+                          onChange={(e) =>
+                            updateBulkUser(i, "password", e.target.value)
+                          }
                           placeholder="Password"
                           className="h-9 text-sm"
                           type="password"
@@ -625,7 +660,9 @@ export function UsersTable() {
               Cancel
             </Button>
             <Button onClick={handleBulkSubmit} disabled={isBulkSubmitting}>
-              {isBulkSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isBulkSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               {isBulkSubmitting ? "Creating Users..." : "Bulk Create Users"}
             </Button>
           </DialogFooter>

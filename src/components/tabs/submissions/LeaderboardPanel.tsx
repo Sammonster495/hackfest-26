@@ -4,10 +4,10 @@ import { ChevronLeft, ChevronRight, Eye, Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDashboardPermissions } from "~/components/dashboard/permissions-context";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
-import { Badge } from "~/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -85,10 +85,14 @@ export function LeaderboardPanel() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<LeaderboardRow | null>(null);
-  const [teamEvaluations, setTeamEvaluations] = useState<EvaluatorBreakdown[]>([]);
+  const [teamEvaluations, setTeamEvaluations] = useState<EvaluatorBreakdown[]>(
+    [],
+  );
 
   const [statsModalOpen, setStatsModalOpen] = useState(false);
-  const [statsModalType, setStatsModalType] = useState<"colleges" | "states" | "tracks">("colleges");
+  const [statsModalType, setStatsModalType] = useState<
+    "colleges" | "states" | "tracks"
+  >("colleges");
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: hmm
   useEffect(() => {
@@ -307,7 +311,9 @@ export function LeaderboardPanel() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Selected Unique Colleges</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Selected Unique Colleges
+              </CardTitle>
               <Button
                 variant="ghost"
                 size="icon"
@@ -324,12 +330,16 @@ export function LeaderboardPanel() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{uniqueCollegesCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">Based on teams selected for next round</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Based on teams selected for next round
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Selected Unique States</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Selected Unique States
+              </CardTitle>
               <Button
                 variant="ghost"
                 size="icon"
@@ -346,12 +356,16 @@ export function LeaderboardPanel() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{uniqueStatesCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">Based on teams selected for next round</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Based on teams selected for next round
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Selected Unique Tracks</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Selected Unique Tracks
+              </CardTitle>
               <Button
                 variant="ghost"
                 size="icon"
@@ -368,7 +382,9 @@ export function LeaderboardPanel() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{uniqueTracksCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">Based on teams selected for next round</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Based on teams selected for next round
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -446,6 +462,7 @@ export function LeaderboardPanel() {
           <Button
             onClick={handleMoveToRound2}
             disabled={
+              currentRound?.status === "Completed" ||
               isTerminalStage ||
               selectedTeamIds.length === 0 ||
               isMovingTeams ||
@@ -463,11 +480,13 @@ export function LeaderboardPanel() {
 
       {selectedTeamIds.length > 0 && tracksBreakdown.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/40 rounded-lg border">
-          <span className="text-sm font-medium mr-1 text-muted-foreground">Selected per track (click to filter):</span>
+          <span className="text-sm font-medium mr-1 text-muted-foreground">
+            Selected per track (click to filter):
+          </span>
           {tracksBreakdown.map((t) => (
-            <Badge 
-              key={t.name} 
-              variant={trackId === t.id ? "default" : "secondary"} 
+            <Badge
+              key={t.name}
+              variant={trackId === t.id ? "default" : "secondary"}
               className="px-2.5 py-0.5 text-xs font-normal cursor-pointer transition-colors"
               onClick={() => {
                 if (t.id) setTrackId(trackId === t.id ? "all" : t.id);
@@ -719,10 +738,20 @@ export function LeaderboardPanel() {
         <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
-              {statsModalType === "colleges" ? "Selected Colleges Breakdown" : statsModalType === "states" ? "Selected States Breakdown" : "Selected Tracks Breakdown"}
+              {statsModalType === "colleges"
+                ? "Selected Colleges Breakdown"
+                : statsModalType === "states"
+                  ? "Selected States Breakdown"
+                  : "Selected Tracks Breakdown"}
             </DialogTitle>
             <DialogDescription>
-              Count of teams selected per {statsModalType === "colleges" ? "college" : statsModalType === "states" ? "state" : "track"}.
+              Count of teams selected per{" "}
+              {statsModalType === "colleges"
+                ? "college"
+                : statsModalType === "states"
+                  ? "state"
+                  : "track"}
+              .
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto mt-4 px-1 rounded-md border bg-card">
@@ -730,21 +759,40 @@ export function LeaderboardPanel() {
               <TableHeader className="sticky top-0 bg-background shadow-sm border-b z-10">
                 <TableRow>
                   <TableHead>
-                    {statsModalType === "colleges" ? "College/University" : statsModalType === "states" ? "State" : "Track"}
+                    {statsModalType === "colleges"
+                      ? "College/University"
+                      : statsModalType === "states"
+                        ? "State"
+                        : "Track"}
                   </TableHead>
                   <TableHead className="text-right">Teams</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(statsModalType === "colleges" ? collegesBreakdown : statsModalType === "states" ? statesBreakdown : tracksBreakdown).map((item) => (
+                {(statsModalType === "colleges"
+                  ? collegesBreakdown
+                  : statsModalType === "states"
+                    ? statesBreakdown
+                    : tracksBreakdown
+                ).map((item) => (
                   <TableRow key={item.name}>
-                    <TableCell className="font-medium text-sm">{item.name}</TableCell>
+                    <TableCell className="font-medium text-sm">
+                      {item.name}
+                    </TableCell>
                     <TableCell className="text-right">{item.count}</TableCell>
                   </TableRow>
                 ))}
-                {(statsModalType === "colleges" ? collegesBreakdown : statsModalType === "states" ? statesBreakdown : tracksBreakdown).length === 0 && (
+                {(statsModalType === "colleges"
+                  ? collegesBreakdown
+                  : statsModalType === "states"
+                    ? statesBreakdown
+                    : tracksBreakdown
+                ).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground py-4 text-sm">
+                    <TableCell
+                      colSpan={2}
+                      className="text-center text-muted-foreground py-4 text-sm"
+                    >
                       No data available based on current selection.
                     </TableCell>
                   </TableRow>

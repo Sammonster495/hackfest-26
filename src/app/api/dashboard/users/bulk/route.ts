@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { adminProtected } from "~/auth/routes-wrapper";
-import { hashPassword } from "~/lib/auth/password";
 import * as dashboardUserRoleData from "~/db/data/dashboard-user-roles";
 import * as dashboardUserData from "~/db/data/dashboard-users";
-import { z } from "zod";
+import { hashPassword } from "~/lib/auth/password";
 
 const bulkUserSchema = z.object({
   roleId: z.string().min(1, "Role is required"),
@@ -14,7 +14,7 @@ const bulkUserSchema = z.object({
         username: z.string().min(1, "Username is required"),
         email: z.string().email().optional().or(z.literal("")),
         password: z.string().min(1, "Password is required"),
-      })
+      }),
     )
     .min(1, "At least one user is required"),
 });
@@ -27,7 +27,7 @@ export const POST = adminProtected(async (req) => {
     if (!result.success) {
       return NextResponse.json(
         { error: "Invalid data", details: result.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,9 +40,13 @@ export const POST = adminProtected(async (req) => {
       try {
         const passwordHash = await hashPassword(userConfig.password);
 
-        const existingUser = await dashboardUserData.findByUsernameOrEmail(userConfig.username);
+        const existingUser = await dashboardUserData.findByUsernameOrEmail(
+          userConfig.username,
+        );
         if (existingUser) {
-          errors.push(`Row ${index + 1}: Username '${userConfig.username}' already exists.`);
+          errors.push(
+            `Row ${index + 1}: Username '${userConfig.username}' already exists.`,
+          );
           continue;
         }
 
@@ -54,17 +58,24 @@ export const POST = adminProtected(async (req) => {
           isActive: true,
         };
 
-        const createdUsers = await dashboardUserData.createDashboardUser(newUserPayload);
+        const createdUsers =
+          await dashboardUserData.createDashboardUser(newUserPayload);
 
         let createdUserId = "";
         if (Array.isArray(createdUsers) && createdUsers.length > 0) {
           createdUserId = createdUsers[0].id;
-        } else if (createdUsers && typeof createdUsers === "object" && "id" in createdUsers) {
+        } else if (
+          createdUsers &&
+          typeof createdUsers === "object" &&
+          "id" in createdUsers
+        ) {
           createdUserId = (createdUsers as any).id;
         }
 
         if (!createdUserId) {
-          const fetchedUser = await dashboardUserData.findByUsernameOrEmail(userConfig.username);
+          const fetchedUser = await dashboardUserData.findByUsernameOrEmail(
+            userConfig.username,
+          );
           if (fetchedUser) createdUserId = fetchedUser.id;
         }
 
@@ -75,23 +86,27 @@ export const POST = adminProtected(async (req) => {
           });
           successCount++;
         } else {
-          errors.push(`Row ${index + 1}: Could not verify creation for '${userConfig.username}'.`);
+          errors.push(
+            `Row ${index + 1}: Could not verify creation for '${userConfig.username}'.`,
+          );
         }
       } catch (err: any) {
-        errors.push(`Row ${index + 1}: ${err.message || "Failed to create user"}`);
+        errors.push(
+          `Row ${index + 1}: ${err.message || "Failed to create user"}`,
+        );
       }
     }
 
     return NextResponse.json({
       successCount,
       errors,
-      message: `Successfully created ${successCount} user(s).${errors.length > 0 ? " Some errors occurred." : ""}`
+      message: `Successfully created ${successCount} user(s).${errors.length > 0 ? " Some errors occurred." : ""}`,
     });
   } catch (error) {
     console.error("Error bulk creating users:", error);
     return NextResponse.json(
       { error: "Failed to process bulk user creation" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });

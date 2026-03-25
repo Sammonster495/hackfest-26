@@ -277,8 +277,10 @@ export function EvaluatorAllocationsPanel() {
                     {users
                       .filter((user) =>
                         selectedRound
-                          ? user.roles.some((r) => r.id === selectedRound.roleId)
-                          : true
+                          ? user.roles.some(
+                              (r) => r.id === selectedRound.roleId,
+                            )
+                          : true,
                       )
                       .map((user) => (
                         <SelectItem key={user.id} value={user.id}>
@@ -288,7 +290,7 @@ export function EvaluatorAllocationsPanel() {
                     {users.filter((user) =>
                       selectedRound
                         ? user.roles.some((r) => r.id === selectedRound.roleId)
-                        : true
+                        : true,
                     ).length === 0 && (
                       <SelectItem value="none" disabled>
                         No evaluators found for this role

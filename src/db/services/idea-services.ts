@@ -194,7 +194,12 @@ export async function assignIdeaRound(roundId: string) {
   const evaluators = await db
     .select({ id: dashboardUserRoles.dashboardUserId })
     .from(dashboardUserRoles)
-    .where(and(eq(dashboardUserRoles.roleId, round.roleId), eq(dashboardUserRoles.isActive, true)));
+    .where(
+      and(
+        eq(dashboardUserRoles.roleId, round.roleId),
+        eq(dashboardUserRoles.isActive, true),
+      ),
+    );
 
   if (evaluators.length === 0)
     throw new Error(`No evaluators found for role: ${round.roleId}`);

@@ -67,7 +67,7 @@ export default async function DashboardPage() {
     (role) => role.name === "ORGANIZER",
   );
   const hasRoundTwoEvaluatorRole = dashboardUser.roles.some(
-    (role) => role.name === "ROUND_ONE_EVALUATOR"
+    (role) => role.name === "ROUND_ONE_EVALUATOR",
   );
   const canAccessDashboard =
     hasPermission(dashboardUser, "dashboard:access") ||
@@ -229,7 +229,9 @@ export default async function DashboardPage() {
         {hasRoundTwoEvaluatorRole && (
           <>
             <div className="space-y-2 mt-8">
-              <h2 className="text-xl font-semibold tracking-tight text-primary">Evaluation Criteria</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-primary">
+                Evaluation Criteria
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Use the following criteria when scoring submissions in Round 2.
               </p>
@@ -243,7 +245,9 @@ export default async function DashboardPage() {
                 >
                   <CardHeader className="pb-3 border-b border-primary/10 bg-primary/5">
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base leading-snug font-bold text-primary">{c.title}</CardTitle>
+                      <CardTitle className="text-base leading-snug font-bold text-primary">
+                        {c.title}
+                      </CardTitle>
                       <span className="text-3xl font-extrabold text-primary/10 leading-none select-none">
                         {c.number}
                       </span>
@@ -258,7 +262,10 @@ export default async function DashboardPage() {
                     </p>
                     <ul className="space-y-2">
                       {c.questions.map((q, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <li
+                          key={q.slice(0, 30)}
+                          className="flex items-start gap-2 text-sm text-muted-foreground"
+                        >
                           <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
                           <span>{q}</span>
                         </li>
