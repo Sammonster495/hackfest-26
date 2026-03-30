@@ -127,12 +127,13 @@ const Events = ({
         registrationsOpen: boolean;
         isHackathonSelected?: boolean;
         hasSubmittedIdea?: boolean;
+        resultsOut?: boolean;
       }>("/api/events/getAll", { method: "GET" });
 
       setRegistration(response.registrationsOpen ?? false);
       if (response) {
         setEvents(response.events);
-        if (response.isHackathonSelected && hackfestSelected) {
+        if (response.isHackathonSelected && hackfestSelected && response.resultsOut) {
           setHackfestSelected(true);
           setModalType("selected");
         } else if (response.hasSubmittedIdea && !response.isHackathonSelected) {

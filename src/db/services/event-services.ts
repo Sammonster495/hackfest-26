@@ -31,6 +31,7 @@ import { findByIdandEvent, memberCount, teamCount } from "../data/event-teams";
 
 export async function getAllEvents(userId?: string) {
   const registrationsOpen = await eventRegistrationOpen();
+  const siteSettings = await db.query.siteSettings.findFirst();
   const events = await findAllPublishedEvents();
 
   let participations: Record<string, UserParticipation> = {};
@@ -48,7 +49,7 @@ export async function getAllEvents(userId?: string) {
         },
       },
     });
-    if (user?.team?.teamStage === "SELECTED") {
+    if (user?.team?.teamStage === "SELECTED" && siteSettings?.resultsOut) {
       isHackathonSelected = true;
     }
     if (user?.team?.ideaSubmission) {
@@ -108,6 +109,7 @@ export async function getAllEvents(userId?: string) {
       registrationsOpen,
       isHackathonSelected,
       hasSubmittedIdea,
+      resultsOut: siteSettings?.resultsOut ?? false,
     },
     {
       toast: false,

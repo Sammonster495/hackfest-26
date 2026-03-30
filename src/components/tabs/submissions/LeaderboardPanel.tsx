@@ -81,6 +81,7 @@ export function LeaderboardPanel() {
   const [selectedRoundId, setSelectedRoundId] = useState<string>("all");
   const [trackId, setTrackId] = useState("all");
   const [stateNameFilter, setStateNameFilter] = useState("all");
+  const [collegeNameFilter, setCollegeNameFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"normalized" | "raw" | "average">(
     "normalized",
@@ -159,6 +160,16 @@ export function LeaderboardPanel() {
     return Array.from(states).sort();
   }, [rows]);
 
+  const uniqueColleges = useMemo(() => {
+    const colleges = new Set<string>();
+    for (const row of rows) {
+      if (row.collegeName) {
+        colleges.add(row.collegeName);
+      }
+    }
+    return Array.from(colleges).sort();
+  }, [rows]);
+
   const filteredRows = useMemo(() => {
     let result = rows;
     if (trackId !== "all") {
@@ -166,6 +177,9 @@ export function LeaderboardPanel() {
     }
     if (stateNameFilter !== "all") {
       result = result.filter((r) => r.stateName === stateNameFilter);
+    }
+    if (collegeNameFilter !== "all") {
+      result = result.filter((r) => r.collegeName === collegeNameFilter);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -192,12 +206,12 @@ export function LeaderboardPanel() {
         return scoreB - scoreA;
       })
       .map((row, index) => ({ ...row, rank: index + 1 }));
-  }, [rows, trackId, stateNameFilter, search, sortBy]);
+  }, [rows, trackId, stateNameFilter, collegeNameFilter, search, sortBy]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset page on filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [trackId, stateNameFilter, search, sortBy, selectedRoundId]);
+  }, [trackId, stateNameFilter, collegeNameFilter, search, sortBy, selectedRoundId]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const paginatedRows = filteredRows.slice(
@@ -458,6 +472,25 @@ export function LeaderboardPanel() {
             {uniqueStates.map((state) => (
               <SelectItem key={state} value={state} className="text-sm">
                 {state}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={collegeNameFilter}
+          onValueChange={(value) => setCollegeNameFilter(value)}
+        >
+          <SelectTrigger className="h-9 w-44 text-sm font-normal">
+            <SelectValue placeholder="College" />
+          </SelectTrigger>
+          <SelectContent className="text-sm">
+            <SelectItem value="all" className="text-sm">
+              All colleges
+            </SelectItem>
+            {uniqueColleges.map((college) => (
+              <SelectItem key={college} value={college} className="text-sm">
+                {college}
               </SelectItem>
             ))}
           </SelectContent>
