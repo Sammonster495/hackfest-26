@@ -16,44 +16,44 @@ import {
 } from "~/components/ui/card";
 import { hasPermission, isAdmin } from "~/lib/auth/check-access";
 
-const CRITERIA = [
-  {
-    number: "01",
-    title: "Feasibility",
-    description:
-      "Is the project practically possible to build within the given timeframe?",
-    questions: [
-      "Is the project practically achievable?",
-      "Does the team have the necessary resources?",
-      "Are the technical requirements realistic?",
-      "Can it be completed within the time constraint?",
-    ],
-  },
-  {
-    number: "02",
-    title: "Innovation",
-    description:
-      "Does the project bring a novel idea or a unique approach to an existing problem?",
-    questions: [
-      "Is the core idea original?",
-      "Does it solve the problem in a new way?",
-      "What differentiates it from existing solutions?",
-      "Is the approach creative?",
-    ],
-  },
-  {
-    number: "03",
-    title: "Clarity of Concept",
-    description:
-      "Does the team clearly understand what they are trying to build and how it would work?",
-    questions: [
-      "Is the idea well-defined, or is it vague and buzzword-heavy?",
-      "Do they clearly explain how the solution would work (even at a high level)?",
-      "Are their assumptions reasonable for a hackathon-level concept?",
-      "Do they avoid unrealistic or absolute claims (e.g., “100% accurate”)?",
-    ],
-  },
-];
+// const CRITERIA = [
+//   {
+//     number: "01",
+//     title: "Feasibility",
+//     description:
+//       "Is the project practically possible to build within the given timeframe?",
+//     questions: [
+//       "Is the project practically achievable?",
+//       "Does the team have the necessary resources?",
+//       "Are the technical requirements realistic?",
+//       "Can it be completed within the time constraint?",
+//     ],
+//   },
+//   {
+//     number: "02",
+//     title: "Innovation",
+//     description:
+//       "Does the project bring a novel idea or a unique approach to an existing problem?",
+//     questions: [
+//       "Is the core idea original?",
+//       "Does it solve the problem in a new way?",
+//       "What differentiates it from existing solutions?",
+//       "Is the approach creative?",
+//     ],
+//   },
+//   {
+//     number: "03",
+//     title: "Clarity of Concept",
+//     description:
+//       "Does the team clearly understand what they are trying to build and how it would work?",
+//     questions: [
+//       "Is the idea well-defined, or is it vague and buzzword-heavy?",
+//       "Do they clearly explain how the solution would work (even at a high level)?",
+//       "Are their assumptions reasonable for a hackathon-level concept?",
+//       "Do they avoid unrealistic or absolute claims (e.g., “100% accurate”)?",
+//     ],
+//   },
+// ];
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -236,7 +236,7 @@ export default async function DashboardPage() {
                 Use the following criteria when scoring submissions in Round 2.
               </p>
             </div>
-
+{/* 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {CRITERIA.map((c) => (
                 <Card
@@ -274,7 +274,7 @@ export default async function DashboardPage() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </div> */}
           </>
         )}
         <DashboardContent session={session} />

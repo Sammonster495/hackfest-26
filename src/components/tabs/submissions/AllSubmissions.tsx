@@ -84,6 +84,11 @@ export function AllSubmissions() {
   >("csv");
   const [isExporting, setIsExporting] = useState(false);
 
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
+  const [statsModalType, setStatsModalType] = useState<"colleges" | "states">(
+    "colleges"
+  );
+
   const allColumns = [
     "Team Name",
     "Leader Name",
@@ -185,6 +190,34 @@ export function AllSubmissions() {
     stageFilter,
     progressFilter,
   ]);
+
+  const dataSourceForBreakdown = useMemo(() => {
+    return selectedTeamIds.length > 0
+      ? rows.filter((r) => selectedTeamIds.includes(r.teamId))
+      : filteredRows;
+  }, [rows, selectedTeamIds, filteredRows]);
+
+  const collegesBreakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const team of dataSourceForBreakdown) {
+      if (!team.collegeName) continue;
+      counts.set(team.collegeName, (counts.get(team.collegeName) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [dataSourceForBreakdown]);
+
+  const statesBreakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const team of dataSourceForBreakdown) {
+      if (!team.stateName) continue;
+      counts.set(team.stateName, (counts.get(team.stateName) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [dataSourceForBreakdown]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -318,17 +351,49 @@ export function AllSubmissions() {
             <CardTitle className="text-sm font-medium">
               Unique Colleges
             </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setStatsModalType("colleges");
+                setStatsModalOpen(true);
+              }}
+            >
+              <Eye className="h-4 w-4 text-muted-foreground pointer-events-none" />
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{uniqueColleges.length}</div>
+            <div className="text-2xl font-bold">{collegesBreakdown.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Based on {selectedTeamIds.length > 0 ? "selected" : "filtered"} teams
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Unique States</CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setStatsModalType("states");
+                setStatsModalOpen(true);
+              }}
+            >
+              <Eye className="h-4 w-4 text-muted-foreground pointer-events-none" />
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{uniqueStates.length}</div>
+            <div className="text-2xl font-bold">{statesBreakdown.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Based on {selectedTeamIds.length > 0 ? "selected" : "filtered"} teams
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -553,6 +618,49 @@ export function AllSubmissions() {
               {isExporting ? "Exporting..." : "Download"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={statsModalOpen} onOpenChange={setStatsModalOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {statsModalType === "colleges" ? "Colleges Breakdown" : "States Breakdown"}
+            </DialogTitle>
+            <DialogDescription>
+              Count of submissions per {statsModalType === "colleges" ? "college" : "state"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto mt-4 px-1 rounded-md border bg-card">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background shadow-sm border-b z-10">
+                <TableRow>
+                  <TableHead>{statsModalType === "colleges" ? "College/University" : "State/City"}</TableHead>
+                  <TableHead className="text-right">Teams</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(statsModalType === "colleges" ? collegesBreakdown : statesBreakdown).map((item) => (
+                  <TableRow key={item.name}>
+                    <TableCell className="font-medium text-sm">
+                      {item.name}
+                    </TableCell>
+                    <TableCell className="text-right">{item.count}</TableCell>
+                  </TableRow>
+                ))}
+                {(statsModalType === "colleges" ? collegesBreakdown : statesBreakdown).length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={2}
+                      className="text-center text-muted-foreground py-4 text-sm"
+                    >
+                      No data available based on current selection.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </DialogContent>
       </Dialog>
 
