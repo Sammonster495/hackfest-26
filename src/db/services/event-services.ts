@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull, or } from "drizzle-orm";
 import db from "~/db";
 import {
   findByEvent,
@@ -27,7 +27,12 @@ import {
   findAllPublishedEvents,
   findByEventId,
 } from "../data/event";
-import { findByIdandEvent, memberCount, teamCount } from "../data/event-teams";
+import {
+  findByIdandEvent,
+  memberCount,
+  teamCount,
+  teamCountWithPayments,
+} from "../data/event-teams";
 
 export async function getAllEvents(userId?: string) {
   const registrationsOpen = await eventRegistrationOpen();
@@ -379,7 +384,8 @@ export async function createEventTeam(
   teamName: string,
 ) {
   const event = await findByEventId(eventId);
-  const teams = await teamCount(eventId);
+
+  const teams = await teamCountWithPayments(eventId);
 
   if (event && teams >= event.maxTeams)
     return errorResponse(
@@ -874,6 +880,48 @@ export async function submitEventPayment(
       title: "Payment Proof Submitted",
       description:
         "Your payment screenshot has been uploaded and is pending verification.",
+    },
+  );
+}
+
+export async function eventHealthCheck(eventId: string) {
+  const event = await db.query.events.findFirst({
+    where: (e, { eq }) => eq(e.id, eventId),
+  });
+
+  if (!event)
+    return errorResponse(
+      new AppError("EVENT_NOT_FOUND", 404, {
+        title: "Event not found",
+        description: "The event you are looking for does not exist.",
+      }),
+    );
+
+  const teamsCount = (
+    await db.query.eventTeams.findMany({
+      where: (t, { eq, and, or, isNotNull }) =>
+        and(
+          eq(t.eventId, eventId),
+          or(eq(t.isComplete, true), isNotNull(t.paymentId)),
+        ),
+    })
+  ).length;
+
+  if (teamsCount >= event.maxTeams) {
+    return errorResponse(
+      new AppError("Max Teams Reached,", 400, {
+        title: "Max teams reached",
+        description:
+          "The maximum number of teams for this event has been reached.",
+      }),
+    );
+  }
+
+  return successResponse(
+    { status: 200, message: "Available" },
+    {
+      title: "Available",
+      description: "The event is available for registration.",
     },
   );
 }

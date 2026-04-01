@@ -236,7 +236,7 @@ export default async function DashboardPage() {
                 Use the following criteria when scoring submissions in Round 2.
               </p>
             </div>
-{/* 
+            {/* 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {CRITERIA.map((c) => (
                 <Card

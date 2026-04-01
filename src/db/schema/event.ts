@@ -84,7 +84,9 @@ export const eventTeams = pgTable("event_teams", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
-  paymentId: text("payment_id").references(() => payment.id),
+  paymentId: text("payment_id").references(() => payment.id, {
+    onDelete: "set null",
+  }),
   paymentStatus: paymentStatusEnum("payment_status").default("Pending"),
   eventId: text("event_id")
     .notNull()

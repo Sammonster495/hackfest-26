@@ -133,10 +133,18 @@ const Events = ({
       setRegistration(response.registrationsOpen ?? false);
       if (response) {
         setEvents(response.events);
-        if (response.isHackathonSelected && hackfestSelected && response.resultsOut) {
+        if (
+          response.isHackathonSelected &&
+          hackfestSelected &&
+          response.resultsOut
+        ) {
           setHackfestSelected(true);
           setModalType("selected");
-        } else if (response.hasSubmittedIdea && !response.isHackathonSelected && !response.resultsOut) {
+        } else if (
+          response.hasSubmittedIdea &&
+          !response.isHackathonSelected &&
+          !response.resultsOut
+        ) {
           setModalType("awaiting");
         }
       }

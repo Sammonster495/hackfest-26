@@ -43,15 +43,22 @@ export async function apiFetch<T = unknown>(
         });
       }
     }
-
+    console.log("hi");
     if (!json.success) {
-      const error = new Error(json.error || "REQUEST_FAILED");
-      (error as Error & { isHandledError?: boolean }).isHandledError = true;
+      const error = new Error(json.error || "REQUEST_FAILED") as Error & {
+        title?: string;
+        description?: string;
+        isHandledError?: boolean;
+      };
+      error.title = json.title;
+      error.description = json.description;
+      error.isHandledError = true;
       throw error;
     }
 
     return json.data as T;
   } catch (error) {
+    console.log(error);
     if (
       error instanceof Error &&
       error.message !== "REQUEST_FAILED" &&

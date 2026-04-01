@@ -37,3 +37,12 @@ export async function teamCount(eventId: string) {
     })
   ).length;
 }
+
+export async function teamCountWithPayments(eventId: string) {
+  return (
+    await query.eventTeams.findMany({
+      where: (t, { eq, and, isNotNull }) =>
+        and(eq(t.eventId, eventId), isNotNull(t.paymentId)),
+    })
+  ).length;
+}

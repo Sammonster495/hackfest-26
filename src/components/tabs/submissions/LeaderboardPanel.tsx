@@ -211,7 +211,14 @@ export function LeaderboardPanel() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset page on filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [trackId, stateNameFilter, collegeNameFilter, search, sortBy, selectedRoundId]);
+  }, [
+    trackId,
+    stateNameFilter,
+    collegeNameFilter,
+    search,
+    sortBy,
+    selectedRoundId,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const paginatedRows = filteredRows.slice(
@@ -750,7 +757,10 @@ export function LeaderboardPanel() {
               </div>
             )}
             <div className="space-y-2 pt-4 text-left">
-              <label htmlFor="confirm" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="confirm"
+                className="text-sm font-medium text-foreground"
+              >
                 Please type{" "}
                 <span className="font-bold select-all bg-muted px-1 py-0.5 rounded">
                   {currentRound?.name}
@@ -939,15 +949,15 @@ export function LeaderboardPanel() {
                     ? statesBreakdown
                     : tracksBreakdown
                 ).length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={2}
-                        className="text-center text-muted-foreground py-4 text-sm"
-                      >
-                        No data available based on current selection.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  <TableRow>
+                    <TableCell
+                      colSpan={2}
+                      className="text-center text-muted-foreground py-4 text-sm"
+                    >
+                      No data available based on current selection.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

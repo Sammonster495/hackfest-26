@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import QRCode from "react-qr-code";
+import { toast } from "sonner";
 import { CloudinaryUpload } from "~/components/cloudinary-upload";
 import { Button } from "~/components/ui/button";
 import {
@@ -39,6 +40,27 @@ export function EventPaymentModal({
   const [transactionId, setTransactionId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isHealthChecking, setIsHealthChecking] = useState(false);
+
+  const handleHealthCheckAndOpen = async () => {
+    setIsHealthChecking(true);
+    try {
+      const res = await apiFetch(`/api/events/${eventId}/healthCheck`, {
+        method: "GET",
+      });
+      if (res) {
+        setOpen(true);
+      }
+    } catch (err) {
+      const error = err as Error & { title?: string; description?: string };
+      toast.error(error.title || error.message || "Error", {
+        description:
+          error.description || "Failed to verify event availability.",
+      });
+    } finally {
+      setIsHealthChecking(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!paymentScreenshotUrl) {
@@ -86,14 +108,20 @@ export function EventPaymentModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          disabled={disabled}
-          className="flex-1 bg-[#f4d35e] text-[#0b2545] font-bold hover:brightness-110 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Pay to Confirm
-        </Button>
-      </DialogTrigger>
+      <Button
+        onClick={handleHealthCheckAndOpen}
+        disabled={disabled || isHealthChecking}
+        className="flex-1 bg-[#f4d35e] text-[#0b2545] font-bold hover:brightness-110 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isHealthChecking ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Checking Availability...
+          </>
+        ) : (
+          "Pay to Confirm"
+        )}
+      </Button>
 
       <DialogContent
         onInteractOutside={(e) => {

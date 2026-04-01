@@ -1,6 +1,20 @@
 "use client";
 
-import { CheckCircle2, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Info,
+  Loader2,
+  Pencil,
+  Search,
+  Settings2,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -21,13 +35,17 @@ import {
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -88,6 +106,7 @@ export function EventStatsTab() {
   const [newTeamName, setNewTeamName] = useState("");
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [updatingTeamId, setUpdatingTeamId] = useState<string | null>(null);
@@ -119,6 +138,40 @@ export function EventStatsTab() {
     [],
   );
   const [loadingMembers, setLoadingMembers] = useState(false);
+
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportFilter, setExportFilter] = useState<
+    "all" | "confirmed" | "unconfirmed"
+  >("all");
+  const [exportFields, setExportFields] = useState<Record<string, boolean>>({
+    teamName: true,
+    isComplete: true,
+    paymentStatus: true,
+    attended: true,
+    leaderName: true,
+    leaderEmail: true,
+    leaderPhone: true,
+    leaderCollege: true,
+    memberNames: true,
+    memberEmails: true,
+    memberPhones: true,
+    colleges: true,
+  });
+
+  const EXPORT_FIELD_LABELS: Record<string, string> = {
+    teamName: "Team Name",
+    isComplete: "Is Complete",
+    paymentStatus: "Payment Status",
+    attended: "Attended",
+    leaderName: "Leader Name",
+    leaderEmail: "Leader Email",
+    leaderPhone: "Leader Phone",
+    leaderCollege: "Leader College",
+    memberNames: "Member Names",
+    memberEmails: "Member Emails",
+    memberPhones: "Member Phones",
+    colleges: "All Member Colleges",
+  };
 
   const activeEventId = selectedEventId || eventStats[0]?.eventId || "";
 
@@ -241,9 +294,49 @@ export function EventStatsTab() {
         query,
       ).then(setLeaderOptions);
     }, 250);
-
-    return () => clearTimeout(timeoutId);
   }, [selectedEventId, setLeaderPopoverTeamId, leaderQuery]);
+
+  const handleDownload = async () => {
+    if (!selectedEventId) return;
+    setIsExporting(true);
+    try {
+      const activeFields = Object.entries(exportFields)
+        .filter(([_, checked]) => checked)
+        .map(([id]) => id);
+
+      if (activeFields.length === 0) {
+        toast.error("Please select at least one field to export");
+        return;
+      }
+
+      const res = await fetch("/api/dashboard/events/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: selectedEventId,
+          filter: exportFilter,
+          fields: activeFields,
+        }),
+      });
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `event_teams_export_${exportFilter}_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Download generated successfully");
+      setIsExportDialogOpen(false);
+    } catch (_error) {
+      toast.error("Failed to generate export");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   async function handleRowClick(team: OrganizerEventTeam) {
     if (
@@ -499,7 +592,7 @@ export function EventStatsTab() {
               <CardTitle>Team CRUD</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+              <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto_1fr] lg:items-center">
                 <Input
                   value={newTeamName}
                   onChange={(event) => setNewTeamName(event.target.value)}
@@ -510,6 +603,15 @@ export function EventStatsTab() {
                   disabled={!activeEventId || creating}
                 >
                   {creating ? "Creating..." : "Create Team"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsExportDialogOpen(true)}
+                  disabled={teams.length === 0}
+                  className="gap-2 border-primary/20 hover:border-primary/50"
+                >
+                  <Download className="h-4 w-4" />
+                  Download CSV
                 </Button>
                 <Input
                   value={teamSearchQuery}
@@ -534,11 +636,14 @@ export function EventStatsTab() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Team Name</TableHead>
-                      <TableHead>Members</TableHead>
+                      <TableHead className="w-[300px]">Team Name</TableHead>
+                      <TableHead className="w-[100px]">Members</TableHead>
                       <TableHead>Leader</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>College</TableHead>
+                      <TableHead className="w-[120px]">Status</TableHead>
+                      <TableHead className="text-right w-[100px]">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -548,230 +653,106 @@ export function EventStatsTab() {
                       return (
                         <TableRow
                           key={team.id}
-                          onClick={() => void handleRowClick(team)}
+                          onClick={() =>
+                            !isEditing && void handleRowClick(team)
+                          }
                           className={
-                            isEditing ? "" : "cursor-pointer hover:bg-muted/50"
+                            isEditing
+                              ? ""
+                              : "cursor-pointer hover:bg-muted/50 transition-colors"
                           }
                         >
                           <TableCell>
                             {isEditing ? (
                               <Input
                                 value={editingName}
-                                onChange={(event) =>
-                                  setEditingName(event.target.value)
-                                }
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-8 py-1"
+                                autoFocus
                               />
                             ) : (
-                              team.name
+                              <span className="font-medium text-sm">
+                                {team.name}
+                              </span>
                             )}
                           </TableCell>
-                          <TableCell>{team.memberCount}</TableCell>
-                          <TableCell>{team.leaderName || "-"}</TableCell>
+                          <TableCell className="text-sm">
+                            {team.memberCount}
+                          </TableCell>
+                          <TableCell className="max-w-[150px] truncate text-sm">
+                            {team.leaderName || "-"}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate text-muted-foreground text-xs">
+                            {team.leaderCollegeName || "-"}
+                          </TableCell>
                           <TableCell>
                             {team.isComplete ? (
-                              <Badge>Complete</Badge>
+                              <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-200 text-[10px] font-bold uppercase">
+                                Complete
+                              </Badge>
                             ) : (
-                              <Badge variant="secondary">Draft</Badge>
+                              <Badge
+                                variant="secondary"
+                                className="bg-amber-50 text-amber-700 hover:bg-amber-50 border-amber-200 text-[10px] font-bold uppercase"
+                              >
+                                Draft
+                              </Badge>
                             )}
                           </TableCell>
                           <TableCell
-                            className="text-right space-x-2"
+                            className="text-right"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {isEditing ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  onClick={() => void handleSaveTeam(team.id)}
-                                  disabled={
-                                    !editingName.trim() ||
-                                    updatingTeamId === team.id
-                                  }
-                                >
-                                  {updatingTeamId === team.id
-                                    ? "Saving..."
-                                    : "Save"}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingTeamId(null);
-                                    setEditingName("");
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                              </>
-                            ) : (
-                              <div className="flex flex-wrap justify-end gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingTeamId(team.id);
-                                    setEditingName(team.name);
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-
-                                {/* <Popover
-                                  open={addMemberPopoverTeamId === team.id}
-                                  onOpenChange={(open) => {
-                                    if (open) {
-                                      setAddMemberPopoverTeamId(team.id);
-                                      setAddMemberQuery("");
-                                      setAddMemberOptions([]);
-                                      return;
+                            <div className="flex justify-end gap-1">
+                              {isEditing ? (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                    onClick={() => void handleSaveTeam(team.id)}
+                                    disabled={
+                                      !editingName.trim() ||
+                                      updatingTeamId === team.id
                                     }
-
-                                    if (addMemberPopoverTeamId === team.id) {
-                                      setAddMemberPopoverTeamId(null);
-                                      setAddMemberQuery("");
-                                      setAddMemberOptions([]);
-                                    }
-                                  }}
-                                >
-                                  <PopoverTrigger asChild>
-                                    <Button size="sm" variant="outline">
-                                      Add Member
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent
-                                    className="w-80 p-2"
-                                    align="end"
                                   >
-                                    <div className="space-y-2">
-                                      <Input
-                                        value={addMemberQuery}
-                                        onChange={(event) =>
-                                          setAddMemberQuery(event.target.value)
-                                        }
-                                        placeholder="Search participant"
-                                      />
-                                      {addMemberOptions.length === 0 ? (
-                                        <p className="py-2 text-center text-sm text-muted-foreground">
-                                          No participants found.
-                                        </p>
-                                      ) : (
-                                        <div className="max-h-64 overflow-y-auto space-y-1">
-                                          {addMemberOptions.map(
-                                            (participant) => (
-                                              <button
-                                                key={participant.id}
-                                                type="button"
-                                                className="w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
-                                                onClick={() =>
-                                                  void handleAddMember(
-                                                    team,
-                                                    participant.id,
-                                                  )
-                                                }
-                                                disabled={
-                                                  memberActionTeamId === team.id
-                                                }
-                                              >
-                                                {participantLabel(participant)}
-                                              </button>
-                                            ),
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </PopoverContent>
-                                </Popover> */}
-
-                                {/* <Popover
-                                  open={setLeaderPopoverTeamId === team.id}
-                                  onOpenChange={(open) => {
-                                    if (open) {
-                                      setSetLeaderPopoverTeamId(team.id);
-                                      setLeaderQuery("");
-                                      setLeaderOptions([]);
-                                      return;
-                                    }
-
-                                    if (setLeaderPopoverTeamId === team.id) {
-                                      setSetLeaderPopoverTeamId(null);
-                                      setLeaderQuery("");
-                                      setLeaderOptions([]);
-                                    }
-                                  }}
-                                >
-                                  <PopoverTrigger asChild>
-                                    <Button size="sm" variant="outline">
-                                      Set Leader
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent
-                                    className="w-80 p-2"
-                                    align="end"
+                                    {updatingTeamId === team.id ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Check className="h-3.5 w-3.5" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    onClick={() => {
+                                      setEditingTeamId(null);
+                                      setEditingName("");
+                                    }}
+                                    disabled={updatingTeamId === team.id}
                                   >
-                                    <div className="space-y-2">
-                                      <Input
-                                        value={leaderQuery}
-                                        onChange={(event) =>
-                                          setLeaderQuery(event.target.value)
-                                        }
-                                        placeholder="Search team member"
-                                      />
-                                      {leaderOptions.length === 0 ? (
-                                        <p className="py-2 text-center text-sm text-muted-foreground">
-                                          No members found.
-                                        </p>
-                                      ) : (
-                                        <div className="max-h-64 overflow-y-auto space-y-1">
-                                          {leaderOptions.map((member) => (
-                                            <button
-                                              key={member.participantId}
-                                              type="button"
-                                              className="w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
-                                              onClick={() =>
-                                                void handleAssignLeader(
-                                                  team,
-                                                  member.participantId,
-                                                )
-                                              }
-                                              disabled={
-                                                memberActionTeamId === team.id
-                                              }
-                                            >
-                                              {participantLabel(member)}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </PopoverContent>
-                                </Popover> */}
-                                {/* 
-                                <Button
-                                  size="sm"
-                                  variant={
-                                    team.isComplete ? "secondary" : "default"
-                                  }
-                                  onClick={() => void handleToggleConfirm(team)}
-                                  disabled={confirmingTeamId === team.id}
-                                >
-                                  {confirmingTeamId === team.id
-                                    ? "Updating..."
-                                    : team.isComplete
-                                      ? "Unconfirm"
-                                      : "Confirm"}
-                                </Button> */}
-                                {/* <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => void handleDeleteTeam(team.id)}
-                                  disabled={deletingTeamId === team.id}
-                                >
-                                  {deletingTeamId === team.id
-                                    ? "Deleting..."
-                                    : "Delete"}
-                                </Button> */}
-                              </div>
-                            )}
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingTeamId(team.id);
+                                      setEditingName(team.name);
+                                    }}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -838,7 +819,7 @@ export function EventStatsTab() {
         open={!!viewTeamId}
         onOpenChange={(open) => !open && setViewTeamId(null)}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-5xl w-[60vw] max-h-[85vh] flex flex-col p-6">
           <DialogHeader>
             <DialogTitle>Team Details</DialogTitle>
           </DialogHeader>
@@ -860,6 +841,7 @@ export function EventStatsTab() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
+                    <TableHead>College</TableHead>
                     <TableHead>Gender</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -882,6 +864,7 @@ export function EventStatsTab() {
                       </TableCell>
                       <TableCell>{member.email || "-"}</TableCell>
                       <TableCell>{member.phone || "-"}</TableCell>
+                      <TableCell>{member.collegeName || "-"}</TableCell>
                       <TableCell className="capitalize">
                         {member.gender?.toLowerCase() || "-"}
                       </TableCell>
@@ -891,6 +874,123 @@ export function EventStatsTab() {
               </Table>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-primary" />
+              Export Options
+            </DialogTitle>
+            <DialogDescription>
+              Select which teams and data you want to include in the CSV.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold flex items-center gap-2">
+                <Settings2 className="h-4 w-4" />
+                Selection
+              </Label>
+              <Select
+                value={exportFilter}
+                onValueChange={(v) => setExportFilter(v as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Teams" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Teams</SelectItem>
+                  <SelectItem value="confirmed">
+                    Confirmed Teams Only
+                  </SelectItem>
+                  <SelectItem value="unconfirmed">
+                    Unconfirmed (Draft) Only
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  Fields to include
+                </Label>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs"
+                  onClick={() => {
+                    const allSelected =
+                      Object.values(exportFields).every(Boolean);
+                    const newFields = { ...exportFields };
+                    for (const key in newFields) {
+                      newFields[key] = !allSelected;
+                    }
+                    setExportFields(newFields);
+                  }}
+                >
+                  {Object.values(exportFields).every(Boolean)
+                    ? "Deselect All"
+                    : "Select All"}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                {Object.entries(EXPORT_FIELD_LABELS).map(([id, label]) => (
+                  <div key={id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`field-${id}`}
+                      checked={exportFields[id]}
+                      onCheckedChange={(checked) =>
+                        setExportFields((prev) => ({
+                          ...prev,
+                          [id]: !!checked,
+                        }))
+                      }
+                    />
+                    <label
+                      htmlFor={`field-${id}`}
+                      className="text-xs font-medium leading-none cursor-pointer hover:text-primary transition-colors pr-1"
+                    >
+                      {label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="ghost"
+              onClick={() => setIsExportDialogOpen(false)}
+              disabled={isExporting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleDownload()}
+              disabled={
+                isExporting || !Object.values(exportFields).some(Boolean)
+              }
+              className="gap-2 min-w-[120px]"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download CSV
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

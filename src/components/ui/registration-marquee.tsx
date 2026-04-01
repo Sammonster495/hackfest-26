@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 const MarqueeItem = () => (
   <span className="inline-flex items-center gap-3 px-8 text-sm tracking-wide">
     <span className="font-crimson text-emerald-100 font-semibold">
-      Shortlist results for Hackfest'26 have been announced | CTF Event registrations are now open
+      Shortlist results for Hackfest'26 have been announced | CTF Event
+      registrations are now open
     </span>
     <span className="text-emerald-400/60">•</span>
     <span className="font-crimson text-emerald-200/90">

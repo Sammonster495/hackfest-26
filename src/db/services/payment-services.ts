@@ -129,7 +129,7 @@ export async function checkPayment(teamId: string) {
   const leaderUser = await db.query.teams.findFirst({
     where: eq(teams.id, teamId),
     columns: { leaderId: true },
-  })
+  });
 
   if (!leaderUser) {
     throw new AppError("TEAM_NOT_FOUND", 404);

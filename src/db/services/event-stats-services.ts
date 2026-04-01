@@ -4,6 +4,7 @@ import { errorResponse } from "~/lib/response/error";
 import { successResponse } from "~/lib/response/success";
 import db from "..";
 import {
+  colleges,
   eventOrganizers,
   eventParticipants,
   events,
@@ -184,10 +185,14 @@ export async function getOrganizerEventTeams(
         leaderEmail: sql<
           string | null
         >`max(case when ${eventParticipants.isLeader} = true then ${participants.email} end)`,
+        leaderCollegeName: sql<
+          string | null
+        >`max(case when ${eventParticipants.isLeader} = true then ${colleges.name} end)`,
       })
       .from(eventTeams)
       .leftJoin(eventParticipants, eq(eventParticipants.teamId, eventTeams.id))
       .leftJoin(participants, eq(participants.id, eventParticipants.userId))
+      .leftJoin(colleges, eq(colleges.id, participants.collegeId))
       .where(eq(eventTeams.eventId, eventId))
       .groupBy(eventTeams.id)
       .orderBy(asc(eventTeams.name));
@@ -302,10 +307,12 @@ export async function getOrganizerTeamMembers(
         email: participants.email,
         phone: participants.phone,
         gender: participants.gender,
+        collegeName: colleges.name,
         isLeader: eventParticipants.isLeader,
       })
       .from(eventParticipants)
       .innerJoin(participants, eq(participants.id, eventParticipants.userId))
+      .leftJoin(colleges, eq(colleges.id, participants.collegeId))
       .where(
         and(
           eq(eventParticipants.eventId, eventId),
@@ -720,5 +727,63 @@ export async function setOrganizerTeamLeader(
         title: "Failed to set team leader",
       }),
     );
+  }
+}
+
+export async function getExportEventTeamsData(
+  userId: string,
+  eventId: string,
+  isAdminUser = false,
+) {
+  try {
+    const organizerEvent = await assertAccessibleEvent(
+      userId,
+      eventId,
+      isAdminUser,
+    );
+    if (!organizerEvent) {
+      return null;
+    }
+
+    const teamsData = await db.query.eventTeams.findMany({
+      where: eq(eventTeams.eventId, eventId),
+      with: {
+        members: {
+          with: {
+            user: {
+              with: {
+                college: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [asc(eventTeams.name)],
+    });
+
+    return teamsData.map((team) => {
+      const leader = team.members.find((m) => m.isLeader);
+      const members = team.members.map((m) => m.user);
+
+      return {
+        teamName: team.name,
+        isComplete: team.isComplete,
+        paymentStatus: team.paymentStatus,
+        attended: team.attended,
+        leaderName: leader?.user.name,
+        leaderEmail: leader?.user.email,
+        leaderPhone: leader?.user.phone,
+        leaderCollege: leader?.user.college?.name,
+        memberNames: members.map((m) => m.name).join(", "),
+        memberEmails: members.map((m) => m.email).join(", "),
+        memberPhones: members.map((m) => m.phone).join(", "),
+        colleges: Array.from(
+          new Set(members.map((m) => m.college?.name).filter(Boolean)),
+        ).join(", "),
+      };
+    });
+  } catch (error) {
+    console.error("getExportEventTeamsData Error:", error);
+    return null;
   }
 }

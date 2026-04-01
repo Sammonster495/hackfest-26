@@ -1472,6 +1472,7 @@ export async function exportTeamsData(teamIds: string[]) {
         teamStage: teams.teamStage,
         teamProgress: selected.teamProgress,
         pptUrl: ideaSubmission.pptUrl,
+        leaderPhone: participants.phone,
       })
       .from(teams)
       .innerJoin(ideaSubmission, eq(ideaSubmission.teamId, teams.id))
@@ -1485,6 +1486,7 @@ export async function exportTeamsData(teamIds: string[]) {
       .select({
         teamId: participants.teamId,
         email: participants.email,
+        phone: participants.phone,
       })
       .from(participants)
       .where(
@@ -1495,17 +1497,24 @@ export async function exportTeamsData(teamIds: string[]) {
       );
 
     const emailMap = new Map<string, string[]>();
+    const phoneMap = new Map<string, string[]>();
     for (const member of allMembers) {
       if (member.teamId && member.email) {
         const list = emailMap.get(member.teamId) || [];
         list.push(member.email);
         emailMap.set(member.teamId, list);
       }
+      if (member.teamId && member.phone) {
+        const list = phoneMap.get(member.teamId) || [];
+        list.push(member.phone);
+        phoneMap.set(member.teamId, list);
+      }
     }
 
     return teamsData.map((t) => ({
       ...t,
       allEmails: (emailMap.get(t.teamId) || []).join(", "),
+      allPhones: (phoneMap.get(t.teamId) || []).join(", "),
     }));
   } catch (error) {
     if (error instanceof AppError) throw error;

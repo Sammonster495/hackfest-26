@@ -1,8 +1,6 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
-import { adminProtected } from "~/auth/routes-wrapper";
+
 // import { bulkPromoteSubmissions } from "~/db/services/submission-services";
-import { errorResponse } from "~/lib/response/error";
 
 const bulkMoveSchema = z.object({
   teamIds: z.array(z.string().min(1)).min(1),

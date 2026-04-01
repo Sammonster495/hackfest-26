@@ -52,6 +52,7 @@ export type OrganizerEventTeam = EventTeam & {
   memberCount: number;
   leaderName: string | null;
   leaderEmail: string | null;
+  leaderCollegeName: string | null;
 };
 
 export type OrganizerOption = {
@@ -73,6 +74,7 @@ export type TeamMemberOption = {
   email: string | null;
   phone: string | null;
   gender: string | null;
+  collegeName: string | null;
   isLeader: boolean;
 };
 

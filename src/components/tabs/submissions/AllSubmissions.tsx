@@ -86,7 +86,7 @@ export function AllSubmissions() {
 
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [statsModalType, setStatsModalType] = useState<"colleges" | "states">(
-    "colleges"
+    "colleges",
   );
 
   const allColumns = [
@@ -100,9 +100,12 @@ export function AllSubmissions() {
     "Stage",
     "Progress",
     "PPT URL",
+    "Leader Phone",
+    "Phone",
   ];
   const [selectedColumns, setSelectedColumns] = useState<string[]>(allColumns);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <needed>
   useEffect(() => {
     setIsLoading(true);
     fetch("/api/dashboard/submissions/all")
@@ -219,6 +222,7 @@ export function AllSubmissions() {
       .sort((a, b) => b.count - a.count);
   }, [dataSourceForBreakdown]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <needed>
   useEffect(() => {
     setCurrentPage(1);
   }, [
@@ -278,7 +282,7 @@ export function AllSubmissions() {
   //     if (!res.ok) throw new Error(data.message || "Failed to move teams");
   //     toast.success(data.message);
   //     setSelectedTeamIds([]);
-//     setRefreshKey((prev) => prev + 1);
+  //     setRefreshKey((prev) => prev + 1);
   //   } catch (error: any) {
   //     toast.error(error.message || "Error moving teams");
   //   } finally {
@@ -368,7 +372,8 @@ export function AllSubmissions() {
           <CardContent>
             <div className="text-2xl font-bold">{collegesBreakdown.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Based on {selectedTeamIds.length > 0 ? "selected" : "filtered"} teams
+              Based on {selectedTeamIds.length > 0 ? "selected" : "filtered"}{" "}
+              teams
             </p>
           </CardContent>
         </Card>
@@ -392,7 +397,8 @@ export function AllSubmissions() {
           <CardContent>
             <div className="text-2xl font-bold">{statesBreakdown.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Based on {selectedTeamIds.length > 0 ? "selected" : "filtered"} teams
+              Based on {selectedTeamIds.length > 0 ? "selected" : "filtered"}{" "}
+              teams
             </p>
           </CardContent>
         </Card>
@@ -625,22 +631,32 @@ export function AllSubmissions() {
         <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
-              {statsModalType === "colleges" ? "Colleges Breakdown" : "States Breakdown"}
+              {statsModalType === "colleges"
+                ? "Colleges Breakdown"
+                : "States Breakdown"}
             </DialogTitle>
             <DialogDescription>
-              Count of submissions per {statsModalType === "colleges" ? "college" : "state"}.
+              Count of submissions per{" "}
+              {statsModalType === "colleges" ? "college" : "state"}.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto mt-4 px-1 rounded-md border bg-card">
             <Table>
               <TableHeader className="sticky top-0 bg-background shadow-sm border-b z-10">
                 <TableRow>
-                  <TableHead>{statsModalType === "colleges" ? "College/University" : "State/City"}</TableHead>
+                  <TableHead>
+                    {statsModalType === "colleges"
+                      ? "College/University"
+                      : "State/City"}
+                  </TableHead>
                   <TableHead className="text-right">Teams</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(statsModalType === "colleges" ? collegesBreakdown : statesBreakdown).map((item) => (
+                {(statsModalType === "colleges"
+                  ? collegesBreakdown
+                  : statesBreakdown
+                ).map((item) => (
                   <TableRow key={item.name}>
                     <TableCell className="font-medium text-sm">
                       {item.name}
@@ -648,7 +664,10 @@ export function AllSubmissions() {
                     <TableCell className="text-right">{item.count}</TableCell>
                   </TableRow>
                 ))}
-                {(statsModalType === "colleges" ? collegesBreakdown : statesBreakdown).length === 0 && (
+                {(statsModalType === "colleges"
+                  ? collegesBreakdown
+                  : statesBreakdown
+                ).length === 0 && (
                   <TableRow>
                     <TableCell
                       colSpan={2}

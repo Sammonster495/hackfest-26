@@ -1,6 +1,6 @@
 {
-  "id": "b28faca2-e7ef-4b73-a5ea-238ad2eb85e5",
-  "prevId": "89600e3b-d300-4c7f-887a-a9ee460df21f",
+  "id": "708e0019-90f1-4e26-ab42-17f1bf0c6689",
+  "prevId": "b28faca2-e7ef-4b73-a5ea-238ad2eb85e5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1191,7 +1191,7 @@
           "tableTo": "payment",
           "columnsFrom": ["payment_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "event_teams_event_id_event_id_fk": {
