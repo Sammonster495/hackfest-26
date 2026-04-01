@@ -342,6 +342,9 @@ export async function getPaymentStats() {
     columns: { amount: true },
   });
 
+  const numberOfHFPaymentsConfirmed =
+    totalConfirmedHackfestPaymentsResult.length;
+
   const totalConfirmedHackfestPayments =
     totalConfirmedHackfestPaymentsResult.reduce(
       (sum, p) => sum + parseInt(p.amount),
@@ -355,6 +358,8 @@ export async function getPaymentStats() {
     ),
     columns: { amount: true },
   });
+
+  const numberOfHFPaymentsPending = totalPendingHackfestPaymentsResult.length;
 
   const totalPendingHackfestPayments =
     totalPendingHackfestPaymentsResult.reduce(
@@ -370,6 +375,9 @@ export async function getPaymentStats() {
     columns: { amount: true },
   });
 
+  const numberOfEventPaymentsConfirmed =
+    totalConfirmedEventPaymentsResult.length;
+
   const totalConfirmedEventPayments = totalConfirmedEventPaymentsResult.reduce(
     (sum, p) => sum + parseInt(p.amount),
     0,
@@ -383,12 +391,18 @@ export async function getPaymentStats() {
     columns: { amount: true },
   });
 
+  const numberOfEventPaymentsPending = totalPendingEventPaymentsResult.length;
+
   const totalPendingEventPayments = totalPendingEventPaymentsResult.reduce(
     (sum, p) => sum + parseInt(p.amount),
     0,
   );
 
   return {
+    numberOfHFPaymentsConfirmed,
+    numberOfHFPaymentsPending,
+    numberOfEventPaymentsConfirmed,
+    numberOfEventPaymentsPending,
     totalConfirmedHackfestPayments,
     totalPendingHackfestPayments,
     totalConfirmedEventPayments,

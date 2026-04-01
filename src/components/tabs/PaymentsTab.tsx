@@ -6,6 +6,10 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 interface StatsData {
+  numberOfHFPaymentsConfirmed: number;
+  numberOfHFPaymentsPending: number;
+  numberOfEventPaymentsConfirmed: number;
+  numberOfEventPaymentsPending: number;
   totalConfirmedHackfestPayments: number;
   totalPendingHackfestPayments: number;
   totalConfirmedEventPayments: number;
@@ -55,28 +59,28 @@ function PaymentStats() {
 
   const statItems = [
     {
-      title: "Confirmed Hackfest",
+      title: "Verified Hackfest Payments",
       value: stats?.totalConfirmedHackfestPayments ?? 0,
-      icon: <IndianRupee className="h-4 w-4 text-emerald-500" />,
-      description: "Total confirmed hackfest payments",
+      count: stats?.numberOfHFPaymentsConfirmed ?? 0,
+      description: "Total verified hackfest payments",
     },
     {
-      title: "Pending Hackfest",
+      title: "Unverified Hackfest Payments",
       value: stats?.totalPendingHackfestPayments ?? 0,
-      icon: <History className="h-4 w-4 text-amber-500" />,
-      description: "Total pending hackfest payments",
+      count: stats?.numberOfHFPaymentsPending ?? 0,
+      description: "Total unverified hackfest payments",
     },
     {
-      title: "Confirmed Event",
+      title: "Verified Event Payments",
       value: stats?.totalConfirmedEventPayments ?? 0,
-      icon: <CreditCard className="h-4 w-4 text-blue-500" />,
-      description: "Total confirmed event payments",
+      count: stats?.numberOfEventPaymentsConfirmed ?? 0,
+      description: "Total verified event payments",
     },
     {
-      title: "Pending Event",
+      title: "Unverified Event Payments",
       value: stats?.totalPendingEventPayments ?? 0,
-      icon: <TrendingUp className="h-4 w-4 text-violet-500" />,
-      description: "Total pending event payments",
+      count: stats?.numberOfEventPaymentsPending ?? 0,
+      description: "Total unverified event payments",
     },
   ];
 
@@ -86,11 +90,13 @@ function PaymentStats() {
         <Card key={item.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
-            {item.icon}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               ₹{item.value.toLocaleString("en-IN")}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">
+              {item.count} payments
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {item.description}
