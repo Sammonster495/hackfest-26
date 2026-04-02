@@ -149,7 +149,7 @@ export function TeamDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-[#0f1823] border border-[#39577c] text-white p-0 overflow-hidden max-w-md w-full rounded-2xl"
+        className="bg-[#0f1823] border border-[#39577c] text-white p-0 overflow-y-auto max-h-[90vh] max-w-md w-[95%] sm:w-full rounded-2xl"
         showCloseButton={false}
       >
         <VisuallyHidden>
@@ -222,19 +222,17 @@ export function TeamDetailsDialog({
             {allMembers.map((member) => (
               <div
                 key={member.id}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-colors ${
-                  member.isLeader
-                    ? "bg-[#f4d35e]/8 border-[#f4d35e]/30"
-                    : "bg-[#133c55]/40 border-[#39577c]/60"
-                }`}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-colors ${member.isLeader
+                  ? "bg-[#f4d35e]/8 border-[#f4d35e]/30"
+                  : "bg-[#133c55]/40 border-[#39577c]/60"
+                  }`}
               >
                 {/* Avatar */}
                 <div
-                  className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
-                    member.isLeader
-                      ? "bg-[#f4d35e]/20 text-[#f4d35e]"
-                      : "bg-[#133c55] text-white/60"
-                  }`}
+                  className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${member.isLeader
+                    ? "bg-[#f4d35e]/20 text-[#f4d35e]"
+                    : "bg-[#133c55] text-white/60"
+                    }`}
                 >
                   {member.name?.charAt(0).toUpperCase()}
                 </div>
@@ -301,7 +299,12 @@ export function TeamDetailsDialog({
 
           {/* Action buttons — only for leader */}
           {isLeader && isAvailable && (
-            <div className="flex gap-3 pt-1">
+            <div className="flex flex-col gap-3 pt-1">
+              {!isConfirmed && !team.payment && (
+                <p className="text-[11px] text-[#f4d35e] font-bold text-center uppercase tracking-wider mb-2 px-2 leading-relaxed italic">
+                  * All team members must be added and the full payment must be completed before confirming the team. Once confirmed, no changes will be allowed. *
+                </p>
+              )}
               {!isConfirmed && !team.payment && (
                 <Button
                   onClick={handleDelete}

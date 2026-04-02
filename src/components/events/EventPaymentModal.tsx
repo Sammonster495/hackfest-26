@@ -134,15 +134,16 @@ export function EventPaymentModal({
             e.preventDefault();
           }
         }}
-        className="bg-[#0f1823] border border-[#39577c] text-white p-6 max-w-md md:max-w-2xl w-full rounded-2xl **:data-[slot=dialog-close]:text-white/60 **:data-[slot=dialog-close]:hover:bg-white/10"
+        className="bg-[#0f1823] border border-[#39577c] text-white p-6 max-h-[95vh] overflow-y-auto max-w-md md:max-w-2xl w-[95%] sm:w-full rounded-2xl **:data-[slot=dialog-close]:text-white/60 **:data-[slot=dialog-close]:hover:bg-white/10"
       >
         <DialogHeader>
           <DialogTitle className="font-pirate text-3xl tracking-wider text-[#f4d35e]">
             Complete Payment
           </DialogTitle>
-          <DialogDescription className="text-white/60">
-            Scan the QR code and upload your payment screenshot to confirm your
-            event registration.
+          <DialogDescription className="text-white/60 flex flex-col gap-2">
+            <span>
+              Scan the QR code and upload your payment screenshot to confirm your event registration.
+            </span>
           </DialogDescription>
         </DialogHeader>
 
@@ -228,7 +229,9 @@ export function EventPaymentModal({
 
         {/* Error */}
         {error && <p className="text-sm text-red-400 font-medium">{error}</p>}
-
+        <span className="text-[#f4d35e] font-bold text-[16px] mt-1 italic">
+          * All team members must be added and the full payment must be completed before confirming the team. Once confirmed, no changes will be allowed. *
+        </span>
         <DialogFooter className="mt-4 pt-4 border-t border-[#39577c]/50">
           <Button
             onClick={handleSubmit}

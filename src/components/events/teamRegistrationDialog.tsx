@@ -127,7 +127,7 @@ export default function TeamRegistrationDialog({
         if (!o) resetState();
       }}
     >
-      <DialogContent className="bg-[#0f1823] border border-[#39577c] text-white p-0 overflow-hidden max-w-sm w-full rounded-2xl">
+      <DialogContent className="bg-[#0f1823] border border-[#39577c] text-white p-0 overflow-y-auto max-h-[90vh] max-w-sm w-[95%] sm:w-full rounded-2xl">
         <DialogTitle className="sr-only">Team Registration</DialogTitle>
 
         {/* Header strip */}
@@ -157,6 +157,9 @@ export default function TeamRegistrationDialog({
             <div className="flex flex-col gap-3">
               <p className="text-white/50 text-sm mb-2">
                 Start a new team or jump into an existing one.
+              </p>
+              <p className="text-[#f4d35e] font-bold text-[12px] uppercase tracking-wider mb-2 leading-relaxed italic border border-[#f4d35e]/20 p-2 rounded-lg bg-[#f4d35e]/5">
+                * All team members must be added and the full payment must be completed before confirming the team. Once confirmed, no changes will be allowed. *
               </p>
               <button
                 type="button"
