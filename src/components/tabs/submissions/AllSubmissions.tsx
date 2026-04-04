@@ -102,7 +102,7 @@ export function AllSubmissions() {
     "PPT URL",
     "Leader Phone",
     "Phone",
-    "Payment Status"
+    "Payment Status",
   ];
   const [selectedColumns, setSelectedColumns] = useState<string[]>(allColumns);
 
