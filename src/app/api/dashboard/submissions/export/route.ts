@@ -60,7 +60,7 @@ export const POST = adminProtected(async (request, _ctx, _user) => {
       "PPT URL",
       "Leader Phone",
       "Phone",
-      "Payment Status"
+      "Payment Status",
     ];
     const cols =
       parsed.columns && parsed.columns.length > 0
