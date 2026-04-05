@@ -191,7 +191,7 @@ export default function AboutSlate() {
                 </div>
 
                 <a
-                  href="/images/brochure/Hackfest26-Brochure.pdf"
+                  href="/images/brochure/Hackfest26Brochure.pdf"
                   download
                   className="group flex items-center gap-3 px-8 py-4 rounded-lg bg-cyan-900/40 border border-cyan-500/30 hover:bg-cyan-800/40 hover:border-cyan-400/50 transition-all shrink-0"
                 >

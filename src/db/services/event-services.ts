@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import db from "~/db";
 import {
   findByEvent,

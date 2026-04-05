@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 export default function BrochureRedirect() {
   useEffect(() => {
-    window.location.replace("/images/brochure/Hackfest26-Brochure.pdf");
+    window.location.replace("/images/brochure/Hackfest26Brochure.pdf");
   }, []);
 
   return (

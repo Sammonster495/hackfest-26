@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { apiFetch } from "~/lib/fetcher";
@@ -142,7 +141,8 @@ export function EventPaymentModal({
           </DialogTitle>
           <DialogDescription className="text-white/60 flex flex-col gap-2">
             <span>
-              Scan the QR code and upload your payment screenshot to confirm your event registration.
+              Scan the QR code and upload your payment screenshot to confirm
+              your event registration.
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -230,7 +230,9 @@ export function EventPaymentModal({
         {/* Error */}
         {error && <p className="text-sm text-red-400 font-medium">{error}</p>}
         <span className="text-[#f4d35e] font-bold text-[16px] mt-1 italic">
-          * All team members must be added and the full payment must be completed before confirming the team. Once confirmed, no changes will be allowed. *
+          * All team members must be added and the full payment must be
+          completed before confirming the team. Once confirmed, no changes will
+          be allowed. *
         </span>
         <DialogFooter className="mt-4 pt-4 border-t border-[#39577c]/50">
           <Button

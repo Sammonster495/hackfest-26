@@ -6,12 +6,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Info,
   Loader2,
   Pencil,
-  Search,
   Settings2,
-  Trash2,
   Users,
   X,
 } from "lucide-react";
@@ -287,7 +284,7 @@ export function EventStatsTab() {
 
     const query = leaderQuery.trim();
 
-    const timeoutId = setTimeout(() => {
+    const _timeoutId = setTimeout(() => {
       void getOrganizerTeamMembers(
         selectedEventId,
         setLeaderPopoverTeamId,
@@ -737,20 +734,18 @@ export function EventStatsTab() {
                                   </Button>
                                 </>
                               ) : (
-                                <>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-7 w-7 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingTeamId(team.id);
-                                      setEditingName(team.name);
-                                    }}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </Button>
-                                </>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTeamId(team.id);
+                                    setEditingName(team.name);
+                                  }}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
                               )}
                             </div>
                           </TableCell>

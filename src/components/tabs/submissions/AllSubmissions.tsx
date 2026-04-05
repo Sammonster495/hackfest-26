@@ -75,8 +75,8 @@ export function AllSubmissions() {
   const [pageSize, setPageSize] = useState(10);
 
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
-  const [isMoving, setIsMoving] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [isMoving, _setIsMoving] = useState(false);
+  const [refreshKey, _setRefreshKey] = useState(0);
 
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [exportType, setExportType] = useState<

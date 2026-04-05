@@ -33,7 +33,7 @@ export default function BrochureDownload() {
               <div className="relative shrink-0">
                 <div className="absolute inset-0 bg-cyan-400/30 blur-xl md:blur-2xl rounded-full scale-75 md:animate-pulse" />
                 <a
-                  href="/images/brochure/Hackfest26-Brochure.pdf"
+                  href="/images/brochure/Hackfest26Brochure.pdf"
                   download
                   className="relative flex items-center justify-center gap-4 px-10 py-5 bg-linear-to-b from-cyan-600 to-cyan-800 text-white rounded-xl font-pirate text-2xl tracking-wide border-t border-cyan-400 shadow-[0_10px_20px_rgba(0,0,0,0.5),0_0_20px_rgba(6,182,212,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_8px_rgb(255,255,255)] active:scale-95 overflow-hidden"
                 >

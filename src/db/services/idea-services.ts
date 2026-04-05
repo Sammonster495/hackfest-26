@@ -99,10 +99,10 @@ export async function getIdeaSubmission(teamId: string) {
     });
     const submission = ideaSubmissionData
       ? {
-        pdfUrl: ideaSubmissionData.pptUrl,
-        trackId: ideaSubmissionData.trackId,
-        trackName: ideaSubmissionData.track?.name ?? "Unknown Track",
-      }
+          pdfUrl: ideaSubmissionData.pptUrl,
+          trackId: ideaSubmissionData.trackId,
+          trackName: ideaSubmissionData.track?.name ?? "Unknown Track",
+        }
       : null;
     return submission;
   } catch (error) {
@@ -933,17 +933,17 @@ export async function saveIdeaScores(
       criteriaIds.length === 0
         ? []
         : await db
-          .select({
-            id: ideaRoundCriteria.id,
-            maxScore: ideaRoundCriteria.maxScore,
-          })
-          .from(ideaRoundCriteria)
-          .where(
-            and(
-              eq(ideaRoundCriteria.roundId, assignment.roundId),
-              inArray(ideaRoundCriteria.id, criteriaIds),
-            ),
-          );
+            .select({
+              id: ideaRoundCriteria.id,
+              maxScore: ideaRoundCriteria.maxScore,
+            })
+            .from(ideaRoundCriteria)
+            .where(
+              and(
+                eq(ideaRoundCriteria.roundId, assignment.roundId),
+                inArray(ideaRoundCriteria.id, criteriaIds),
+              ),
+            );
 
     const criteriaMap = new Map(
       criteriaRows.map((row) => [row.id, row.maxScore]),

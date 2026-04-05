@@ -1,4 +1,3 @@
-import { CreditCard, History, IndianRupee, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { PaymentsTable } from "~/components/dashboard/tables/payments-table";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";

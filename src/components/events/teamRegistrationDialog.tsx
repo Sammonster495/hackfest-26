@@ -159,7 +159,9 @@ export default function TeamRegistrationDialog({
                 Start a new team or jump into an existing one.
               </p>
               <p className="text-[#f4d35e] font-bold text-[12px] uppercase tracking-wider mb-2 leading-relaxed italic border border-[#f4d35e]/20 p-2 rounded-lg bg-[#f4d35e]/5">
-                * All team members must be added and the full payment must be completed before confirming the team. Once confirmed, no changes will be allowed. *
+                * All team members must be added and the full payment must be
+                completed before confirming the team. Once confirmed, no changes
+                will be allowed. *
               </p>
               <button
                 type="button"

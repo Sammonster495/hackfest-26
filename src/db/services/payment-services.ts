@@ -347,7 +347,7 @@ export async function getPaymentStats() {
 
   const totalConfirmedHackfestPayments =
     totalConfirmedHackfestPaymentsResult.reduce(
-      (sum, p) => sum + parseInt(p.amount),
+      (sum, p) => sum + parseInt(p.amount, 10),
       0,
     );
 
@@ -363,7 +363,7 @@ export async function getPaymentStats() {
 
   const totalPendingHackfestPayments =
     totalPendingHackfestPaymentsResult.reduce(
-      (sum, p) => sum + parseInt(p.amount),
+      (sum, p) => sum + parseInt(p.amount, 10),
       0,
     );
 
@@ -379,7 +379,7 @@ export async function getPaymentStats() {
     totalConfirmedEventPaymentsResult.length;
 
   const totalConfirmedEventPayments = totalConfirmedEventPaymentsResult.reduce(
-    (sum, p) => sum + parseInt(p.amount),
+    (sum, p) => sum + parseInt(p.amount, 10),
     0,
   );
 
@@ -394,7 +394,7 @@ export async function getPaymentStats() {
   const numberOfEventPaymentsPending = totalPendingEventPaymentsResult.length;
 
   const totalPendingEventPayments = totalPendingEventPaymentsResult.reduce(
-    (sum, p) => sum + parseInt(p.amount),
+    (sum, p) => sum + parseInt(p.amount, 10),
     0,
   );
 

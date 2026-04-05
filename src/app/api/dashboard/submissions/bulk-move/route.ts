@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // import { bulkPromoteSubmissions } from "~/db/services/submission-services";
 
-const bulkMoveSchema = z.object({
+const _bulkMoveSchema = z.object({
   teamIds: z.array(z.string().min(1)).min(1),
   nextStage: z.enum(["NOT_SELECTED", "SEMI_SELECTED", "SELECTED"]),
 });
