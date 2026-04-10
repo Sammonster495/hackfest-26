@@ -1,9 +1,23 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { env } from "./env";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const userAgent = request.headers.get("user-agent")?.toLowerCase() || "";
+
+  // Allow workers to access PUT routes
+  if (
+    request.method === "PUT" &&
+    pathname.startsWith("/api/dashboard/worker")
+  ) {
+    if (request.headers.get("X-Hackfest-Secret") === env.WORKER_SECRET) {
+      return NextResponse.next();
+    } else {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   if (
     (userAgent.includes("postman") || userAgent.includes("curl")) &&
     request.method !== "GET"

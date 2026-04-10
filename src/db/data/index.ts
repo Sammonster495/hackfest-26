@@ -5,6 +5,7 @@ import {
   eventParticipants,
   events,
   eventTeams,
+  githubs,
   participants,
   permissions,
   roles,
@@ -25,4 +26,5 @@ export const query = {
   dashboardUserRoles: queryBuilder(dashboardUserRoles, "dashboardUserRoles"),
   siteSettings: queryBuilder(siteSettings, "siteSettings"),
   eventOrganizers: queryBuilder(eventOrganizers, "eventOrganizers"),
+  github: queryBuilder(githubs, "githubs"),
 };

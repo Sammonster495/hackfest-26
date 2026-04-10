@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import type { RateLimiterRedis } from "rate-limiter-flexible";
 import { auth } from "~/auth/dashboard-config";
+import { env } from "~/env";
 import { hasPermission, isAdmin } from "~/lib/auth/check-access";
 import { AppError } from "~/lib/errors/app-error";
 import { getIdentifier, rateLimiters, withRateLimit } from "~/lib/rate-limit";
@@ -132,5 +133,23 @@ export function permissionProtected<T = Record<string, string>>(
     } catch (err) {
       return errorResponse(err) as unknown as Response;
     }
+  };
+}
+
+// NOTE: rate limiter not required as it is only accessible by internal workers with the secret header
+export function workerOnlyRoute<T = Record<string, string>>(
+  handler: (
+    request: NextRequest,
+    context: RouteContext<T>,
+  ) => Promise<NextResponse>,
+) {
+  return async (request: NextRequest, context: RouteContext<T>) => {
+    const headers = request.headers.get("X-Hackfest-Secret");
+
+    if (headers === env.WORKER_SECRET) {
+      return await handler(request, context);
+    }
+
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   };
 }

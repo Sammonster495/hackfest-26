@@ -20,6 +20,9 @@ const server = z.object({
   SMTP_USER: z.string().min(1),
   SMTP_PASS: z.string().min(1),
   REDIS_URL: z.string().min(1),
+  WORKER_API_URL: z.string().min(1),
+  WORKER_SECRET: z.string().min(1),
+  RABBIT_MQ_URL: z.string().min(1),
 });
 
 const client = z.object({
@@ -55,6 +58,9 @@ const processEnv = {
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
   REDIS_URL: process.env.REDIS_URL,
+  WORKER_API_URL: process.env.WORKER_API_URL,
+  WORKER_SECRET: process.env.WORKER_SECRET,
+  RABBIT_MQ_URL: process.env.RABBIT_MQ_URL,
 };
 
 function validateEnv() {
@@ -126,6 +132,9 @@ function validateEnv() {
       SMTP_USER: "",
       SMTP_PASS: "",
       REDIS_URL: "",
+      WORKER_API_URL: "",
+      WORKER_SECRET: "",
+      RABBIT_MQ_URL: "",
       ...clientParsed.data,
     };
   }

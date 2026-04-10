@@ -19,6 +19,7 @@ import {
   teams,
   tracks,
 } from "./schema";
+import { githubRepos, githubs, githubTeams } from "./schema/github";
 import {
   mentorFeedback,
   mentorRoundAssignments,
@@ -246,5 +247,26 @@ export const mentorFeedbackRelations = relations(mentorFeedback, ({ one }) => ({
   assignment: one(mentorRoundAssignments, {
     fields: [mentorFeedback.roundAssignmentId],
     references: [mentorRoundAssignments.id],
+  }),
+}));
+
+export const githubTeamRelations = relations(githubs, ({ one }) => ({
+  team: one(teams, {
+    fields: [githubs.teamId],
+    references: [teams.id],
+  }),
+}));
+
+export const githubTeamsRelations = relations(githubTeams, ({ one }) => ({
+  github: one(githubs, {
+    fields: [githubTeams.githubId],
+    references: [githubs.id],
+  }),
+}));
+
+export const githubRepoRelations = relations(githubRepos, ({ one }) => ({
+  github: one(githubs, {
+    fields: [githubRepos.githubId],
+    references: [githubs.id],
   }),
 }));
