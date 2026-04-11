@@ -1448,7 +1448,53 @@ export async function fetchAllSubmissionsDetails() {
       .leftJoin(selected, eq(selected.teamId, teams.id))
       .orderBy(desc(ideaSubmission.createdAt));
 
-    return rows;
+    if (rows.length === 0) return [];
+
+    const teamIds = rows.map((r) => r.teamId);
+
+    const genderRows = await db
+      .select({
+        teamId: participants.teamId,
+        gender: participants.gender,
+        count: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(participants)
+      .where(
+        and(
+          isNotNull(participants.teamId),
+          inArray(participants.teamId, teamIds),
+        ),
+      )
+      .groupBy(participants.teamId, participants.gender);
+
+    const genderMap = new Map<
+      string,
+      { Male: number; Female: number; "Prefer Not To Say": number }
+    >();
+    for (const g of genderRows) {
+      if (!g.teamId) continue;
+      if (!genderMap.has(g.teamId)) {
+        genderMap.set(g.teamId, { Male: 0, Female: 0, "Prefer Not To Say": 0 });
+      }
+      const entry = genderMap.get(g.teamId);
+      if (
+        entry &&
+        (g.gender === "Male" ||
+          g.gender === "Female" ||
+          g.gender === "Prefer Not To Say")
+      ) {
+        entry[g.gender] += g.count;
+      }
+    }
+
+    return rows.map((r) => ({
+      ...r,
+      genderCounts: genderMap.get(r.teamId) ?? {
+        Male: 0,
+        Female: 0,
+        "Prefer Not To Say": 0,
+      },
+    }));
   } catch (error) {
     if (error instanceof AppError) throw error;
     console.error("Error fetching all submissions details:", error);
@@ -1486,6 +1532,8 @@ export async function exportTeamsData(teamIds: string[]) {
     const allMembers = await db
       .select({
         teamId: participants.teamId,
+        name: participants.name,
+        alias: participants.alias,
         email: participants.email,
         phone: participants.phone,
       })
@@ -1499,6 +1547,15 @@ export async function exportTeamsData(teamIds: string[]) {
 
     const emailMap = new Map<string, string[]>();
     const phoneMap = new Map<string, string[]>();
+    const membersMap = new Map<
+      string,
+      {
+        name: string | null;
+        alias: string | null;
+        email: string | null;
+        phone: string | null;
+      }[]
+    >();
     for (const member of allMembers) {
       if (member.teamId && member.email) {
         const list = emailMap.get(member.teamId) || [];
@@ -1510,12 +1567,23 @@ export async function exportTeamsData(teamIds: string[]) {
         list.push(member.phone);
         phoneMap.set(member.teamId, list);
       }
+      if (member.teamId) {
+        const list = membersMap.get(member.teamId) || [];
+        list.push({
+          name: member.name,
+          alias: member.alias,
+          email: member.email,
+          phone: member.phone,
+        });
+        membersMap.set(member.teamId, list);
+      }
     }
 
     return teamsData.map((t) => ({
       ...t,
       allEmails: (emailMap.get(t.teamId) || []).join(", "),
       allPhones: (phoneMap.get(t.teamId) || []).join(", "),
+      members: membersMap.get(t.teamId) || [],
     }));
   } catch (error) {
     if (error instanceof AppError) throw error;

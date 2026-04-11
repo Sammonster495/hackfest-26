@@ -57,6 +57,11 @@ type SubmissionRow = {
     | null;
   pptUrl: string | null;
   createdAt: string;
+  genderCounts: {
+    Male: number;
+    Female: number;
+    "Prefer Not To Say": number;
+  };
 };
 
 export function AllSubmissions() {
@@ -85,9 +90,9 @@ export function AllSubmissions() {
   const [isExporting, setIsExporting] = useState(false);
 
   const [statsModalOpen, setStatsModalOpen] = useState(false);
-  const [statsModalType, setStatsModalType] = useState<"colleges" | "states">(
-    "colleges",
-  );
+  const [statsModalType, setStatsModalType] = useState<
+    "colleges" | "states" | "gender"
+  >("colleges");
 
   const allColumns = [
     "Team Name",
@@ -104,7 +109,7 @@ export function AllSubmissions() {
     "Phone",
     "Payment Status",
   ];
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(allColumns);
+  const [selectedColumns, _setSelectedColumns] = useState<string[]>(allColumns);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <needed>
   useEffect(() => {
@@ -118,7 +123,7 @@ export function AllSubmissions() {
         setRows(data.rows || []);
         setSelectedTeamIds((prev) =>
           prev.filter((id) =>
-            (data.rows || []).some((r: any) => r.teamId === id),
+            (data.rows || []).some((r: { teamId: string }) => r.teamId === id),
           ),
         );
       })
@@ -223,6 +228,25 @@ export function AllSubmissions() {
       .sort((a, b) => b.count - a.count);
   }, [dataSourceForBreakdown]);
 
+  const genderBreakdown = useMemo(() => {
+    const totals = { Male: 0, Female: 0, "Prefer Not To Say": 0 };
+    for (const team of dataSourceForBreakdown) {
+      totals.Male += team.genderCounts.Male;
+      totals.Female += team.genderCounts.Female;
+      totals["Prefer Not To Say"] += team.genderCounts["Prefer Not To Say"];
+    }
+    return [
+      { name: "Male", count: totals.Male },
+      { name: "Female", count: totals.Female },
+      { name: "Prefer Not To Say", count: totals["Prefer Not To Say"] },
+    ].filter((g) => g.count > 0);
+  }, [dataSourceForBreakdown]);
+
+  const totalParticipants = useMemo(
+    () => genderBreakdown.reduce((sum, g) => sum + g.count, 0),
+    [genderBreakdown],
+  );
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <needed>
   useEffect(() => {
     setCurrentPage(1);
@@ -310,7 +334,7 @@ export function AllSubmissions() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const extension = exportType === "csv" ? "csv" : "txt";
+      const extension = exportType === "csv" ? "xlsx" : "txt";
       const formatName =
         exportType === "csv" ? "hackfest_teams_export" : exportType;
       a.download = `${formatName}.${extension}`;
@@ -330,7 +354,7 @@ export function AllSubmissions() {
 
   return (
     <div className="space-y-4 pt-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -400,6 +424,32 @@ export function AllSubmissions() {
             <p className="text-xs text-muted-foreground mt-1">
               Based on {selectedTeamIds.length > 0 ? "selected" : "filtered"}{" "}
               teams
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Gender Distribution
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setStatsModalType("gender");
+                setStatsModalOpen(true);
+              }}
+            >
+              <Eye className="h-4 w-4 text-muted-foreground pointer-events-none" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalParticipants}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {genderBreakdown.map((g) => `${g.name}: ${g.count}`).join(" · ")}
             </p>
           </CardContent>
         </Card>
@@ -536,7 +586,9 @@ export function AllSubmissions() {
               <Label>Export Format</Label>
               <Select
                 value={exportType}
-                onValueChange={(val: any) => setExportType(val)}
+                onValueChange={(val: string) =>
+                  setExportType(val as "leader_emails" | "all_emails" | "csv")
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select format" />
@@ -549,58 +601,17 @@ export function AllSubmissions() {
                     All Member Emails (.txt)
                   </SelectItem>
                   <SelectItem value="csv">
-                    Detailed Spreadsheet (.csv)
+                    Detailed Spreadsheet (.xlsx)
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {exportType === "csv" && (
-              <div className="space-y-2 mt-4">
-                <div className="flex items-center justify-between">
-                  <Label>Columns to Include</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0 text-xs"
-                    onClick={() => {
-                      if (selectedColumns.length === allColumns.length) {
-                        setSelectedColumns([]);
-                      } else {
-                        setSelectedColumns(allColumns);
-                      }
-                    }}
-                  >
-                    {selectedColumns.length === allColumns.length
-                      ? "Deselect All"
-                      : "Select All"}
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {allColumns.map((col) => (
-                    <div key={col} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`col-${col}`}
-                        checked={selectedColumns.includes(col)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedColumns((prev) => [...prev, col]);
-                          } else {
-                            setSelectedColumns((prev) =>
-                              prev.filter((c) => c !== col),
-                            );
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor={`col-${col}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {col}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Exports an Excel file with team names grouped (merged cells) and
+                individual member details including Name, Alias, and contact
+                info.
+              </p>
             )}
           </div>
           <DialogFooter>
@@ -610,13 +621,7 @@ export function AllSubmissions() {
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleDownload}
-              disabled={
-                isExporting ||
-                (exportType === "csv" && selectedColumns.length === 0)
-              }
-            >
+            <Button onClick={handleDownload} disabled={isExporting}>
               {isExporting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -634,11 +639,14 @@ export function AllSubmissions() {
             <DialogTitle>
               {statsModalType === "colleges"
                 ? "Colleges Breakdown"
-                : "States Breakdown"}
+                : statsModalType === "states"
+                  ? "States Breakdown"
+                  : "Gender Distribution"}
             </DialogTitle>
             <DialogDescription>
-              Count of submissions per{" "}
-              {statsModalType === "colleges" ? "college" : "state"}.
+              {statsModalType === "gender"
+                ? "Participant count by gender."
+                : `Count of submissions per ${statsModalType === "colleges" ? "college" : "state"}.`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto mt-4 px-1 rounded-md border bg-card">
@@ -648,15 +656,21 @@ export function AllSubmissions() {
                   <TableHead>
                     {statsModalType === "colleges"
                       ? "College/University"
-                      : "State/City"}
+                      : statsModalType === "states"
+                        ? "State/City"
+                        : "Gender"}
                   </TableHead>
-                  <TableHead className="text-right">Teams</TableHead>
+                  <TableHead className="text-right">
+                    {statsModalType === "gender" ? "Participants" : "Teams"}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(statsModalType === "colleges"
                   ? collegesBreakdown
-                  : statesBreakdown
+                  : statsModalType === "states"
+                    ? statesBreakdown
+                    : genderBreakdown
                 ).map((item) => (
                   <TableRow key={item.name}>
                     <TableCell className="font-medium text-sm">
@@ -667,7 +681,9 @@ export function AllSubmissions() {
                 ))}
                 {(statsModalType === "colleges"
                   ? collegesBreakdown
-                  : statesBreakdown
+                  : statsModalType === "states"
+                    ? statesBreakdown
+                    : genderBreakdown
                 ).length === 0 && (
                   <TableRow>
                     <TableCell
@@ -762,7 +778,9 @@ export function AllSubmissions() {
                         className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/50"
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(row.pptUrl!, "_blank");
+                          if (row.pptUrl) {
+                            window.open(row.pptUrl, "_blank");
+                          }
                         }}
                         title="View PPT"
                       >

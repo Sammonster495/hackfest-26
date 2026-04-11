@@ -69,7 +69,7 @@ export const POST = adminProtected(async (req) => {
           typeof createdUsers === "object" &&
           "id" in createdUsers
         ) {
-          createdUserId = (createdUsers as any).id;
+          createdUserId = (createdUsers as { id: string }).id;
         }
 
         if (!createdUserId) {
@@ -90,10 +90,10 @@ export const POST = adminProtected(async (req) => {
             `Row ${index + 1}: Could not verify creation for '${userConfig.username}'.`,
           );
         }
-      } catch (err: any) {
-        errors.push(
-          `Row ${index + 1}: ${err.message || "Failed to create user"}`,
-        );
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to create user";
+        errors.push(`Row ${index + 1}: ${errorMessage}`);
       }
     }
 

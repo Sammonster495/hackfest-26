@@ -68,7 +68,7 @@ export const POST = async (request: NextRequest) => {
 
     let csvContent = `\uFEFF${generateCsvRow(cols)}\n`;
 
-    data.forEach((t: any) => {
+    data.forEach((t: Record<string, unknown>) => {
       const rowData = selectedFields.map((f: string) => {
         const val = t[f];
         if (f === "isComplete") return val ? "Yes" : "No";

@@ -93,8 +93,10 @@ export function EvaluatorAllocationsPanel() {
           .map((r: RoleCandidate) => r.id),
       );
 
-      const evaluatorUsers = usersData.filter((u: any) =>
-        u.roles.some((r: any) => evaluatorRoleIds.has(r.id)),
+      const evaluatorUsers = usersData.filter((u: EvaluatorUser) =>
+        u.roles.some((r: { id: string; name: string }) =>
+          evaluatorRoleIds.has(r.id),
+        ),
       );
 
       setUsers(evaluatorUsers);
@@ -334,8 +336,8 @@ export function EvaluatorAllocationsPanel() {
                   <div className="flex items-center gap-2">
                     <Select
                       value={filter}
-                      onValueChange={(v: any) => {
-                        setFilter(v);
+                      onValueChange={(v: string) => {
+                        setFilter(v as "all" | "assigned" | "unassigned");
                         setPage(1);
                       }}
                     >
@@ -353,8 +355,10 @@ export function EvaluatorAllocationsPanel() {
 
                     <Select
                       value={sortBy}
-                      onValueChange={(v: any) => {
-                        setSortBy(v);
+                      onValueChange={(v: string) => {
+                        setSortBy(
+                          v as "default" | "evaluatorsAsc" | "evaluatorsDesc",
+                        );
                         setPage(1);
                       }}
                     >

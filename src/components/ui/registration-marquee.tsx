@@ -25,8 +25,8 @@ export function RegistrationMarquee() {
       <div className="marquee-track flex whitespace-nowrap py-1">
         {[0, 1].map((set) => (
           <div key={set} className="flex shrink-0">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <MarqueeItem key={i} />
+            {["m1", "m2", "m3", "m4", "m5", "m6"].map((id) => (
+              <MarqueeItem key={`${set}-${id}`} />
             ))}
           </div>
         ))}

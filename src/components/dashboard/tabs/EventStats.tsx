@@ -892,7 +892,9 @@ export function EventStatsTab() {
               </Label>
               <Select
                 value={exportFilter}
-                onValueChange={(v) => setExportFilter(v as any)}
+                onValueChange={(v) =>
+                  setExportFilter(v as "all" | "confirmed" | "unconfirmed")
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All Teams" />

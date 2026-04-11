@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminProtected } from "~/auth/routes-wrapper";
@@ -47,59 +48,130 @@ export const POST = adminProtected(async (request, _ctx, _user) => {
       });
     }
 
-    const defaultCols = [
-      "Team Name",
-      "Leader Name",
-      "Leader Email",
-      "All Emails",
-      "College",
-      "State",
-      "Track",
-      "Stage",
-      "Progress",
-      "PPT URL",
-      "Leader Phone",
-      "Phone",
-      "Payment Status",
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Teams Export");
+
+    const columns: Partial<ExcelJS.Column>[] = [
+      { header: "Team Name", key: "teamName", width: 25 },
+      { header: "Member Name", key: "memberName", width: 22 },
+      { header: "Alias", key: "alias", width: 22 },
+      { header: "isAliasAvailable", key: "isAliasAvailable", width: 18 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Phone", key: "phone", width: 16 },
+      { header: "College", key: "college", width: 30 },
+      { header: "State", key: "state", width: 18 },
+      { header: "Track", key: "track", width: 18 },
+      { header: "Stage", key: "stage", width: 16 },
+      { header: "Progress", key: "progress", width: 16 },
+      { header: "PPT URL", key: "pptUrl", width: 35 },
+      { header: "Payment Status", key: "paymentStatus", width: 16 },
     ];
-    const cols =
-      parsed.columns && parsed.columns.length > 0
-        ? parsed.columns
-        : defaultCols;
+    worksheet.columns = columns;
 
-    const generateCsvRow = (row: string[]) =>
-      row
-        .map((cell) => `"${String(cell || "").replace(/"/g, '""')}"`)
-        .join(",");
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF2563EB" },
+    };
+    headerRow.alignment = { vertical: "middle", horizontal: "center" };
+    headerRow.height = 24;
 
-    let csvContent = `${generateCsvRow(cols)}\n`;
+    const teamMergeRanges: { startRow: number; endRow: number }[] = [];
 
-    data.forEach((t) => {
-      const rowData = [];
-      for (const col of cols) {
-        if (col === "Team Name") rowData.push(t.teamName || "");
-        else if (col === "Leader Name") rowData.push(t.leaderName || "");
-        else if (col === "Leader Email") rowData.push(t.leaderEmail || "");
-        else if (col === "All Emails") rowData.push(t.allEmails || "");
-        else if (col === "College") rowData.push(t.collegeName || "");
-        else if (col === "State") rowData.push(t.stateName || "");
-        else if (col === "Track") rowData.push(t.trackName || "");
-        else if (col === "Stage") rowData.push(t.teamStage || "");
-        else if (col === "Progress") rowData.push(t.teamProgress || "");
-        else if (col === "PPT URL") rowData.push(t.pptUrl || "");
-        else if (col === "Leader Phone") rowData.push(t.leaderPhone || "");
-        else if (col === "Phone") rowData.push(t.allPhones || "");
-        else if (col === "Payment Status") rowData.push(t.paymentStatus || "");
-        else rowData.push("");
-      }
-      csvContent += `${generateCsvRow(rowData)}\n`;
+    const teamLevelColIndices = [1, 7, 8, 9, 10, 11, 12, 13];
+
+    let currentRow = 2;
+
+    data.sort((a, b) => {
+      const trackA = (a.trackName || "").toLowerCase();
+      const trackB = (b.trackName || "").toLowerCase();
+      if (trackA !== trackB) return trackA.localeCompare(trackB);
+      const nameA = (a.teamName || "").toLowerCase();
+      const nameB = (b.teamName || "").toLowerCase();
+      return nameA.localeCompare(nameB);
     });
 
-    return new NextResponse(csvContent, {
+    for (const team of data) {
+      const members =
+        team.members.length > 0
+          ? team.members
+          : [{ name: null, alias: null, email: null, phone: null }];
+
+      const teamStartRow = currentRow;
+
+      for (const member of members) {
+        const memberName = member.name || "";
+        const memberAlias = member.alias;
+        const isAliasAvailable = memberAlias !== null && memberAlias !== "";
+        const aliasValue = isAliasAvailable ? memberAlias : memberName;
+
+        worksheet.addRow({
+          teamName: team.teamName || "",
+          memberName: memberName,
+          alias: aliasValue,
+          isAliasAvailable: isAliasAvailable ? "TRUE" : "FALSE",
+          email: member.email || "",
+          phone: member.phone || "",
+          college: team.collegeName || "",
+          state: team.stateName || "",
+          track: team.trackName || "",
+          stage: team.teamStage || "",
+          progress: team.teamProgress || "",
+          pptUrl: team.pptUrl || "",
+          paymentStatus: team.paymentStatus || "",
+        });
+        currentRow++;
+      }
+
+      const teamEndRow = currentRow - 1;
+
+      if (teamEndRow > teamStartRow) {
+        teamMergeRanges.push({
+          startRow: teamStartRow,
+          endRow: teamEndRow,
+        });
+      }
+    }
+
+    for (const range of teamMergeRanges) {
+      for (const colIdx of teamLevelColIndices) {
+        worksheet.mergeCells(range.startRow, colIdx, range.endRow, colIdx);
+        const cell = worksheet.getCell(range.startRow, colIdx);
+        cell.alignment = { vertical: "middle", horizontal: "left" };
+      }
+    }
+
+    for (let rowNum = 2; rowNum < currentRow; rowNum++) {
+      const row = worksheet.getRow(rowNum);
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFD1D5DB" } },
+          left: { style: "thin", color: { argb: "FFD1D5DB" } },
+          bottom: { style: "thin", color: { argb: "FFD1D5DB" } },
+          right: { style: "thin", color: { argb: "FFD1D5DB" } },
+        };
+      });
+    }
+
+    for (let rowNum = 2; rowNum < currentRow; rowNum++) {
+      const cell = worksheet.getCell(rowNum, 4);
+      if (cell.value === "TRUE") {
+        cell.font = { color: { argb: "FF16A34A" }, bold: true };
+      } else {
+        cell.font = { color: { argb: "FFDC2626" }, bold: true };
+      }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="hackfest_teams_export.csv"`,
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="hackfest_teams_export.xlsx"`,
       },
     });
   } catch (error) {
