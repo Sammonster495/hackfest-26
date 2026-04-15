@@ -46,6 +46,7 @@
     "@tanstack/react-virtual": "3.13.18",
     "@types/three": "0.182.0",
     "amqplib": "1.0.3",
+    "@yudiel/react-qr-scanner": "^2.5.1",
     "bcryptjs": "3.0.3",
     "bullmq": "5.71.0",
     "class-variance-authority": "0.7.1",

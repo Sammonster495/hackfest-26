@@ -24,6 +24,7 @@ export const participants = pgTable(
     isRegistrationComplete: boolean("is_registration_complete")
       .notNull()
       .default(false),
+    attended: boolean("attended").notNull().default(false),
     idProof: text("idProof"),
     resume: text("resume"),
     github: text("github"),

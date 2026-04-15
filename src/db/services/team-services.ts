@@ -359,6 +359,7 @@ export async function fetchTeams({
       attended: teams.attended,
       teamStage: teams.teamStage,
       isCompleted: teams.isCompleted,
+      labId: teams.labId,
       createdAt: teams.createdAt,
       updatedAt: teams.updatedAt,
       memberCount: sql<number>`COALESCE(${memberCount.count}, 0)`.mapWith(

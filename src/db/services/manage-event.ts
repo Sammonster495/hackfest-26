@@ -1,5 +1,5 @@
-import { desc, eq } from "drizzle-orm";
-import type { NextResponse } from "next/server";
+import { desc, eq, inArray } from "drizzle-orm";
+import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { query } from "~/db/data";
 import { AppError } from "~/lib/errors/app-error";
@@ -13,7 +13,81 @@ import {
   eventParticipants,
   events,
   eventTeams,
+  teams,
+  participants,
 } from "../schema";
+
+export async function markTeamAttendanceByScan(
+  teamId: string,
+  presentParticipantIds?: string[],
+) {
+  try {
+    const team = await db.query.teams.findFirst({
+      where: eq(teams.id, teamId),
+    });
+
+    if (!team) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Team not found",
+          toast: true,
+          toastType: "error",
+          title: "Scan Failed",
+          description: "Invalid QR Code or team does not exist.",
+        },
+        { status: 404 },
+      );
+    }
+
+    await db.transaction(async (tx) => {
+      // 1. Mark the team itself as attended, unless explicitly marked with 0 members
+      const isTeamAttended = presentParticipantIds ? presentParticipantIds.length > 0 : true;
+      await tx
+        .update(teams)
+        .set({ attended: isTeamAttended })
+        .where(eq(teams.id, teamId));
+
+      // 2. Process individual participants if provided
+      if (presentParticipantIds) {
+        // Assume everyone is absent
+        await tx
+          .update(participants)
+          .set({ attended: false })
+          .where(eq(participants.teamId, teamId));
+
+        // Mark checked ones as present
+        if (presentParticipantIds.length > 0) {
+          await tx
+            .update(participants)
+            .set({ attended: true })
+            .where(inArray(participants.id, presentParticipantIds));
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        alreadyMarked: !!team.attended && (!presentParticipantIds || presentParticipantIds.length === 0),
+        teamName: team.name,
+      },
+    });
+  } catch (error) {
+    console.error("markTeamAttendanceByScan error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        toast: true,
+        toastType: "error",
+        title: "Scan Failed",
+      },
+      { status: 500 },
+    );
+  }
+}
+
 
 export type TeamDetails = {
   id: string;
