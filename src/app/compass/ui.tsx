@@ -3,8 +3,8 @@
 import { Home, MapPinned, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import QRCode from "react-qr-code";
 import { useEffect, useMemo, useRef, useState } from "react";
+import QRCode from "react-qr-code";
 
 type TimerPayload = {
   timer?: {
@@ -74,89 +74,89 @@ export function CompassClient({
   const [activeSpotId, setActiveSpotId] = useState("checkin-desk");
   const sourceRef = useRef<EventSource | null>(null);
 
-const mapSpots: MapSpot[] = useMemo(
-  () => [
-    {
-      id: "ramanujan-block",
-      title: "Ramanujan Block",
-      x: 54,
-      y: 68,
-      order: 1,
-      showNumber: true,
-      previewImage: "/images/map/ramanujan.webp",
-      previewAlt: "Ramanujan Block preview",
-    },
-    {
-      id: "apj-block",
-      title: "APJ Block",
-      x: 68,
-      y: 80,
-      order: 2,
-      showNumber: true,
-      previewImage: "/images/map/apj.webp",
-      previewAlt: "APJ preview",
-    },
-    {
-      id: "sac",
-      title: "SAC",
-      x: 64,
-      y: 48,
-      showNumber: false,
-      previewImage: "/images/map/sac.webp",
-      previewAlt: "SAC preview",
-    },
+  const mapSpots: MapSpot[] = useMemo(
+    () => [
+      {
+        id: "ramanujan-block",
+        title: "Ramanujan Block",
+        x: 54,
+        y: 68,
+        order: 1,
+        showNumber: true,
+        previewImage: "/images/map/ramanujan.webp",
+        previewAlt: "Ramanujan Block preview",
+      },
+      {
+        id: "apj-block",
+        title: "APJ Block",
+        x: 68,
+        y: 80,
+        order: 2,
+        showNumber: true,
+        previewImage: "/images/map/apj.webp",
+        previewAlt: "APJ preview",
+      },
+      {
+        id: "sac",
+        title: "SAC",
+        x: 64,
+        y: 48,
+        showNumber: false,
+        previewImage: "/images/map/sac.webp",
+        previewAlt: "SAC preview",
+      },
 
-    {
-      id: "smv",
-      title: "SMV Block",
-      x: 74,
-      y: 44,
-      order: 3,
-      showNumber: true,
-      previewImage: "/images/map/smv.webp",
-      previewAlt: "SMV Block preview",
-    },
+      {
+        id: "smv",
+        title: "SMV Block",
+        x: 74,
+        y: 44,
+        order: 3,
+        showNumber: true,
+        previewImage: "/images/map/smv.webp",
+        previewAlt: "SMV Block preview",
+      },
 
-    {
-      id: "mechanical-workshop",
-      title: "Mechanical Workshop",
-      x: 106,
-      y: 42,
-      order: 4,
-      showNumber: true,
-      previewImage: "/images/map/food-area.webp",
-      previewAlt: "Food Area preview",
-    },
-    {
-      id: "cv-raman",
-      title: "CV RAMAN Block",
-      x: 88,
-      y: 58,
-      showNumber: false,
-      previewImage: "/images/map/cv-raman.webp",
-      previewAlt: "Location preview",
-    },
-    {
-      id: "atal-block",
-      title: "Atal Block",
-      x: 28,
-      y: 40,
-      showNumber: false,
-      previewImage: "/images/map/atal.webp",
-      previewAlt: "Location preview",
-    },
-    {
-      id: "entrance",
-      title: "Enterance Point",
-      x: 60,
-      y: 100,
-      showNumber: false,
-      previewImage: "/images/map/gate.webp",
-      previewAlt: "Location preview",
-    },
-  ],
-  [],
-);
+      {
+        id: "mechanical-workshop",
+        title: "Mechanical Workshop",
+        x: 106,
+        y: 42,
+        order: 4,
+        showNumber: true,
+        previewImage: "/images/map/food-area.webp",
+        previewAlt: "Food Area preview",
+      },
+      {
+        id: "cv-raman",
+        title: "CV RAMAN Block",
+        x: 88,
+        y: 58,
+        showNumber: false,
+        previewImage: "/images/map/cv-raman.webp",
+        previewAlt: "Location preview",
+      },
+      {
+        id: "atal-block",
+        title: "Atal Block",
+        x: 28,
+        y: 40,
+        showNumber: false,
+        previewImage: "/images/map/atal.webp",
+        previewAlt: "Location preview",
+      },
+      {
+        id: "entrance",
+        title: "Enterance Point",
+        x: 60,
+        y: 100,
+        showNumber: false,
+        previewImage: "/images/map/gate.webp",
+        previewAlt: "Location preview",
+      },
+    ],
+    [],
+  );
 
   const activeSpot = useMemo(
     () => mapSpots.find((spot) => spot.id === activeSpotId) ?? mapSpots[0],
@@ -164,7 +164,10 @@ const mapSpots: MapSpot[] = useMemo(
   );
 
   const orderedSpots = useMemo(
-    () => [...mapSpots].sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity)),
+    () =>
+      [...mapSpots].sort(
+        (a, b) => (a.order ?? Infinity) - (b.order ?? Infinity),
+      ),
     [mapSpots],
   );
 
@@ -249,7 +252,11 @@ const mapSpots: MapSpot[] = useMemo(
       };
     }
 
-    if (timerStatus === "RUNNING" && remaining !== null && remaining <= 216000) {
+    if (
+      timerStatus === "RUNNING" &&
+      remaining !== null &&
+      remaining <= 216000
+    ) {
       return {
         textClass: "text-[#ff8b8b]",
         glow: "0 0 9px rgba(255,66,66,0.9), 0 0 20px rgba(255,66,66,0.65)",
@@ -266,7 +273,8 @@ const mapSpots: MapSpot[] = useMemo(
     return {
       textClass: "text-[#eef6ff]",
       glow: "none",
-      label: remaining === null ? (isMounted ? "CURRENT TIME" : "SYNCING") : "IDLE",
+      label:
+        remaining === null ? (isMounted ? "CURRENT TIME" : "SYNCING") : "IDLE",
     };
   }, [remaining, timerStatus, isMounted]);
 
@@ -325,10 +333,18 @@ const mapSpots: MapSpot[] = useMemo(
       <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-md flex-col justify-start gap-3 px-5 pb-8 pt-14">
         <div
           className="relative w-full overflow-hidden rounded-[20px] border border-[#f3d8a7]/[0.4] bg-[#6f4a26]/[0.18] shadow-[0_10px_22px_rgba(1,10,28,0.18),inset_0_1px_0_rgba(255,246,224,0.22)] backdrop-blur-[8px]"
-          style={{ WebkitBackdropFilter: "blur(8px) saturate(120%)", backdropFilter: "blur(8px) saturate(120%)" }}
+          style={{
+            WebkitBackdropFilter: "blur(8px) saturate(120%)",
+            backdropFilter: "blur(8px) saturate(120%)",
+          }}
         >
           <div className="relative h-[108px] w-full">
-            <Image src="/images/map.webp" alt="Campus map" fill className="object-cover blur-[1.5px] scale-[1.02]" />
+            <Image
+              src="/images/map.webp"
+              alt="Campus map"
+              fill
+              className="object-cover blur-[1.5px] scale-[1.02]"
+            />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(63,36,16,0.16)_0%,rgba(40,24,12,0.58)_100%)]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_30%,rgba(255,232,189,0.16),transparent_58%)] backdrop-blur-[0.75px]" />
 
@@ -347,7 +363,10 @@ const mapSpots: MapSpot[] = useMemo(
 
         <div
           className="relative w-full overflow-hidden rounded-[26px] border border-white/[0.18] bg-white/[0.015] p-4 text-[#eef6ff] shadow-[0_10px_20px_rgba(1,10,28,0.12),inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-[8px] backdrop-saturate-[115%]"
-          style={{ WebkitBackdropFilter: "blur(8px) saturate(115%)", backdropFilter: "blur(8px) saturate(115%)" }}
+          style={{
+            WebkitBackdropFilter: "blur(8px) saturate(115%)",
+            backdropFilter: "blur(8px) saturate(115%)",
+          }}
         >
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(165deg,rgba(255,255,255,0.012),rgba(255,255,255,0.001)_46%,rgba(153,198,255,0.006)_75%,rgba(68,128,201,0.006))]" />
           <div className="pointer-events-none absolute -left-20 top-6 h-48 w-48 rounded-full bg-white/[0.015] blur-3xl" />
@@ -360,7 +379,6 @@ const mapSpots: MapSpot[] = useMemo(
             >
               <Home className="h-4 w-4" />
             </Link>
-
           </div>
 
           <div className="relative z-10 p-1.5">
@@ -375,32 +393,44 @@ const mapSpots: MapSpot[] = useMemo(
             </div>
 
             <section className="px-3 pb-4 pt-5 text-center">
-              <p className="font-pirate text-xs tracking-[0.22em] text-[#dbe9ff]">TIMER</p>
+              <p className="font-pirate text-xs tracking-[0.22em] text-[#dbe9ff]">
+                TIMER
+              </p>
               <p
                 className={`mt-1 font-pirate text-[52px] leading-[1] tracking-wide ${timerTone.textClass}`}
                 style={{ textShadow: timerTone.glow }}
               >
                 {timerText}
               </p>
-              <p className="mt-1 font-pirate text-xs tracking-[0.18em] text-[#d0e2ff]">{timerTone.label}</p>
+              <p className="mt-1 font-pirate text-xs tracking-[0.18em] text-[#d0e2ff]">
+                {timerTone.label}
+              </p>
             </section>
 
             <div className="my-0.5 h-px bg-white/[0.12]" />
 
             <section className="grid grid-cols-[minmax(0,1fr)_102px] gap-3 pt-2">
               <div>
-                <p className="font-pirate text-xs tracking-[0.18em] text-[#dbe9ff]">TEAM NAME</p>
-                <p className="mt-1 font-pirate text-[40px] leading-[0.95]">{teamName}</p>
+                <p className="font-pirate text-xs tracking-[0.18em] text-[#dbe9ff]">
+                  TEAM NAME
+                </p>
+                <p className="mt-1 font-pirate text-[40px] leading-[0.95]">
+                  {teamName}
+                </p>
 
                 <div className="mt-3 border-t border-white/[0.12] pt-2">
                   <div className="flex items-center justify-between">
                     <p className="font-pirate text-[30px] leading-none">Lab</p>
-                    <p className="font-pirate text-[44px] leading-none">{labAssignment}</p>
+                    <p className="font-pirate text-[44px] leading-none">
+                      {labAssignment}
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-2 border-t border-white/[0.12] pt-2">
-                  <p className="mb-1.5 font-pirate text-[30px] leading-none">Dorm</p>
+                  <p className="mb-1.5 font-pirate text-[30px] leading-none">
+                    Dorm
+                  </p>
                   {dormMode === "male-only" ? (
                     <div className="flex items-center justify-between">
                       <p className="font-pirate text-lg">Male Dorm</p>
@@ -418,11 +448,15 @@ const mapSpots: MapSpot[] = useMemo(
                   {dormMode === "mixed" ? (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="font-pirate text-base text-[#dbe9ff]">Male</p>
+                        <p className="font-pirate text-base text-[#dbe9ff]">
+                          Male
+                        </p>
                         <p className="font-pirate text-xl leading-none">TBA</p>
                       </div>
                       <div>
-                        <p className="font-pirate text-base text-[#dbe9ff]">Female</p>
+                        <p className="font-pirate text-base text-[#dbe9ff]">
+                          Female
+                        </p>
                         <p className="font-pirate text-xl leading-none">TBA</p>
                       </div>
                     </div>
@@ -435,15 +469,27 @@ const mapSpots: MapSpot[] = useMemo(
               <div className="flex h-full flex-col justify-between pb-0.5 pt-0.5">
                 <div
                   className="rounded-xl border border-white/[0.18] bg-white/[0.012] px-2 py-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-[6px]"
-                  style={{ WebkitBackdropFilter: "blur(6px) saturate(115%)", backdropFilter: "blur(6px) saturate(115%)" }}
+                  style={{
+                    WebkitBackdropFilter: "blur(6px) saturate(115%)",
+                    backdropFilter: "blur(6px) saturate(115%)",
+                  }}
                 >
-                  <p className="font-pirate text-[9px] tracking-[0.18em] text-[#deecff]">TEAM NUMBER</p>
-                  <p className="mt-1 font-pirate text-[52px] leading-none text-[#f7fbff]">{teamNoLabel}</p>
+                  <p className="font-pirate text-[9px] tracking-[0.18em] text-[#deecff]">
+                    TEAM NUMBER
+                  </p>
+                  <p className="mt-1 font-pirate text-[52px] leading-none text-[#f7fbff]">
+                    {teamNoLabel}
+                  </p>
                 </div>
 
                 <div className="mt-2 flex flex-1 items-end justify-center">
                   <div className="rounded-2xl bg-white p-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
-                    <QRCode value={teamId} size={92} bgColor="#ffffff" fgColor="#1f2937" />
+                    <QRCode
+                      value={teamId}
+                      size={92}
+                      bgColor="#ffffff"
+                      fgColor="#1f2937"
+                    />
                   </div>
                 </div>
               </div>
@@ -461,14 +507,22 @@ const mapSpots: MapSpot[] = useMemo(
             onClick={() => setIsMapOpen(false)}
           />
 
-          <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-[24px] border border-[#f2d7a4]/[0.45] bg-[#6e4a29]/[0.16] p-3 text-[#fff6e8] shadow-[0_20px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,243,220,0.28)] backdrop-blur-[12px] backdrop-saturate-[130%] md:p-4"
-            style={{ WebkitBackdropFilter: "blur(12px) saturate(135%)", backdropFilter: "blur(12px) saturate(135%)" }}
+          <section
+            className="relative z-10 w-full max-w-5xl overflow-hidden rounded-[24px] border border-[#f2d7a4]/[0.45] bg-[#6e4a29]/[0.16] p-3 text-[#fff6e8] shadow-[0_20px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,243,220,0.28)] backdrop-blur-[12px] backdrop-saturate-[130%] md:p-4"
+            style={{
+              WebkitBackdropFilter: "blur(12px) saturate(135%)",
+              backdropFilter: "blur(12px) saturate(135%)",
+            }}
           >
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(160deg,rgba(255,236,197,0.2),rgba(223,176,112,0.08)_42%,rgba(118,77,39,0.12)_74%,rgba(52,30,14,0.18))]" />
             <div className="mb-3 flex items-start justify-between gap-2">
               <div>
-                <p className="font-pirate text-sm tracking-[0.2em] text-[#ffecc7]">CAMPUS MAP</p>
-                <p className="mt-1 text-[11px] text-[#efd5ab]">Tap checkpoints to preview locations.</p>
+                <p className="font-pirate text-sm tracking-[0.2em] text-[#ffecc7]">
+                  CAMPUS MAP
+                </p>
+                <p className="mt-1 text-[11px] text-[#efd5ab]">
+                  Tap checkpoints to preview locations.
+                </p>
               </div>
 
               <button
@@ -514,24 +568,28 @@ const mapSpots: MapSpot[] = useMemo(
                         {spot.showNumber ? spot.order : ""}
                       </span>
                       <span
-  className={`mt-1 block whitespace-nowrap rounded bg-[#2f1c0f]/78 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-[#ffedcb] transition-opacity ${
-    activeSpotId === spot.id
-      ? "opacity-100"
-      : spot.showNumber
-      ? "opacity-0 md:opacity-70 md:group-hover:opacity-100"
-      : "opacity-0"
-  }`}
->
-  {spot.title}
-</span>
+                        className={`mt-1 block whitespace-nowrap rounded bg-[#2f1c0f]/78 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-[#ffedcb] transition-opacity ${
+                          activeSpotId === spot.id
+                            ? "opacity-100"
+                            : spot.showNumber
+                              ? "opacity-0 md:opacity-70 md:group-hover:opacity-100"
+                              : "opacity-0"
+                        }`}
+                      >
+                        {spot.title}
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
 
               <aside className="rounded-2xl border border-[#f2d8aa]/[0.35] bg-[#563823]/[0.26] p-3 backdrop-blur-[3px]">
-                <p className="font-pirate text-xs tracking-[0.2em] text-[#ffe7be]">LOCATION PREVIEW</p>
-                <p className="mt-1 font-pirate text-xl leading-none">{activeSpot.title}</p>
+                <p className="font-pirate text-xs tracking-[0.2em] text-[#ffe7be]">
+                  LOCATION PREVIEW
+                </p>
+                <p className="mt-1 font-pirate text-xl leading-none">
+                  {activeSpot.title}
+                </p>
 
                 <div className="relative mt-2 aspect-[4/3] overflow-hidden rounded-xl border border-[#f2d8aa]/[0.4] bg-[#2e1e11]/65">
                   <Image
@@ -543,7 +601,7 @@ const mapSpots: MapSpot[] = useMemo(
                   <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,236,198,0.08),rgba(42,23,11,0.35))]" />
                 </div>
                 <div className="mt-2.5 grid grid-cols-2 gap-1.5 text-[11px]">
-                  {mapSpots.map((spot) => (
+                  {orderedSpots.map((spot) => (
                     <button
                       key={`quick-${spot.id}`}
                       type="button"
