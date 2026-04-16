@@ -232,6 +232,7 @@ export async function triggerGithubRepoAutomationForTeams(
       where: (t, { inArray }) => inArray(t.id, teamIds),
       with: {
         users: true,
+        selected: true,
       },
     });
 
@@ -240,7 +241,7 @@ export async function triggerGithubRepoAutomationForTeams(
       const team = selectedTeams[i];
       teams.push({
         team_id: team.id,
-        team_no: i + 1,
+        team_no: team.selected.teamNo ?? 0,
         team_name: team.name,
         members: team.users.map(
           (user) =>

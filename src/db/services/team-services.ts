@@ -9,6 +9,7 @@ import {
   isNotNull,
   type SQL,
   sql,
+  inArray,
 } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import db from "~/db";
@@ -16,6 +17,8 @@ import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
 import { notSelected, participants, selected, teams } from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
+import { errorResponse } from "~/lib/response/error";
+import { successResponse } from "~/lib/response/success";
 
 type Team = InferSelectModel<typeof teams>;
 type TeamWithMemberCount = Team & { memberCount: number };
@@ -491,6 +494,16 @@ export async function fetchAttendanceTeams({
     .groupBy(participants.teamId)
     .as("member_counts");
 
+  const presentCount = db
+    .select({
+      teamId: participants.teamId,
+      count: count().as("present_count"),
+    })
+    .from(participants)
+    .where(and(isNotNull(participants.teamId), eq(participants.attended, true)))
+    .groupBy(participants.teamId)
+    .as("present_counts");
+
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   const result = await db
@@ -503,18 +516,105 @@ export async function fetchAttendanceTeams({
       memberCount: sql<number>`COALESCE(${memberCount.count}, 0)`.mapWith(
         Number,
       ),
+      presentCount: sql<number>`COALESCE(${presentCount.count}, 0)`.mapWith(
+        Number,
+      ),
     })
     .from(teams)
     .innerJoin(selected, eq(teams.id, selected.teamId))
     .leftJoin(memberCount, eq(teams.id, memberCount.teamId))
+    .leftJoin(presentCount, eq(teams.id, presentCount.teamId))
     .where(whereClause)
     .orderBy(asc(selected.teamNo));
+
+  const totalCountResult = await db
+    .select({ count: count() })
+    .from(teams)
+    .innerJoin(selected, eq(teams.id, selected.teamId));
+
+  const presentCountResult = await db
+    .select({ count: count() })
+    .from(teams)
+    .innerJoin(selected, eq(teams.id, selected.teamId))
+    .where(eq(teams.attended, true));
+
+  const statsTotalCount = totalCountResult[0]?.count ?? 0;
+  const statsPresentCount = presentCountResult[0]?.count ?? 0;
+  const statsAbsentCount = statsTotalCount - statsPresentCount;
 
   console.log("Fetched attendance teams with filters:", {
     search,
     filter,
     count: result.length,
+    stats: { totalCount: statsTotalCount, presentCount: statsPresentCount, absentCount: statsAbsentCount },
   });
 
-  return { teams: result };
+  return { 
+    teams: result, 
+    stats: { totalCount: statsTotalCount, presentCount: statsPresentCount, absentCount: statsAbsentCount } 
+  };
+}
+
+
+export async function markTeamAttendanceByScan(
+  teamId: string,
+  presentParticipantIds?: string[],
+) {
+  try {
+    const team = await db.query.teams.findFirst({
+      where: eq(teams.id, teamId),
+    });
+
+    if (!team) {
+      return errorResponse(
+        new AppError("Team not found", 404, {
+          toast: false,
+          title: "Scan Failed",
+          description: "Invalid QR Code or team does not exist.",
+        }),
+      );
+    }
+
+    await db.transaction(async (tx) => {
+      const isTeamAttended = presentParticipantIds
+        ? presentParticipantIds.length > 0
+        : true;
+      await tx
+        .update(teams)
+        .set({ attended: isTeamAttended })
+        .where(eq(teams.id, teamId));
+
+      if (presentParticipantIds) {
+        await tx
+          .update(participants)
+          .set({ attended: false })
+          .where(eq(participants.teamId, teamId));
+
+        if (presentParticipantIds.length > 0) {
+          await tx
+            .update(participants)
+            .set({ attended: true })
+            .where(inArray(participants.id, presentParticipantIds));
+        }
+      }
+    });
+
+    return successResponse(
+      {
+        alreadyMarked:
+          !!team.attended &&
+          (!presentParticipantIds || presentParticipantIds.length === 0),
+        teamName: team.name,
+      },
+      { toast: false },
+    );
+  } catch (error) {
+    console.error("markTeamAttendanceByScan error:", error);
+    return errorResponse(
+      new AppError("Internal server error", 500, {
+        toast: false,
+        title: "Scan Failed",
+      }),
+    );
+  }
 }

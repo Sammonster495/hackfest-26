@@ -41,6 +41,7 @@ export type TeamRow = {
   teamStage: string;
   attended: boolean;
   memberCount: number;
+  presentCount: number;
 };
 
 export async function fetchTeamsForAttendance({
@@ -53,7 +54,7 @@ export async function fetchTeamsForAttendance({
   attended?: string;
   paymentStatus?: string;
   limit?: number;
-}): Promise<{ teams: TeamRow[] }> {
+}): Promise<{ teams: TeamRow[]; stats?: { totalCount: number, presentCount: number, absentCount: number } }> {
   try {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
@@ -62,7 +63,7 @@ export async function fetchTeamsForAttendance({
       params.set("paymentStatus", paymentStatus);
     if (limit) params.set("limit", limit.toString());
 
-    return await apiFetch<{ teams: TeamRow[] }>(
+    return await apiFetch<{ teams: TeamRow[]; stats?: { totalCount: number, presentCount: number, absentCount: number } }>(
       `/api/dashboard/attendance/teams?${params.toString()}`,
     );
   } catch (error) {

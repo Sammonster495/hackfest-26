@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { permissionProtected } from "~/auth/routes-wrapper";
-import { markTeamAttendanceByScan } from "~/db/services/manage-event";
+import { markTeamAttendanceByScan } from "~/db/services/team-services";
 
 const scanSchema = z.object({
   teamId: z.string().min(1, "Team ID is required"),
@@ -8,7 +8,7 @@ const scanSchema = z.object({
 });
 
 export const POST = permissionProtected(
-  ["event:manage"],
+  ["attendance:mark"],
   async (req: Request) => {
     const body = await req.json();
     const parsed = scanSchema.safeParse(body);
