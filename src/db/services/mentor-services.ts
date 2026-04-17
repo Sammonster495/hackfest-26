@@ -49,11 +49,7 @@ export async function getSelectableMentorTeams(labId: string | null = null) {
       id: true,
       name: true,
     },
-    where: (team, { eq }) =>
-      and(
-        eq(team.teamStage, "SELECTED"),
-        labId ? eq(team.labId, labId) : undefined,
-      ),
+    where: (team, { eq }) => and(...conditions),
     orderBy: (team, { asc }) => asc(team.name),
     with: {
       ideaSubmission: {

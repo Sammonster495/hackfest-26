@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { publicRoute } from "~/auth/route-handlers";
 import { adminProtected } from "~/auth/routes-wrapper";
 import db from "~/db";

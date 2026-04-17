@@ -109,7 +109,7 @@ export function UsersTable() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, roleFilter, pageSize]);
+  }, []);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredUsers.length / pageSize)),

@@ -497,6 +497,7 @@ export function CompassClient({
 
                 <div className="mt-2 flex flex-1 items-end justify-center">
                   <button
+                    type="button"
                     onClick={() => setIsQrModalOpen(true)}
                     className="rounded-2xl bg-white p-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.35)] transition-transform hover:scale-105 active:scale-95"
                     aria-label="Enlarge QR Code"
