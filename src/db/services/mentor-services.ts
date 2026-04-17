@@ -12,6 +12,7 @@ import {
   selected,
   teams,
   tracks,
+  labTeams,
 } from "../schema";
 
 export async function getMentorUsers() {
@@ -39,9 +40,17 @@ export async function getMentorUsers() {
 }
 
 export async function getSelectableMentorTeams(labId: string | null = null) {
-  const conditions = [eq(teams.teamStage, "SELECTED")];
+  const conditions: any[] = [eq(teams.teamStage, "SELECTED")];
   if (labId !== null) {
-    conditions.push(eq(teams.labId, labId));
+    conditions.push(
+      inArray(
+        teams.id,
+        db
+          .select({ teamId: labTeams.teamId })
+          .from(labTeams)
+          .where(eq(labTeams.labId, labId)),
+      ),
+    );
   }
 
   const data = await db.query.teams.findMany({
