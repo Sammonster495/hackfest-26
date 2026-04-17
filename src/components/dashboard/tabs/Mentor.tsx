@@ -32,6 +32,7 @@ import { Textarea } from "~/components/ui/textarea";
 type MentorAllocation = {
   assignmentId: string;
   teamId: string;
+  teamNo: number;
   teamName: string;
   paymentStatus: string | null;
   roundId: string;
@@ -102,7 +103,7 @@ export function MentorTab() {
     return roundAllocations.map((allocation, index) => ({
       ...allocation,
       // TODO: Replace derived teamNumber with a stable mapped team identifier from DB.
-      teamNumber: index + 1,
+      teamNumber: allocation.teamNo,
     }));
   }, [allocations, selectedRoundId]);
 
