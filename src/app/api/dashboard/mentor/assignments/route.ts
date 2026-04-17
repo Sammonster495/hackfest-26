@@ -36,10 +36,11 @@ export const GET = adminProtected(async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const mentorRoundId = searchParams.get("mentorRoundId");
     const mentorUserId = searchParams.get("mentorUserId");
+    const selectedLabId = searchParams.get("labId");
 
     const [mentorUsers, allTeams] = await Promise.all([
       getMentorUsers(),
-      getSelectableMentorTeams(),
+      getSelectableMentorTeams(selectedLabId || null),
     ]);
 
     let assignedTeamIds: string[] = [];

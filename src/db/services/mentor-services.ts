@@ -37,12 +37,37 @@ export async function getMentorUsers() {
   );
 }
 
-export async function getSelectableMentorTeams() {
-  return db
-    .select({ id: teams.id, name: teams.name })
-    .from(teams)
-    .where(eq(teams.teamStage, "SELECTED"))
-    .orderBy(asc(teams.name));
+export async function getSelectableMentorTeams(labId: string | null = null) {
+  const conditions = [eq(teams.teamStage, "SELECTED")];
+  if (labId !== null) {
+    conditions.push(eq(teams.labId, labId));
+  }
+
+  const data = await db.query.teams.findMany({
+    columns: {
+      id: true,
+      name: true,
+    },
+    where: (team, { eq }) =>
+      and(
+        eq(team.teamStage, "SELECTED"),
+        labId ? eq(team.labId, labId) : undefined,
+      ),
+    orderBy: (team, { asc }) => asc(team.name),
+    with: {
+      ideaSubmission: {
+        columns: {
+          trackId: true,
+        },
+      },
+    },
+  });
+
+  return data.map((team) => ({
+    id: team.id,
+    name: team.name,
+    trackId: team.ideaSubmission?.trackId || null,
+  }));
 }
 
 export async function getMentorByDashboardUserId(dashboardUserId: string) {
