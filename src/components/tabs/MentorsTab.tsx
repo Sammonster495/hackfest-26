@@ -49,6 +49,7 @@ type MentorUser = {
 type TeamOption = {
   id: string;
   name: string;
+  trackId: string;
 };
 
 type MentorHistoryRow = {
