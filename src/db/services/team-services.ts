@@ -6,10 +6,10 @@ import {
   gt,
   type InferSelectModel,
   ilike,
+  inArray,
   isNotNull,
   type SQL,
   sql,
-  inArray,
 } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import db from "~/db";
@@ -554,12 +554,20 @@ export async function fetchAttendanceTeams({
     search,
     filter,
     count: result.length,
-    stats: { totalCount: statsTotalCount, presentCount: statsPresentCount, absentCount: statsAbsentCount },
+    stats: {
+      totalCount: statsTotalCount,
+      presentCount: statsPresentCount,
+      absentCount: statsAbsentCount,
+    },
   });
 
-  return { 
-    teams: result, 
-    stats: { totalCount: statsTotalCount, presentCount: statsPresentCount, absentCount: statsAbsentCount } 
+  return {
+    teams: result,
+    stats: {
+      totalCount: statsTotalCount,
+      presentCount: statsPresentCount,
+      absentCount: statsAbsentCount,
+    },
   };
 }
 
