@@ -8,6 +8,7 @@ import {
   ilike,
   inArray,
   isNotNull,
+  or,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -478,7 +479,19 @@ export async function fetchAttendanceTeams({
   const conditions: SQL[] = [];
 
   if (search?.trim()) {
-    conditions.push(ilike(teams.name, `%${search.trim()}%`));
+    const searchTerm = search.trim();
+    const searchNo = parseInt(searchTerm, 10);
+
+    if (!isNaN(searchNo)) {
+      conditions.push(
+        or(
+          ilike(teams.name, `%${searchTerm}%`),
+          eq(selected.teamNo, searchNo),
+        )!,
+      );
+    } else {
+      conditions.push(ilike(teams.name, `%${searchTerm}%`));
+    }
   }
 
   if (filter?.paymentStatus && filter.paymentStatus !== "all") {
@@ -518,6 +531,7 @@ export async function fetchAttendanceTeams({
   const result = await db
     .select({
       id: teams.id,
+      teamNo: selected.teamNo,
       name: teams.name,
       paymentStatus: teams.paymentStatus,
       teamStage: teams.teamStage,
