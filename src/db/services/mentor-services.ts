@@ -9,6 +9,7 @@ import {
   mentorRounds,
   mentors,
   roles,
+  selected,
   teams,
   tracks,
 } from "../schema";
@@ -407,6 +408,7 @@ export async function getMentorFeedbackHistory(params: {
 export async function getMentorAllocationsByMentorIds(mentorIds: string[]) {
   return db
     .select({
+      teamNo: selected.teamNo,
       assignmentId: mentorRoundAssignments.id,
       teamId: teams.id,
       teamName: teams.name,
@@ -420,6 +422,7 @@ export async function getMentorAllocationsByMentorIds(mentorIds: string[]) {
     })
     .from(mentorRoundAssignments)
     .innerJoin(teams, eq(teams.id, mentorRoundAssignments.teamId))
+    .innerJoin(selected, eq(selected.teamId, teams.id))
     .innerJoin(
       mentorRounds,
       eq(mentorRounds.id, mentorRoundAssignments.mentorRoundId),
