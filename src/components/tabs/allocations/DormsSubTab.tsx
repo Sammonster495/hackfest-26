@@ -3,6 +3,7 @@
 import {
   AlertTriangle,
   CheckCircle,
+  Download,
   Loader2,
   Lock,
   Plus,
@@ -166,10 +167,37 @@ export function DormsSubTab() {
     >
   >({});
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/dashboard/allocations/dorms/export", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "hackfest_dorms_allocation.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Export downloaded successfully");
+    } catch (_err) {
+      toast.error("Failed to export dorms data");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: needed
   useEffect(() => {
-    setIsLoading(true);
-    setDormTeams({});
+    if (dorms.length === 0 && teams.length === 0) {
+      setIsLoading(true);
+    }
     Promise.all([
       fetch("/api/dashboard/allocations/dorms").then((r) => r.json()),
       fetch("/api/dashboard/allocations/teams").then((r) => r.json()),
@@ -177,6 +205,20 @@ export function DormsSubTab() {
       .then(([dormsData, teamsData]) => {
         setDorms(dormsData.dorms ?? []);
         setTeams(teamsData.teams ?? []);
+
+        setExpandedDorm((currentExpanded) => {
+          if (currentExpanded) {
+            fetch(`/api/dashboard/allocations/dorms/${currentExpanded}`)
+              .then((r) => r.json())
+              .then((data) => {
+                setDormTeams((prev) => ({
+                  ...prev,
+                  [currentExpanded]: data.teams ?? [],
+                }));
+              });
+          }
+          return currentExpanded;
+        });
       })
       .catch(() => toast.error("Failed to load allocation data"))
       .finally(() => setIsLoading(false));
@@ -342,7 +384,6 @@ export function DormsSubTab() {
           ? `${gender} members assigned`
           : `${selectedTeam.teamName} assigned`,
       );
-      setDormTeams({});
       // Optimistically update selectedTeam so dialog reflects new state immediately
       if (gender === "Male")
         setSelectedTeam((prev) =>
@@ -403,7 +444,6 @@ export function DormsSubTab() {
           ? `${gender} members unassigned`
           : `${selectedTeam.teamName} unassigned`,
       );
-      setDormTeams({});
       if (gender === "Male")
         setSelectedTeam((prev) =>
           prev ? { ...prev, maleDormId: null, maleDormName: null } : prev,
@@ -467,6 +507,19 @@ export function DormsSubTab() {
               <CheckCircle className="h-4 w-4 mr-1" />
             )}
             Auto-Assign
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-1" />
+            )}
+            Export
           </Button>
           <Button
             size="sm"

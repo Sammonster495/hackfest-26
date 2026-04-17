@@ -6,16 +6,24 @@ import {
   gt,
   type InferSelectModel,
   ilike,
+  inArray,
   isNotNull,
   type SQL,
   sql,
-  inArray,
 } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import db from "~/db";
 import * as userData from "~/db/data/participant";
 import * as teamData from "~/db/data/teams";
-import { notSelected, participants, selected, teams } from "~/db/schema";
+import {
+  dormitory,
+  lab,
+  labTeams,
+  notSelected,
+  participants,
+  selected,
+  teams,
+} from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
 import { successResponse } from "~/lib/response/success";
@@ -546,15 +554,110 @@ export async function fetchAttendanceTeams({
     search,
     filter,
     count: result.length,
-    stats: { totalCount: statsTotalCount, presentCount: statsPresentCount, absentCount: statsAbsentCount },
+    stats: {
+      totalCount: statsTotalCount,
+      presentCount: statsPresentCount,
+      absentCount: statsAbsentCount,
+    },
   });
 
-  return { 
-    teams: result, 
-    stats: { totalCount: statsTotalCount, presentCount: statsPresentCount, absentCount: statsAbsentCount } 
+  return {
+    teams: result,
+    stats: {
+      totalCount: statsTotalCount,
+      presentCount: statsPresentCount,
+      absentCount: statsAbsentCount,
+    },
   };
 }
 
+export async function getCompassData(userId: string) {
+  const me = (
+    await db
+      .select({ teamId: participants.teamId })
+      .from(participants)
+      .where(eq(participants.id, userId))
+      .limit(1)
+  )[0];
+
+  if (!me?.teamId) {
+    return { error: "NOT_IN_TEAM" };
+  }
+
+  const team = (
+    await db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        stage: teams.teamStage,
+        labName: lab.name,
+      })
+      .from(teams)
+      .leftJoin(labTeams, eq(teams.id, labTeams.teamId))
+      .leftJoin(lab, eq(labTeams.labId, lab.id))
+      .where(eq(teams.id, me.teamId))
+      .limit(1)
+  )[0];
+
+  console.log("Team data for compass:", team);
+
+  if (!team) {
+    return { error: "TEAM_NOT_FOUND" };
+  }
+
+  const selectedEntry = (
+    await db
+      .select({ teamNo: selected.teamNo })
+      .from(selected)
+      .where(eq(selected.teamId, team.id))
+      .limit(1)
+  )[0];
+
+  const isSelected = team.stage === "SELECTED" || !!selectedEntry;
+
+  if (!isSelected) {
+    return { error: "NOT_SELECTED", teamId: team.id };
+  }
+
+  const genderCounts = await db
+    .select({ gender: participants.gender, total: count() })
+    .from(participants)
+    .where(eq(participants.teamId, team.id))
+    .groupBy(participants.gender);
+
+  const maleCount = genderCounts.find((g) => g.gender === "Male")?.total ?? 0;
+  const femaleCount =
+    genderCounts.find((g) => g.gender === "Female")?.total ?? 0;
+
+  const dormsAssigned = await db
+    .select({
+      dormName: dormitory.name,
+      dormGender: dormitory.gender,
+    })
+    .from(participants)
+    .innerJoin(dormitory, eq(participants.dormitoryId, dormitory.id))
+    .where(eq(participants.teamId, team.id))
+    .groupBy(dormitory.name, dormitory.gender);
+
+  console.log("Dorms assigned:", dormsAssigned);
+
+  const maleDorm =
+    dormsAssigned.find((d) => d.dormGender === "Male")?.dormName ?? "TBA";
+  const femaleDorm =
+    dormsAssigned.find((d) => d.dormGender === "Female")?.dormName ?? "TBA";
+
+  return {
+    success: true,
+    teamId: team.id,
+    teamName: team.name,
+    teamNo: selectedEntry?.teamNo ?? null,
+    maleCount,
+    femaleCount,
+    labAssignment: team.labName ?? "Lab TBA",
+    maleDorm,
+    femaleDorm,
+  };
+}
 
 export async function markTeamAttendanceByScan(
   teamId: string,

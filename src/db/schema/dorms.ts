@@ -1,11 +1,4 @@
-import {
-  integer,
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 import { genderEnum } from "../enum";
 import { teams } from "./team";
 

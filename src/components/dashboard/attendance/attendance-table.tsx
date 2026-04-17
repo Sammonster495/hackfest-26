@@ -65,7 +65,9 @@ export function AttendanceTable() {
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [attendanceSort, setAttendanceSort] = useState<"none" | "asc" | "desc">("none");
+  const [attendanceSort, setAttendanceSort] = useState<"none" | "asc" | "desc">(
+    "none",
+  );
 
   // Filters
   const [search, setSearch] = useState("");
@@ -75,6 +77,7 @@ export function AttendanceTable() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(25);
+  const [_refreshKey, setRefreshKey] = useState(0);
   const hasInitialized = useRef(false);
 
   // Dialog State
@@ -93,23 +96,26 @@ export function AttendanceTable() {
 
   const hasFetchedOnce = useRef(false);
 
-  const fetchData = useCallback(async (quiet = false) => {
-    const isQuiet = quiet || hasFetchedOnce.current;
+  const fetchData = useCallback(
+    async (quiet = false) => {
+      const isQuiet = quiet || hasFetchedOnce.current;
 
-    if (!isQuiet) setIsLoading(true);
-    else setIsRefreshing(true);
+      if (!isQuiet) setIsLoading(true);
+      else setIsRefreshing(true);
 
-    const data = await fetchTeamsForAttendance({
-      search: debouncedSearch,
-      attended: attendedFilter,
-      paymentStatus: paymentFilter,
-      limit: 500,
-    });
-    setTeams(data.teams);
-    hasFetchedOnce.current = true;
-    setIsLoading(false);
-    setIsRefreshing(false);
-  }, [debouncedSearch, attendedFilter, paymentFilter]);
+      const data = await fetchTeamsForAttendance({
+        search: debouncedSearch,
+        attended: attendedFilter,
+        paymentStatus: paymentFilter,
+        limit: 500,
+      });
+      setTeams(data.teams);
+      hasFetchedOnce.current = true;
+      setIsLoading(false);
+      setIsRefreshing(false);
+    },
+    [debouncedSearch, attendedFilter, paymentFilter],
+  );
 
   useEffect(() => {
     if (!hasInitialized.current) {
@@ -122,7 +128,7 @@ export function AttendanceTable() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, attendedFilter, paymentFilter]);
+  }, []);
 
   const handleRefresh = useCallback(() => {
     void fetchData(true);
@@ -193,8 +199,11 @@ export function AttendanceTable() {
   }, []);
 
   const totalTeams = teams.length;
-  const partialTeams = teams.filter((t) => t.attended && t.presentCount > 0 && t.presentCount < t.memberCount).length;
-  const fullyPresentTeams = teams.filter((t) => t.attended).length - partialTeams;
+  const partialTeams = teams.filter(
+    (t) => t.attended && t.presentCount > 0 && t.presentCount < t.memberCount,
+  ).length;
+  const fullyPresentTeams =
+    teams.filter((t) => t.attended).length - partialTeams;
   const absentTeams = totalTeams - fullyPresentTeams - partialTeams;
 
   const totalPages = Math.max(1, Math.ceil(totalTeams / pageSize));
@@ -241,7 +250,9 @@ export function AttendanceTable() {
             <AlertCircle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{partialTeams}</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {partialTeams}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -309,7 +320,9 @@ export function AttendanceTable() {
           title="Refresh"
           className="h-9 w-9"
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${isLoading || isRefreshing ? "animate-spin" : ""}`}
+          />
         </Button>
       </div>
 
@@ -334,8 +347,12 @@ export function AttendanceTable() {
                     }
                   >
                     Attendance
-                    {attendanceSort === "asc" && <ChevronUp className="ml-1 h-4 w-4" />}
-                    {attendanceSort === "desc" && <ChevronDown className="ml-1 h-4 w-4" />}
+                    {attendanceSort === "asc" && (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    )}
+                    {attendanceSort === "desc" && (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )}
                     {attendanceSort === "none" && <div className="ml-1 w-4" />}
                   </Button>
                 </div>
@@ -441,15 +458,22 @@ export function AttendanceTable() {
           </div>
         ) : (
           paginatedTeams.map((team, index) => (
-            <Card key={team.id} className="flex flex-col p-4 shadow-sm border-muted-foreground/20">
+            <Card
+              key={team.id}
+              className="flex flex-col p-4 shadow-sm border-muted-foreground/20"
+            >
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <div className="font-semibold text-base">{team.name}</div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    #{(currentPage - 1) * pageSize + index + 1} • {team.memberCount} Members
+                    #{(currentPage - 1) * pageSize + index + 1} •{" "}
+                    {team.memberCount} Members
                   </div>
                 </div>
-                <Badge variant="outline" className="text-[10px] font-normal leading-tight whitespace-nowrap">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-normal leading-tight whitespace-nowrap"
+                >
                   {team.teamStage.replace(/_/g, " ")}
                 </Badge>
               </div>
@@ -473,10 +497,13 @@ export function AttendanceTable() {
                     No Payment
                   </span>
                 )}
-                
-                <span className={`text-xs ml-auto font-medium ${team.attended ? (team.presentCount > 0 && team.presentCount < team.memberCount ? "text-yellow-600" : "text-green-600") : "text-red-500"}`}>
+
+                <span
+                  className={`text-xs ml-auto font-medium ${team.attended ? (team.presentCount > 0 && team.presentCount < team.memberCount ? "text-yellow-600" : "text-green-600") : "text-red-500"}`}
+                >
                   {team.attended
-                    ? team.presentCount > 0 && team.presentCount < team.memberCount
+                    ? team.presentCount > 0 &&
+                      team.presentCount < team.memberCount
                       ? `Partial (${team.presentCount}/${team.memberCount})`
                       : "Present"
                     : "Absent"}

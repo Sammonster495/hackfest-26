@@ -1,5 +1,5 @@
 import { desc, eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { query } from "~/db/data";
 import { AppError } from "~/lib/errors/app-error";
@@ -14,7 +14,6 @@ import {
   events,
   eventTeams,
 } from "../schema";
-
 
 export type TeamDetails = {
   id: string;

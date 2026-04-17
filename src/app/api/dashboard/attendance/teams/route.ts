@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { permissionProtected, type RouteContext } from "~/auth/routes-wrapper";
 import { fetchAttendanceTeams } from "~/db/services/team-services";
 import { successResponse } from "~/lib/response/success";

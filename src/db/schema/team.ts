@@ -1,7 +1,6 @@
 import {
   boolean,
   index,
-  integer,
   type PgColumn,
   pgTable,
   text,

@@ -3,6 +3,7 @@
 import {
   AlertTriangle,
   CheckCircle,
+  Download,
   Loader2,
   Lock,
   Monitor,
@@ -120,10 +121,37 @@ export function LabsSubTab() {
   } | null>(null);
   const [autoResultOpen, setAutoResultOpen] = useState(false);
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/dashboard/allocations/labs/export", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "hackfest_labs_allocation.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Export downloaded successfully");
+    } catch (_err) {
+      toast.error("Failed to export labs data");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: needed
   useEffect(() => {
-    setIsLoading(true);
-    setLabTeamDetails({});
+    if (labs.length === 0 && teams.length === 0) {
+      setIsLoading(true);
+    }
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
     fetch(`/api/dashboard/allocations/labs?${params}`)
@@ -131,6 +159,20 @@ export function LabsSubTab() {
       .then((data) => {
         setLabs(data.labs ?? []);
         setTeams(data.teams ?? []);
+
+        setExpandedLab((currentExpanded) => {
+          if (currentExpanded) {
+            fetch(`/api/dashboard/allocations/labs/${currentExpanded}`)
+              .then((r) => r.json())
+              .then((data) => {
+                setLabTeamDetails((prev) => ({
+                  ...prev,
+                  [currentExpanded]: data.teams ?? [],
+                }));
+              });
+          }
+          return currentExpanded;
+        });
       })
       .catch(() => toast.error("Failed to load lab data"))
       .finally(() => setIsLoading(false));
@@ -249,7 +291,6 @@ export function LabsSubTab() {
           ? { ...prev, assignedLabId: labId, assignedLabName: labName }
           : prev,
       );
-      setLabTeamDetails({});
       setRefreshKey((k) => k + 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to assign");
@@ -278,7 +319,6 @@ export function LabsSubTab() {
       setSelectedTeam((prev) =>
         prev ? { ...prev, assignedLabId: null, assignedLabName: null } : prev,
       );
-      setLabTeamDetails({});
       setRefreshKey((k) => k + 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to unassign");
@@ -297,7 +337,6 @@ export function LabsSubTab() {
       if (!res.ok) throw new Error(data.error || "Auto-assign failed");
       setAutoResult(data);
       setAutoResultOpen(true);
-      setLabTeamDetails({});
       setRefreshKey((k) => k + 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Auto-assign failed");
@@ -355,6 +394,19 @@ export function LabsSubTab() {
               <CheckCircle className="h-4 w-4 mr-1" />
             )}
             Auto-Assign
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-1" />
+            )}
+            Export
           </Button>
           <Button
             size="sm"

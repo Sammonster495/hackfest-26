@@ -1,8 +1,9 @@
-import { and, eq, inArray, isNotNull, notInArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import db from "~/db";
 import {
   colleges,
   dormitory,
+  dormitoryTeams,
   ideaSubmission,
   lab,
   labTeams,
@@ -271,6 +272,11 @@ export async function assignTeamToDorm(teamId: string, dormId: string) {
     .update(participants)
     .set({ dormitoryId: dormId })
     .where(eq(participants.teamId, teamId));
+
+  await db
+    .insert(dormitoryTeams)
+    .values({ dormId, teamId })
+    .onConflictDoNothing();
 }
 
 export async function unassignTeamFromDorm(teamId: string) {
@@ -278,6 +284,8 @@ export async function unassignTeamFromDorm(teamId: string) {
     .update(participants)
     .set({ dormitoryId: null })
     .where(eq(participants.teamId, teamId));
+
+  await db.delete(dormitoryTeams).where(eq(dormitoryTeams.teamId, teamId));
 }
 
 export async function assignTeamMembersByGenderToDorm(
@@ -294,12 +302,18 @@ export async function assignTeamMembersByGenderToDorm(
         sql`${participants.gender}::text = ${gender}`,
       ),
     );
+
+  await db
+    .insert(dormitoryTeams)
+    .values({ dormId, teamId })
+    .onConflictDoNothing();
 }
 
 export async function unassignTeamMembersByGender(
   teamId: string,
   gender: string,
 ) {
+  // First update participants to null for this gender
   await db
     .update(participants)
     .set({ dormitoryId: null })
@@ -309,6 +323,17 @@ export async function unassignTeamMembersByGender(
         sql`${participants.gender}::text = ${gender}`,
       ),
     );
+
+  const remaining = await db
+    .select({ count: sql`count(*)` })
+    .from(participants)
+    .where(
+      and(eq(participants.teamId, teamId), isNotNull(participants.dormitoryId)),
+    );
+
+  if (Number(remaining[0]?.count) === 0) {
+    await db.delete(dormitoryTeams).where(eq(dormitoryTeams.teamId, teamId));
+  }
 }
 
 export async function autoAssignDorms() {
@@ -333,6 +358,8 @@ export async function autoAssignDorms() {
     .set({ dormitoryId: null })
     .where(isNotNull(participants.dormitoryId));
 
+  await db.delete(dormitoryTeams);
+
   for (const team of allTeams) {
     if (team.teamGender === "Mixed" || team.teamGender === "Unknown") {
       notAssigned++;
@@ -356,6 +383,11 @@ export async function autoAssignDorms() {
       .update(participants)
       .set({ dormitoryId: targetDorm.id })
       .where(eq(participants.teamId, team.teamId));
+
+    await db
+      .insert(dormitoryTeams)
+      .values({ dormId: targetDorm.id, teamId: team.teamId })
+      .onConflictDoNothing();
 
     occupancy.set(
       targetDorm.id,

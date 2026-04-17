@@ -11,6 +11,7 @@ export function ThemeToggle() {
 
   if (
     pathname === "/timeline" ||
+    pathname.startsWith("/compass") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/timer")
   )

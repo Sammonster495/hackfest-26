@@ -4,6 +4,7 @@ import Script from "next/script";
 import { SessionProvider } from "next-auth/react";
 import { ToasterWrapper } from "~/components/providers/toaster-wrapper";
 import { DayNightProvider } from "~/components/providers/useDayNight";
+import { CompassFloatingButton } from "~/components/ui/compass-floating-button";
 import { GlobalLoader } from "~/components/ui/global-loader";
 import { RegistrationMarquee } from "~/components/ui/registration-marquee";
 import { ThemeToggle } from "~/components/ui/theme-toggle";
@@ -112,6 +113,7 @@ export default function RootLayout({
               {children}
               <ThemeToggle />
               <ToasterWrapper />
+              <CompassFloatingButton />
             </LoaderProvider>
           </DayNightProvider>
         </SessionProvider>

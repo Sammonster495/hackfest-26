@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 import { lab } from "./labs";
 import { teams } from "./team";
 
