@@ -1,4 +1,4 @@
-import { apiFetch } from "~/lib/fetcher";
+import { apiFetch, apiFetchWithoutToast } from "~/lib/fetcher";
 
 export type ScanResult = {
   teamName: string;
@@ -36,6 +36,7 @@ export async function fetchTeamDetails(teamId: string) {
 
 export type TeamRow = {
   id: string;
+  teamNo: number;
   name: string;
   paymentStatus: string | null;
   teamStage: string;
@@ -67,7 +68,7 @@ export async function fetchTeamsForAttendance({
       params.set("paymentStatus", paymentStatus);
     if (limit) params.set("limit", limit.toString());
 
-    return await apiFetch<{
+    return await apiFetchWithoutToast<{
       teams: TeamRow[];
       stats?: { totalCount: number; presentCount: number; absentCount: number };
     }>(`/api/dashboard/attendance/teams?${params.toString()}`);

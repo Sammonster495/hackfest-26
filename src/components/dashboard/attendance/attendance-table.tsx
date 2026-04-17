@@ -14,7 +14,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -62,7 +62,7 @@ interface TeamData {
 }
 
 export function AttendanceTable() {
-  const [teams, setTeams] = useState<TeamRow[]>([]);
+  const [allTeams, setAllTeams] = useState<TeamRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [attendanceSort, setAttendanceSort] = useState<"none" | "asc" | "desc">(
@@ -96,26 +96,20 @@ export function AttendanceTable() {
 
   const hasFetchedOnce = useRef(false);
 
-  const fetchData = useCallback(
-    async (quiet = false) => {
-      const isQuiet = quiet || hasFetchedOnce.current;
+  const fetchData = useCallback(async (quiet = false) => {
+    const isQuiet = quiet || hasFetchedOnce.current;
 
-      if (!isQuiet) setIsLoading(true);
-      else setIsRefreshing(true);
+    if (!isQuiet) setIsLoading(true);
+    else setIsRefreshing(true);
 
-      const data = await fetchTeamsForAttendance({
-        search: debouncedSearch,
-        attended: attendedFilter,
-        paymentStatus: paymentFilter,
-        limit: 500,
-      });
-      setTeams(data.teams);
-      hasFetchedOnce.current = true;
-      setIsLoading(false);
-      setIsRefreshing(false);
-    },
-    [debouncedSearch, attendedFilter, paymentFilter],
-  );
+    const data = await fetchTeamsForAttendance({
+      limit: 500,
+    });
+    setAllTeams(data.teams);
+    hasFetchedOnce.current = true;
+    setIsLoading(false);
+    setIsRefreshing(false);
+  }, []);
 
   useEffect(() => {
     if (!hasInitialized.current) {
@@ -133,6 +127,53 @@ export function AttendanceTable() {
   const handleRefresh = useCallback(() => {
     void fetchData(true);
   }, [fetchData]);
+
+  const getAttendanceScore = useCallback((t: TeamRow) => {
+    if (!t.attended) return 0;
+    if (t.presentCount > 0 && t.presentCount < t.memberCount) return 1;
+    return 2;
+  }, []);
+
+  const filteredTeams = useMemo(() => {
+    let result = [...allTeams];
+
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.trim().toLowerCase();
+      result = result.filter(
+        (t) => t.name.toLowerCase().includes(q) || t.teamNo?.toString() === q,
+      );
+    }
+
+    if (attendedFilter !== "all") {
+      const isAttended = attendedFilter === "true";
+      result = result.filter((t) => t.attended === isAttended);
+    }
+
+    if (paymentFilter !== "all") {
+      result = result.filter((t) => t.paymentStatus === paymentFilter);
+    }
+
+    if (attendanceSort !== "none") {
+      result.sort((a, b) => {
+        const scoreA = getAttendanceScore(a);
+        const scoreB = getAttendanceScore(b);
+        return attendanceSort === "asc" ? scoreA - scoreB : scoreB - scoreA;
+      });
+    }
+
+    return result;
+  }, [
+    allTeams,
+    debouncedSearch,
+    attendedFilter,
+    paymentFilter,
+    attendanceSort,
+  ]);
+
+  // Adjust pagination if filtered results shrink
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, attendedFilter, paymentFilter]);
 
   const openAttendanceDialog = async (team: TeamRow) => {
     setIsLoadingTeam(true);
@@ -172,15 +213,15 @@ export function AttendanceTable() {
       .map(([id]) => id);
 
     // Optimistic Update
-    const prevTeamIndex = teams.findIndex((t) => t.id === selectedTeam.id);
+    const prevTeamIndex = allTeams.findIndex((t) => t.id === selectedTeam.id);
     if (prevTeamIndex !== -1) {
-      const newTeams = [...teams];
+      const newTeams = [...allTeams];
       newTeams[prevTeamIndex] = {
         ...newTeams[prevTeamIndex],
         attended: presentParticipantIds.length > 0,
         presentCount: presentParticipantIds.length,
       };
-      setTeams(newTeams);
+      setAllTeams(newTeams);
     }
 
     await scanAttendance({
@@ -192,22 +233,17 @@ export function AttendanceTable() {
     setDialogOpen(false);
   };
 
-  const getAttendanceScore = useCallback((t: TeamRow) => {
-    if (!t.attended) return 0;
-    if (t.presentCount > 0 && t.presentCount < t.memberCount) return 1;
-    return 2;
-  }, []);
-
-  const totalTeams = teams.length;
-  const partialTeams = teams.filter(
-    (t) => t.attended && t.presentCount > 0 && t.presentCount < t.memberCount,
+  const totalTeams = filteredTeams.length;
+  const partialTeams = filteredTeams.filter(
+    (t: TeamRow) =>
+      t.attended && t.presentCount > 0 && t.presentCount < t.memberCount,
   ).length;
   const fullyPresentTeams =
-    teams.filter((t) => t.attended).length - partialTeams;
+    filteredTeams.filter((t: TeamRow) => t.attended).length - partialTeams;
   const absentTeams = totalTeams - fullyPresentTeams - partialTeams;
 
   const totalPages = Math.max(1, Math.ceil(totalTeams / pageSize));
-  const paginatedTeams = teams.slice(
+  const paginatedTeams = filteredTeams.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
@@ -391,10 +427,15 @@ export function AttendanceTable() {
                   className="hover:bg-muted/30 transition-colors"
                 >
                   <TableCell className="text-muted-foreground text-sm">
-                    {(currentPage - 1) * pageSize + index + 1}
+                    {team.teamNo}
                   </TableCell>
                   <TableCell className="font-medium">{team.name}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate" title={team.collegeName || "Unknown"}>{team.collegeName || "-"}</TableCell>
+                  <TableCell
+                    className="text-muted-foreground text-sm max-w-[200px] truncate"
+                    title={team.collegeName || "Unknown"}
+                  >
+                    {team.collegeName || "-"}
+                  </TableCell>
                   <TableCell>{team.memberCount}</TableCell>
                   <TableCell>
                     {team.paymentStatus ? (
@@ -472,6 +513,7 @@ export function AttendanceTable() {
                     {team.memberCount} Members
                   </div>
                 </div>
+
                 <Badge
                   variant="outline"
                   className="text-[10px] font-normal leading-tight whitespace-nowrap"
@@ -479,7 +521,12 @@ export function AttendanceTable() {
                   {team.teamStage.replace(/_/g, " ")}
                 </Badge>
               </div>
-
+              <div>
+                <div className="font-semibold text-base">{team.name}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {team.collegeName}
+                </div>
+              </div>
               <div className="flex items-center gap-2 mb-4">
                 {team.paymentStatus ? (
                   <Badge

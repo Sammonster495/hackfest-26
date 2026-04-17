@@ -3,6 +3,7 @@
 import { ChevronRight, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { promise } from "zod";
 import { useDashboardUser } from "~/components/dashboard/permissions-context";
 import { MentorTab } from "~/components/dashboard/tabs/Mentor";
 import { Badge } from "~/components/ui/badge";
@@ -31,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { apiFetch } from "~/lib/fetcher";
 
 type MentorRound = {
   id: string;
@@ -76,7 +78,9 @@ function AdminMentorPanel() {
 
   const [rounds, setRounds] = useState<MentorRound[]>([]);
   const [mentorUsers, setMentorUsers] = useState<MentorUser[]>([]);
-  const [allTeams, setAllTeams] = useState<TeamOption[]>([]);
+  const [allTeams, setAllTeams] = useState<
+    Array<{ id: string; name: string; trackId: string }>
+  >([]);
   const [selectedRoundId, setSelectedRoundId] = useState("");
   const [sourceRoundId, setSourceRoundId] = useState("");
   const [overwriteCopiedAssignments, setOverwriteCopiedAssignments] =
@@ -89,6 +93,11 @@ function AdminMentorPanel() {
   const [historyMentorFilterId, setHistoryMentorFilterId] = useState("all");
   const [historyRoundFilterId, setHistoryRoundFilterId] = useState("all");
   const [historyTeamFilterId, setHistoryTeamFilterId] = useState("all");
+
+  const [labs, setLabs] = useState<{ id: string; name: string }[]>([]);
+  const [selectedLabId, setSelectedLabId] = useState("");
+  const [tracks, setTracks] = useState<{ id: string; name: string }[]>([]);
+  const [selectedTrackId, setSelectedTrackId] = useState("");
 
   const [teamSearch, setTeamSearch] = useState("");
 
@@ -106,13 +115,17 @@ function AdminMentorPanel() {
 
   const filteredTeams = useMemo(() => {
     const term = teamSearch.trim().toLowerCase();
-    if (!term) return allTeams;
-    return allTeams.filter(
+    const trackFiltered = allTeams.filter((team) =>
+      selectedTrackId ? team.trackId === selectedTrackId : true,
+    );
+
+    if (!term) return trackFiltered;
+    return trackFiltered.filter(
       (team) =>
         team.name.toLowerCase().includes(term) ||
         team.id.toLowerCase().includes(term),
     );
-  }, [allTeams, teamSearch]);
+  }, [allTeams, teamSearch, selectedTrackId]);
 
   const historyMentorOptions = useMemo(() => {
     const unique = new Map<string, { id: string; label: string }>();
@@ -257,6 +270,9 @@ function AdminMentorPanel() {
     if (mentorUserId) {
       params.set("mentorUserId", mentorUserId);
     }
+    if (selectedLabId) {
+      params.set("labId", selectedLabId);
+    }
 
     setIsLoadingAssignments(true);
     const res = await fetch(
@@ -299,12 +315,31 @@ function AdminMentorPanel() {
     setFeedbackHistory(data);
   };
 
+  const fetchLabs = async () => {
+    const result = await apiFetch<Array<{ id: string; name: string }>>(
+      "/api/dashboard/allocations?get=labs",
+    );
+
+    setLabs(result);
+  };
+
+  const fetchTracks = async () => {
+    const response = await fetch("/api/tracks");
+    if (!response.ok) {
+      toast.error("Failed to load tracks");
+      return;
+    }
+
+    const data = await response.json();
+    setTracks(data as Array<{ id: string; name: string }>);
+  };
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: initial setup fetch
   useEffect(() => {
     const run = async () => {
       try {
         setIsLoading(true);
-        await fetchRounds();
+        await Promise.all([fetchRounds(), fetchLabs(), fetchTracks()]);
       } catch (error) {
         toast.error(
           error instanceof Error
@@ -335,7 +370,7 @@ function AdminMentorPanel() {
       }
     };
     run();
-  }, [selectedRoundId, selectedMentorUserId]);
+  }, [selectedRoundId, selectedMentorUserId, selectedLabId]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refresh history when selected round context changes
   useEffect(() => {
@@ -766,6 +801,41 @@ function AdminMentorPanel() {
                     {mentorUsers.map((mentorUser) => (
                       <SelectItem key={mentorUser.id} value={mentorUser.id}>
                         {mentorUser.name} ({mentorUser.username})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Lab</p>
+                <Select value={selectedLabId} onValueChange={setSelectedLabId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select lab" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {labs.map((lab) => (
+                      <SelectItem key={lab.id} value={lab.id}>
+                        {lab.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Track</p>
+                <Select
+                  value={selectedTrackId}
+                  onValueChange={setSelectedTrackId}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select track" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tracks.map((track) => (
+                      <SelectItem key={track.id} value={track.id}>
+                        {track.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -12,7 +12,7 @@ import {
   Trash,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -61,6 +61,22 @@ type DashboardUser = {
   roles: Role[];
 };
 
+type BulkUser = {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  password: string;
+};
+
+const createBulkUser = (): BulkUser => ({
+  id: crypto.randomUUID(),
+  name: "",
+  username: "",
+  email: "",
+  password: "",
+});
+
 export function UsersTable() {
   const [users, setUsers] = useState<DashboardUser[]>([]);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
@@ -73,33 +89,41 @@ export function UsersTable() {
 
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkRoleId, setBulkRoleId] = useState<string>("");
-  const [bulkUsers, setBulkUsers] = useState([
-    { name: "", username: "", email: "", password: "" },
-  ]);
+  const [bulkUsers, setBulkUsers] = useState<BulkUser[]>([createBulkUser()]);
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
 
-  const filteredUsers = users.filter((u) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      u.name.toLowerCase().includes(q) ||
-      u.username.toLowerCase().includes(q) ||
-      (u.email?.toLowerCase() || "").includes(q);
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return users.filter((u) => {
+      const matchesSearch =
+        u.name.toLowerCase().includes(q) ||
+        u.username.toLowerCase().includes(q) ||
+        (u.email?.toLowerCase() || "").includes(q);
 
-    const matchesRole =
-      roleFilter === "all" || u.roles.some((r) => r.id === roleFilter);
+      const matchesRole =
+        roleFilter === "all" || u.roles.some((r) => r.id === roleFilter);
 
-    return matchesSearch && matchesRole;
-  });
+      return matchesSearch && matchesRole;
+    });
+  }, [users, searchQuery, roleFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, []);
+  }, [searchQuery, roleFilter, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredUsers.length / pageSize)),
+    [filteredUsers.length, pageSize],
   );
+  const paginatedUsers = useMemo(
+    () =>
+      filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredUsers, currentPage, pageSize],
+  );
+
+  useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
 
   const fetchData = async () => {
     try {
@@ -227,10 +251,7 @@ export function UsersTable() {
   };
 
   const addBulkUserRow = () => {
-    setBulkUsers((prev) => [
-      ...prev,
-      { name: "", username: "", email: "", password: "" },
-    ]);
+    setBulkUsers((prev) => [...prev, createBulkUser()]);
   };
 
   const removeBulkUserRow = (index: number) => {
@@ -239,7 +260,7 @@ export function UsersTable() {
 
   const updateBulkUser = (
     index: number,
-    field: keyof (typeof bulkUsers)[0],
+    field: keyof BulkUser,
     value: string,
   ) => {
     setBulkUsers((prev) => {
@@ -292,7 +313,7 @@ export function UsersTable() {
       }
 
       setIsBulkModalOpen(false);
-      setBulkUsers([{ name: "", username: "", email: "", password: "" }]);
+      setBulkUsers([createBulkUser()]);
       setBulkRoleId("");
       fetchData();
     } catch (error) {
@@ -362,7 +383,7 @@ export function UsersTable() {
                   Loading users...
                 </TableCell>
               </TableRow>
-            ) : users.length === 0 ? (
+            ) : filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   No users found.
@@ -566,7 +587,7 @@ export function UsersTable() {
               <div className="flex-1 min-h-0 overflow-y-auto pr-4 space-y-4 pb-4">
                 {bulkUsers.map((u, i) => (
                   <div
-                    key={u.username}
+                    key={u.id}
                     className="border p-4 rounded-lg relative space-y-4 bg-muted/20"
                   >
                     <div className="absolute top-3 right-3">
@@ -585,11 +606,14 @@ export function UsersTable() {
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label htmlFor="name" className="text-xs font-medium">
+                        <label
+                          htmlFor={`bulk-name-${u.id}`}
+                          className="text-xs font-medium"
+                        >
                           Name
                         </label>
                         <Input
-                          id="name"
+                          id={`bulk-name-${u.id}`}
                           value={u.name}
                           onChange={(e) =>
                             updateBulkUser(i, "name", e.target.value)
@@ -600,13 +624,13 @@ export function UsersTable() {
                       </div>
                       <div className="space-y-1">
                         <label
-                          htmlFor="username"
+                          htmlFor={`bulk-username-${u.id}`}
                           className="text-xs font-medium"
                         >
                           Username
                         </label>
                         <Input
-                          id="username"
+                          id={`bulk-username-${u.id}`}
                           value={u.username}
                           onChange={(e) =>
                             updateBulkUser(i, "username", e.target.value)
@@ -616,11 +640,14 @@ export function UsersTable() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label htmlFor="email" className="text-xs font-medium">
+                        <label
+                          htmlFor={`bulk-email-${u.id}`}
+                          className="text-xs font-medium"
+                        >
                           Email
                         </label>
                         <Input
-                          id="email"
+                          id={`bulk-email-${u.id}`}
                           value={u.email}
                           onChange={(e) =>
                             updateBulkUser(i, "email", e.target.value)
@@ -630,11 +657,14 @@ export function UsersTable() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label htmlFor="pass" className="text-xs font-medium">
+                        <label
+                          htmlFor={`bulk-pass-${u.id}`}
+                          className="text-xs font-medium"
+                        >
                           Password
                         </label>
                         <Input
-                          id="pass"
+                          id={`bulk-pass-${u.id}`}
                           value={u.password}
                           onChange={(e) =>
                             updateBulkUser(i, "password", e.target.value)
