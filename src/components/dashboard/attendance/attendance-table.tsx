@@ -332,6 +332,7 @@ export function AttendanceTable() {
             <TableRow>
               <TableHead className="w-12">#</TableHead>
               <TableHead>Team Name</TableHead>
+              <TableHead>College</TableHead>
               <TableHead>Members</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead>Stage</TableHead>
@@ -393,6 +394,7 @@ export function AttendanceTable() {
                     {(currentPage - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell className="font-medium">{team.name}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate" title={team.collegeName || "Unknown"}>{team.collegeName || "-"}</TableCell>
                   <TableCell>{team.memberCount}</TableCell>
                   <TableCell>
                     {team.paymentStatus ? (

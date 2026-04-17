@@ -23,6 +23,7 @@ import {
   participants,
   selected,
   teams,
+  colleges,
 } from "~/db/schema";
 import { AppError } from "~/lib/errors/app-error";
 import { errorResponse } from "~/lib/response/error";
@@ -521,6 +522,7 @@ export async function fetchAttendanceTeams({
       paymentStatus: teams.paymentStatus,
       teamStage: teams.teamStage,
       attended: teams.attended,
+      collegeName: colleges.name,
       memberCount: sql<number>`COALESCE(${memberCount.count}, 0)`.mapWith(
         Number,
       ),
@@ -532,6 +534,8 @@ export async function fetchAttendanceTeams({
     .innerJoin(selected, eq(teams.id, selected.teamId))
     .leftJoin(memberCount, eq(teams.id, memberCount.teamId))
     .leftJoin(presentCount, eq(teams.id, presentCount.teamId))
+    .leftJoin(participants, eq(teams.leaderId, participants.id))
+    .leftJoin(colleges, eq(participants.collegeId, colleges.id))
     .where(whereClause)
     .orderBy(asc(selected.teamNo));
 

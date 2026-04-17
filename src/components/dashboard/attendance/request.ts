@@ -42,6 +42,7 @@ export type TeamRow = {
   attended: boolean;
   memberCount: number;
   presentCount: number;
+  collegeName: string | null;
 };
 
 export async function fetchTeamsForAttendance({
